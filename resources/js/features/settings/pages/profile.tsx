@@ -4,7 +4,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
 import { Button, HeadingSmall, Input, InputError, Label } from '@/components';
-import { AppLayout, SettingsLayout } from '@/layouts';
+import { DashboardLayout, SettingsLayout } from '@/layouts';
 import { DeleteUser } from '../components/index';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -29,7 +29,7 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
     };
 
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <DashboardLayout>
             <Head title="Profile settings" />
 
             <SettingsLayout>
@@ -110,6 +110,6 @@ export default function Profile({ mustVerifyEmail, status }: { mustVerifyEmail: 
 
                 <DeleteUser />
             </SettingsLayout>
-        </AppLayout>
+        </DashboardLayout>
     );
 }

@@ -4,7 +4,7 @@ import { HeadingSmall } from '@/components';
 import { type BreadcrumbItem } from '@/types';
 import { AppearanceTabs } from '../components';
 
-import { AppLayout, SettingsLayout } from '@/layouts';
+import { DashboardLayout, SettingsLayout } from '@/layouts';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -15,7 +15,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 export default function Appearance() {
     return (
-        <AppLayout breadcrumbs={breadcrumbs}>
+        <DashboardLayout>
             <Head title="Appearance settings" />
 
             <SettingsLayout>
@@ -24,6 +24,6 @@ export default function Appearance() {
                     <AppearanceTabs />
                 </div>
             </SettingsLayout>
-        </AppLayout>
+        </DashboardLayout>
     );
 }

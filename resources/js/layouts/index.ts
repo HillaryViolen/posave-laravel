@@ -1,5 +1,6 @@
-export * from "./app"
+export * from "./dashboard"
 export * from "./auth"
 export * from "./settings"
 export * from "./app-layout"
 export * from "./auth-layout"
+export * from "./dashbord-layout"

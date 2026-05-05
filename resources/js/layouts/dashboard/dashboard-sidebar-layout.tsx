@@ -1,7 +1,7 @@
 import { AppContent, AppShell, AppSidebar, AppSidebarHeader } from '@/components';
 import { type BreadcrumbItem } from '@/types';
 
-export function AppSidebarLayout({ children, breadcrumbs = [] }: { children: React.ReactNode; breadcrumbs?: BreadcrumbItem[] }) {
+export function DashboardSidebarLayout({ children, breadcrumbs = [] }: { children: React.ReactNode; breadcrumbs?: BreadcrumbItem[] }) {
     return (
         <AppShell variant="sidebar">
             <AppSidebar />

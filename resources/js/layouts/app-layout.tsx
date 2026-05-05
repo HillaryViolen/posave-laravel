@@ -1,4 +1,4 @@
-import { AppSidebarLayout } from '@/layouts';
+import { AppHeaderLayout } from '@/layouts';
 import { type BreadcrumbItem } from '@/types';
 
 interface AppLayoutProps {
@@ -7,7 +7,7 @@ interface AppLayoutProps {
 }
 
 export const AppLayout = ({ children, breadcrumbs, ...props }: AppLayoutProps) => (
-    <AppSidebarLayout breadcrumbs={breadcrumbs} {...props}>
+    <AppHeaderLayout breadcrumbs={breadcrumbs} {...props}>
         {children}
-    </AppSidebarLayout>
+    </AppHeaderLayout>
 );
