@@ -79,6 +79,35 @@
 :root {
     /* --success: #2E61E8; */
     /* --success-background: rgba(46, 97, 232, 0.1); */
+
+    --black: #000000;
+    --white: #F4F4F4;
+    --neutral-white: #FFFFFF;
+
+    --primary-900: #22303F;
+    --primary-800: #2A3A4C;
+    --primary-700: #31455A;
+    --primary-600: #394F67;
+    --primary-500: #415A75;
+    
+    --secondary-900: #2C6485;
+    --secondary-800: #316F93;
+    --secondary-700: #377BA3;
+    --secondary-600: #3D8AB8;
+    --secondary-500: #489ED1;
+
+    --accent-900: #C9E1F0;
+    --accent-800: #A9CEE6;
+    --accent-700: #8FBFDA;
+    --accent-600: #659DC2;
+    --accent-500: #3C79A4;
+
+    --grey-text: #707170;
+    --sidebar: #22303F;
+    --header: #22303F;
+    --subheading: #546272;
+    --second-accent: #E7E8E7;
+
     --success: #32843F;
     --success-background: F2F9F4;
     
