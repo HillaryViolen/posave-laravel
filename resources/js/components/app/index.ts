@@ -1,5 +1,6 @@
 export * from "./app-content"
 export * from "./app-header"
+export * from "./app-footer"
 export * from "./app-logo"
 export * from "./app-logo-icon"
 export * from "./app-shell"
