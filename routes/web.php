@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Faq\FaqController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\Inquiry\InquiryController;
 use Illuminate\Support\Facades\Route;
@@ -16,6 +17,8 @@ Route::controller(InquiryController::class)
         Route::get('/', 'index')->name('index');
         Route::post('/', 'store')->name('store');
     });
+
+Route::get('faq', [FaqController::class, 'index'])->name('faq');
 
 Route::get('/layanan', function () {
     return Inertia::render('services/services');
