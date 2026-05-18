@@ -1,7 +1,7 @@
-import '@fontsource/poppins/400.css'; // Regular
-import '@fontsource/poppins/500.css'; // Medium
-import '@fontsource/poppins/600.css'; // Semi-Bold
-import '@fontsource/poppins/700.css'; // Bold
+// import '@fontsource/poppins/400.css'; // Regular
+// import '@fontsource/poppins/500.css'; // Medium
+// import '@fontsource/poppins/600.css'; // Semi-Bold
+// import '@fontsource/poppins/700.css'; // Bold
 
 import '../css/app.css';
 
