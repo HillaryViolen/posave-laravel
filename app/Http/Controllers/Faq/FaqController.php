@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Faq;
 
 use App\Http\Controllers\Controller;
+use Inertia\Response;
 use App\Models\Faq;
+use App\Models\FaqCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -12,9 +14,18 @@ class FaqController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): Response
     {
-        return Inertia::render('faq/faq');
+        $categories = FaqCategory::orderBy('sort_order')->get();
+
+        $faqs = Faq::where('is_active', true)
+            ->orderBy('sort_order')
+            ->get();
+
+        return Inertia::render('faq/faq', [
+            'categories' => $categories,
+            'faqs'       => $faqs,
+        ]);
     }
 
     /**
@@ -36,10 +47,7 @@ class FaqController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Faq $faq)
-    {
-        //
-    }
+    public function show() {}
 
     /**
      * Show the form for editing the specified resource.
