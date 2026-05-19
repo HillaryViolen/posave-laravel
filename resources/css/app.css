@@ -192,6 +192,39 @@
     --sidebar-accent-foreground: hsl(240, 4.8%, 95.9%);
     --sidebar-border: hsl(0, 0%, 15.9%);
     --sidebar-ring: hsl(217.2, 91.2%, 59.8%);
+
+    
+}
+
+.testimonial-swiper {
+    overflow: visible !important;
+    padding-bottom: 20px;
+}
+
+.testimonial-swiper .swiper-slide {
+    opacity: 0.35;
+    transform: scale(0.92);
+    transition: all 0.4s ease;
+}
+
+.testimonial-swiper .swiper-slide-active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.custom-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: #1d2c3d;
+    opacity: 0.35;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.custom-dot-active {
+    opacity: 1;
+    background: #7fb6da;
 }
 
 @layer base {
@@ -202,4 +235,8 @@
     body {
         @apply bg-background text-foreground;
     }
+}
+
+body {
+    overflow-x: hidden;
 }

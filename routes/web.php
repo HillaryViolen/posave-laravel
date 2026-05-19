@@ -4,10 +4,13 @@ use App\Http\Controllers\Faq\FaqController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\Inquiry\InquiryController;
 use Illuminate\Support\Facades\Route;
+use App\Models\Testimonial;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('welcome/welcome');
+    return Inertia::render('welcome/welcome', [
+        'testimonials' => Testimonial::all(),
+    ]);
 })->name('home');
 
 Route::controller(InquiryController::class)
