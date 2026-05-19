@@ -3,6 +3,7 @@ import { type SharedData } from '@/types';
 import { Head, usePage } from '@inertiajs/react';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import { useRef } from "react";
 import 'swiper/css';
 import "swiper/css/navigation";
 import "swiper/css/pagination";
@@ -52,12 +53,16 @@ const features = [
 export default function Welcome() {
     const { auth } = usePage<SharedData>().props;
     const { testimonials } = usePage().props as any;
+    const prevRef = useRef<HTMLButtonElement | null>(null);
+    const nextRef = useRef<HTMLButtonElement | null>(null);
+    const dotsRef = useRef<HTMLDivElement | null>(null);
+    const swiperRef = useRef<any>(null);
 
     return (
         <AppLayout>
             <Head title="Landing Page" />
 
-            <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 px-4 sm:px-6 lg:px-20">
+            <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 px-4 sm:px-6 lg:px-20 mt-8">
                 <div
                     className="rounded-[32px] overflow-hidden w-full max-w-[1600px] mx-auto"
                     style={{
@@ -68,7 +73,7 @@ export default function Welcome() {
                     <div
                         className="w-full h-full relative"
                         style={{
-                            backgroundImage: "url('/images/landingpage_bgtop.jpeg')",
+                            backgroundImage: "url('assets/landing-page/landingpage_bgtop.jpeg')",
                             backgroundSize: 'cover',
                             backgroundPosition: '60% center',
                             backgroundRepeat: 'no-repeat',
@@ -85,15 +90,17 @@ export default function Welcome() {
                         {/* CONTENT */}
                         <div className="relative z-10 flex items-center h-full px-16">
                             <div className="max-w-lg">
-                                <h1 className="text-[70px] leading-[1.1] font-semibold text-black tracking-tight">
+                                <h1 className="text-[70px] leading-[1.1] font-medium text-black tracking-tight">
                                     Satu Untuk <br />
-                                    <span className="italic font-extrabold">
+                                    <span className="italic font-semibold whitespace-nowrap tracking-[0.025em] text-[80px]">
                                         Semua Masalah
                                     </span>
                                 </h1>
 
-                                <p className="mt-4 text-[13px] text-gray-400 max-w-xs leading-snug">
-                                    Kami hadir untuk senantiasa menemani perjalanan bisnis anda
+                                <p className="mt-4 text-[13px] max-w-lg leading-snug whitespace-nowrap overflow-hidden overflow-ellipsis">
+                                    Kami hadir untuk senantiasa menemani perjalanan
+                                    <br />
+                                    bisnis anda
                                 </p>
 
                                 <button className="mt-6 px-7 py-3.5 rounded-full bg-[#1a2744] text-white text-sm font-medium hover:bg-[#243460] transition-colors duration-200">
@@ -109,7 +116,7 @@ export default function Welcome() {
                 <h2 className="text-center text-[30px] md:text-[34px] font-black text-white mb-3 tracking-tight">
                     Fitur Utama Posave
                 </h2>
-                <p className="text-center text-[17px] md:text-[19px] font-semibold text-white mb-8 mx-auto leading-tight whitespace-nowrap overflow-hidden overflow-ellipsis max-w-full">
+                <p className="text-center text-[17px] md:text-[19px] font-medium text-white mb-8 mx-auto leading-tight whitespace-nowrap overflow-hidden overflow-ellipsis max-w-full">
                     Prioritas kami adalah membantu Anda menjalankan bisnis dengan cepat, rapi, dan berkelanjutan.
                 </p>
 
@@ -137,7 +144,7 @@ export default function Welcome() {
                                 >
                                     {feature.image ? (
                                         <img
-                                            src={`/images/${feature.image}`}
+                                            src={`assets/landing-page/${feature.image}`}
                                             alt={feature.title}
                                             className="h-[90px] w-[90px] object-cover rounded-2xl"
                                         />
@@ -168,7 +175,7 @@ export default function Welcome() {
                             <div className="flex-1 min-w-0">
                                 <div className="flex flex-col items-start gap-2 mb-6">
                                     <img
-                                        src="/images/logo.png"
+                                        src="assets/landing-page/logo.png"
                                         alt="POSAVE"
                                         className="h-12 w-auto object-contain scale-450 ml-16"
                                     />
@@ -179,13 +186,13 @@ export default function Welcome() {
                                 </div>
 
                                 <h2
-                                    className="text-[42px] leading-[1.15] font-black tracking-[0.05em] text-[#0f1c36] mb-6"
+                                    className="text-[42px] leading-[1.15] font-semibold tracking-[0.05em] text-[#0f1c36] mb-6"
                                     style={{
                                         WebkitTextStroke: '1px #0f1c36',
                                     }}
                                 >
                                     Atur Usaha <br />
-                                    <span className="font-black">
+                                    <span className="font-semibold">
                                         Ga Pake Ribet
                                     </span>
                                 </h2>
@@ -209,14 +216,14 @@ export default function Welcome() {
                             <div className="relative min-h-[420px] lg:min-h-[440px]">
                                 <div className="absolute -top-5 right-0 w-[360px] h-[430px] rounded-[30px] overflow-hidden shadow-[0_24px_60px_rgba(15,23,42,0.2)]">
                                     <img
-                                        src="/images/section3b.jpeg"
+                                        src="assets/landing-page/section3b.jpeg"
                                         alt="Kasir toko"
                                         className="w-full h-full object-cover"
                                     />
                                 </div>
                                 <div className="absolute -bottom-8 -left-6 w-[210px] h-[270px] rounded-[28px] overflow-hidden shadow-[0_20px_50px_rgba(15,23,42,0.16)]">
                                     <img
-                                        src="/images/section3a.jpeg"
+                                        src="assets/landing-page/section3a.jpeg"
                                         alt="Tim Posave"
                                         className="w-full h-full object-cover"
                                     />
@@ -240,7 +247,7 @@ export default function Welcome() {
                                 style={{ boxShadow: '0 30px 60px -12px rgba(0, 0, 0, 0.35)' }}
                             >
                                 <img 
-                                    src="/images/kenapa-posave.jpeg" 
+                                    src="assets/landing-page/kenapa-posave.jpeg" 
                                     alt="Kenapa Pilih Posave" 
                                     className="w-full h-full object-cover"
                                 />
@@ -257,7 +264,7 @@ export default function Welcome() {
                                 </h2>
                                 <div className="flex items-center gap-4 mt-0 ml-21.5">
                                     <img 
-                                        src="/images/logo.png" 
+                                        src="assets/landing-page/logo.png" 
                                         alt="POSAVE" 
                                         className="h-16 object-contain scale-450" 
                                     />
@@ -401,7 +408,7 @@ export default function Welcome() {
                     <div className="border border-[#9dc3dc] rounded-[42px] px-4 py-6 bg-white overflow-hidden">
 
                         {/* TITLE */}
-                        <div className="flex justify-center mb-14 px-4">
+                        <div className="flex justify-center mb-14 px-4 mt-5">
 
                             <div className="flex items-center justify-center flex-wrap gap-y-4 text-center">
 
@@ -414,7 +421,7 @@ export default function Welcome() {
                             <div className="mx-8 md:mx-14 lg:mx-20">
 
                                 <img
-                                    src="/images/logo.png"
+                                    src="assets/landing-page/logo.png"
                                     alt="POSAVE"
                                     className="
                                         h-[28px]
@@ -442,23 +449,24 @@ export default function Welcome() {
                     {/* SWIPER AREA */}
                     <Swiper
                         className="testimonial-swiper overflow-hidden"
-                        modules={[Navigation, Pagination, Autoplay]}
-                        slidesPerView={1.15}
+                        modules={[Pagination, Autoplay]}
+                        slidesPerView={1.08}
                         centeredSlides={true}
                         spaceBetween={26}
-                        loop={true}
+                        loop={false}
+                        rewind={true}
+                        loopAdditionalSlides={3}
                         grabCursor={true}
                         autoplay={{
                             delay: 4500,
                             disableOnInteraction: false,
                         }}
-                        navigation={{
-                            prevEl: ".btn-prev",
-                            nextEl: ".btn-next",
+                        onSwiper={(swiper) => {
+                            swiperRef.current = swiper;
                         }}
                         pagination={{
                             clickable: true,
-                            el: ".swiper-dots",
+                            el: ".testimonial-dots",
                             bulletClass: "custom-dot",
                             bulletActiveClass: "custom-dot-active",
                         }}
@@ -467,65 +475,58 @@ export default function Welcome() {
                                 slidesPerView: 1,
                             },
                             1024: {
-                                slidesPerView: 1.12,
+                                slidesPerView: 1.08,
                             },
                         }}
                     >
-
                         {testimonials.map((item: any) => (
-
                             <SwiperSlide key={item.id}>
-
-                                <div className="bg-[#e9e9e9] rounded-[42px] overflow-hidden flex flex-col lg:flex-row min-h-[520px]">
+                                <div className="bg-[#e9e9e9] rounded-[36px] overflow-hidden flex flex-col lg:flex-row h-[550px] max-w-[980px] mx-auto">
 
                                     {/* LEFT IMAGE */}
-                                    <div className="w-full lg:w-[38%] h-[200px] lg:h-auto shrink-0">
-
+                                    <div className="w-full lg:w-[38%] h-[200px] lg:h-full shrink-0 p-0">
                                         <img
                                             src={item.photo}
                                             alt={item.name}
-                                            className="w-full h-full object-cover"
+                                            className="w-full h-full object-cover rounded-[32px]"
                                         />
-
                                     </div>
 
                                     {/* RIGHT CONTENT */}
-                                    <div className="flex-1 px-8 py-10 lg:px-14 lg:py-12 flex flex-col justify-center">
+                                    <div className="flex-1 px-8 py-8 lg:px-10 lg:py-10 flex flex-col">
 
-                                        {/* NAME */}
-                                        <h2 className="text-[28px] md:text-[34px] lg:text-[42px] font-black tracking-[-0.04em] leading-[1.05] text-[#111]">
-                                            {item.name}
-                                        </h2>
+                                        {/* TOP */}
+                                        <div>
+                                            {/* NAME */}
+                                            <h2 className="text-[24px] md:text-[26px] lg:text-[28px] font-bold tracking-[-0.04em] leading-tight text-[#111] mt-17">
+                                                {item.name}
+                                            </h2>
 
-                                        {/* POSITION */}
-                                        <p className="mt-2 text-[17px] md:text-[20px] text-[#53708c] font-medium">
-                                            {item.position} {item.company}
-                                        </p>
+                                            {/* POSITION */}
+                                            <p className="mt-1 text-[15px] md:text-[16px] text-[#40566b] font-medium">
+                                                {item.position} {item.company}
+                                            </p>
 
-                                        {/* LOGO */}
-                                        <div className="mt-7">
-
-                                            <div className="w-[135px] h-[88px] bg-[#dcdcdc] rounded-[8px] flex items-center justify-center overflow-hidden">
-
+                                            {/* LOGO */}
+                                            <div className="mt-6">
                                                 <img
                                                     src={item.logo}
                                                     alt="logo"
-                                                    className="max-w-[95px] max-h-[50px] object-contain"
+                                                    className="w-[80px] h-auto object-contain"
                                                 />
-
                                             </div>
-
                                         </div>
 
                                         {/* MESSAGE */}
-                                        <p className="mt-10 text-[17px] md:text-[20px] leading-[1.8] text-[#222] max-w-[680px]">
-                                            "{item.message}"
-                                        </p>
+                                        <div className="mt-[100px]">
+                                            <p className="text-[15px] leading-[1.7] text-[#111] max-w-[520px]">
+                                                "{item.message}"
+                                            </p>
+                                        </div>
 
                                     </div>
 
                                 </div>
-
                             </SwiperSlide>
 
                         ))}
@@ -533,23 +534,25 @@ export default function Welcome() {
                     </Swiper>
 
                         {/* CONTROLS */}
-                        <div className="flex items-center justify-center gap-6 mt-10">
-
-                            {/* PREV */}
-                            <button className="btn-prev text-[52px] text-[#2f628c] leading-none hover:scale-110 transition-all">
+                        <div className="mt-10 flex items-center justify-center gap-4">
+                            <button
+                                type="button"
+                                onClick={() => swiperRef.current?.slidePrev()}
+                                className="flex items-center justify-center text-[42px] text-[#2f628c] leading-none hover:scale-110 transition-all"
+                            >
                                 ‹
                             </button>
 
-                            {/* DOTS */}
-                            <div className="swiper-dots flex items-center justify-center gap-3"></div>
+                            <div className="testimonial-dots flex !w-auto items-center justify-center gap-2" />
 
-                            {/* NEXT */}
-                            <button className="btn-next text-[52px] text-[#2f628c] leading-none hover:scale-110 transition-all">
+                            <button
+                                type="button"
+                                onClick={() => swiperRef.current?.slideNext()}
+                                className="flex items-center justify-center text-[42px] text-[#2f628c] leading-none hover:scale-110 transition-all"
+                            >
                                 ›
                             </button>
-
                         </div>
-
                     </div>
 
                 </div>
@@ -583,7 +586,7 @@ export default function Welcome() {
                         {/* SERONA */}
                         <div className="flex items-center justify-center corner-lg">
                             <img
-                                src="/images/serona.png"
+                                src="assets/landing-page/serona.png"
                                 alt="Serona"
                                 className="h-[140px] object-cover rounded-[36px] shadow-lg"
                             />
@@ -592,7 +595,7 @@ export default function Welcome() {
                         {/* VIKTORIFIT */}
                         <div className="flex items-center justify-center">
                             <img
-                                src="/images/viktorifit.png"
+                                src="assets/landing-page/viktorifit.png"
                                 alt="Viktorifit"
                                 className="h-[140px] object-contain"
                             />
@@ -601,7 +604,7 @@ export default function Welcome() {
                         {/* STUDYSPHERE */}
                         <div className="flex items-center justify-center">
                             <img
-                                src="/images/studysphere.png"
+                                src="assets/landing-page/studysphere.png"
                                 alt="Studysphere"
                                 className="h-[150px] object-contain"
                             />
@@ -612,7 +615,7 @@ export default function Welcome() {
             </section>
 
             {/* CTA Section */}
-            <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 px-4 sm:px-6 lg:px-25 mt-10">
+            <div className="relative left-1/2 right-1/2 w-screen -translate-x-1/2 px-4 sm:px-6 lg:px-25 mt-10 mb-15">
                 <div
                     className="rounded-[32px] overflow-hidden w-full max-w-[1600px] mx-auto"
                     style={{
@@ -623,7 +626,7 @@ export default function Welcome() {
                     <div
                         className="w-full h-full relative"
                         style={{
-                            backgroundImage: "url('/images/gambarbottom.jpeg')",
+                            backgroundImage: "url('assets/landing-page/gambarbottom.jpeg')",
                             backgroundSize: 'cover',
                             backgroundPosition: '40% center',
                             backgroundRepeat: 'no-repeat',
@@ -646,7 +649,7 @@ export default function Welcome() {
 
                                 {/* LOGO */}
                                 <img
-                                    src="/images/logo.png"
+                                    src="assets/landing-page/logo.png"
                                     alt="POSAVE"
                                     className="h-[72px] object-contain mx-auto mb-5 scale-450"
                                 />
@@ -655,9 +658,9 @@ export default function Welcome() {
                                 <h1
                                     className="
                                         text-[38px]
-                                        leading-[1.2]
+                                        leading-[1.1]
                                         font-medium
-                                        tracking-[-0.045em]
+                                        tracking-[-0.055em]
                                         text-[#0f1c36]
                                         max-w-[420px]
                                         mx-auto

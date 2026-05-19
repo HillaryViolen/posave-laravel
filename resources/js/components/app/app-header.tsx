@@ -1,11 +1,9 @@
-import { AppLogo, AppLogoIcon, Breadcrumbs } from '@/components';
+import { AppLogo, Breadcrumbs } from '@/components';
 import { Button, Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui';
-import { useInitials } from '@/hooks/use-initials';
 import { type BreadcrumbItem, type NavItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
-import { Menu } from 'lucide-react'; // Tambahkan ChevronDown untuk ikon bahasa
+import { Menu, ChevronDown } from 'lucide-react';
 
-// 1. Ubah daftar menu sesuai Figma
 const mainNavItems: NavItem[] = [
     { title: 'Tentang Kami', url: '/tentang-kami' },
     { title: 'Layanan', url: '/layanan' },
@@ -21,86 +19,143 @@ interface AppHeaderProps {
 export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
-    const getInitials = useInitials();
 
     return (
         <>
-            <div className="w-full max-w-7xl px-8 pt-4 md:px-16 mx-auto">
-                <div className="flex h-16 w-full items-center justify-between rounded-full bg-[#F2F3F5] px-6 shadow-sm">
+            <div className="mx-auto w-full max-w-[1280px] px-5 pt-4">
+
+                <div className="flex h-[72px] items-center justify-between rounded-full bg-[#f2f2f2] px-10 shadow-[0_2px_8px_rgba(0,0,0,0.18)]">
+
+                    {/* LEFT */}
                     <div className="flex items-center gap-4">
+
+                        {/* MOBILE MENU */}
                         <div className="lg:hidden">
                             <Sheet>
                                 <SheetTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-9 w-9">
+                                    <Button variant="ghost" size="icon">
                                         <Menu className="h-5 w-5" />
                                     </Button>
                                 </SheetTrigger>
-                                <SheetContent side="left" className="bg-sidebar flex h-full w-64 flex-col items-stretch justify-between">
-                                    <SheetTitle className="sr-only">Menu Navigasi</SheetTitle>
-                                    <SheetHeader className="flex justify-start text-left">
-                                        <AppLogoIcon className="h-6 w-6 fill-current text-black dark:text-white" />
+
+                                <SheetContent side="left">
+                                    <SheetHeader>
+                                        <SheetTitle>Menu</SheetTitle>
                                     </SheetHeader>
-                                    <div className="mt-6 flex h-full flex-1 flex-col space-y-4">
-                                        <div className="flex flex-col space-y-4 text-sm">
-                                            {mainNavItems.map((item) => (
-                                                <Link key={item.title} href={item.url} className="font-medium hover:text-slate-600">
-                                                    {item.title}
-                                                </Link>
-                                            ))}
-                                        </div>
+
+                                    <div className="mt-8 flex flex-col gap-5">
+                                        {mainNavItems.map((item) => (
+                                            <Link
+                                                key={item.title}
+                                                href={item.url}
+                                                className="text-sm font-medium"
+                                            >
+                                                {item.title}
+                                            </Link>
+                                        ))}
                                     </div>
                                 </SheetContent>
                             </Sheet>
                         </div>
 
-                        <Link href={auth.user ? '/dashboard' : '/'} prefetch className="flex items-center">
-                            <AppLogo />
+                        {/* LOGO */}
+                        <Link href="/" className="flex items-center">
+                            <img
+                                src="assets/landing-page/logo.png"
+                                alt="POSAVE"
+                                className="h-[34px] w-auto scale-350 ml-5"
+                            />
                         </Link>
+
                     </div>
 
-                    {/* --- TENGAH: MENU DESKTOP --- */}
-                    <div className="hidden flex-1 items-center justify-center space-x-8 text-sm font-medium text-slate-800 lg:flex">
+                    {/* CENTER MENU */}
+                    <div className="hidden items-center gap-10 lg:flex ml-25">
+
                         {mainNavItems.map((item) => (
-                            <Link key={item.title} href={item.url} className="transition-colors hover:text-slate-500">
+                            <Link
+                                key={item.title}
+                                href={item.url}
+                                className="text-[15px] font-semibold text-[#1d1d1d] transition hover:opacity-70"
+                            >
                                 {item.title}
                             </Link>
                         ))}
+
                     </div>
 
-                    <div className="hidden lg:flex items-center space-x-4">
+                    {/* RIGHT */}
+                    <div className="hidden items-center gap-4 lg:flex">
+
+                        {/* LANGUAGE */}
+                        <button className="flex items-center gap-2 text-[15px] font-medium text-[#1a2744] mr-10">
+
+                            <div className="overflow-hidden rounded-sm border border-gray-200">
+                                <div className="h-[8px] w-[20px] bg-red-600"></div>
+                                <div className="h-[8px] w-[20px] bg-white"></div>
+                            </div>
+
+                            ID
+
+                            <ChevronDown className="h-4 w-4 text-[#5b7894]" />
+
+                        </button>
+
+                        {/* BUTTONS */}
                         {auth.user ? (
-                            <div className="flex items-center space-x-3">
+                            <>
                                 <Button
                                     variant="outline"
-                                    className="rounded-md border-slate-800 px-6 hover:bg-slate-100 hover:text-slate-800"
+                                    className="h-[44px] rounded-[10px] border-[#233246] px-6 text-[15px] font-semibold text-[#233246]"
                                     asChild
                                 >
-                                    <Link href="/dashboard">Dashboard</Link>
+                                    <Link href="/dashboard">
+                                        Dashboard
+                                    </Link>
                                 </Button>
-                                <Button className="rounded-md bg-[#253342] px-6 text-white hover:bg-[#1a2530]" asChild>
+
+                                <Button
+                                    className="h-[44px] rounded-[10px] bg-[#233246] px-6 text-[15px] font-semibold text-white hover:bg-[#1b2736]"
+                                    asChild
+                                >
                                     <Link method="post" href={route('logout')}>
                                         Logout
                                     </Link>
                                 </Button>
-                            </div>
+                            </>
                         ) : (
-                            <div className="flex items-center space-x-3">
-                                <Button variant="outline" className="rounded-md border-slate-800 px-6 text-slate-800 hover:bg-slate-100" asChild>
-                                    <Link href="/register">Daftar</Link>
+                            <>
+                                <Button
+                                    variant="outline"
+                                    className="h-[44px] rounded-[10px] border-[#233246] px-6 text-[15px] font-semibold text-[#233246]"
+                                    asChild
+                                >
+                                    <Link href="/register">
+                                        Daftar
+                                    </Link>
                                 </Button>
-                                <Button className="rounded-md bg-[#253342] px-6 text-white hover:bg-[#1a2530]" asChild>
-                                    <Link href="/login">Masuk</Link>
+
+                                <Button
+                                    className="h-[44px] rounded-[10px] bg-[#233246] px-6 text-[15px] font-semibold text-white hover:bg-[#1b2736]"
+                                    asChild
+                                >
+                                    <Link href="/login">
+                                        Masuk
+                                    </Link>
                                 </Button>
-                            </div>
+                            </>
                         )}
+
                     </div>
+
                 </div>
+
             </div>
 
-            {/* Breadcrumbs (Jika ada) */}
+            {/* BREADCRUMBS */}
             {breadcrumbs.length > 1 && (
-                <div className="border-sidebar-border/70 mt-4 flex w-full border-b">
-                    <div className="mx-auto flex h-12 w-full items-center justify-start px-4 text-neutral-500 md:max-w-7xl">
+                <div className="mt-4 border-b border-sidebar-border/70">
+                    <div className="mx-auto flex h-12 w-full items-center px-4 text-neutral-500 md:max-w-7xl">
                         <Breadcrumbs breadcrumbs={breadcrumbs} />
                     </div>
                 </div>
