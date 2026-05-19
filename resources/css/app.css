@@ -7,8 +7,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans:
-        'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -81,48 +80,48 @@
     /* --success-background: rgba(46, 97, 232, 0.1); */
 
     --black: #000000;
-    --white: #F4F4F4;
-    --neutral-white: #FFFFFF;
+    --white: #f4f4f4;
+    --neutral-white: #ffffff;
 
-    --primary-900: #22303F;
-    --primary-800: #2A3A4C;
-    --primary-700: #31455A;
-    --primary-600: #394F67;
-    --primary-500: #415A75;
-    
-    --secondary-900: #2C6485;
-    --secondary-800: #316F93;
-    --secondary-700: #377BA3;
-    --secondary-600: #3D8AB8;
-    --secondary-500: #489ED1;
+    --primary-900: #22303f;
+    --primary-800: #2a3a4c;
+    --primary-700: #31455a;
+    --primary-600: #394f67;
+    --primary-500: #415a75;
 
-    --accent-900: #C9E1F0;
-    --accent-800: #A9CEE6;
-    --accent-700: #8FBFDA;
-    --accent-600: #659DC2;
-    --accent-500: #3C79A4;
+    --secondary-900: #2c6485;
+    --secondary-800: #316f93;
+    --secondary-700: #377ba3;
+    --secondary-600: #3d8ab8;
+    --secondary-500: #489ed1;
+
+    --accent-900: #c9e1f0;
+    --accent-800: #a9cee6;
+    --accent-700: #8fbfda;
+    --accent-600: #659dc2;
+    --accent-500: #3c79a4;
 
     --grey-text: #707170;
-    --sidebar: #22303F;
-    --header: #22303F;
+    --sidebar: #22303f;
+    --header: #22303f;
     --subheading: #546272;
-    --second-accent: #E7E8E7;
-    --text-light: #FBFBFB;
+    --second-accent: #e7e8e7;
+    --text-light: #fbfbfb;
 
-    --success: #32843F;
+    --success: #32843f;
     --success-background: F2F9F4;
-    
-    --warning: #E75F1A;
-    --warning-background: #FEF5EE;
-    
-    --danger: #E94A4D;
-    --danger-background: #FEF0F0;
 
-    --category-color-1: #9F6FD5;
-    --category-bg-color-1: #FEF4E1;
+    --warning: #e75f1a;
+    --warning-background: #fef5ee;
 
-    --category-color-2: #FA9F16;
-    --category-bg-color-3: #F2EBFA;
+    --danger: #e94a4d;
+    --danger-background: #fef0f0;
+
+    --category-color-1: #9f6fd5;
+    --category-bg-color-1: #fef4e1;
+
+    --category-color-2: #fa9f16;
+    --category-bg-color-3: #f2ebfa;
 
     --background: hsl(0, 0%, 100%);
     --foreground: hsl(0, 0%, 3.9%);

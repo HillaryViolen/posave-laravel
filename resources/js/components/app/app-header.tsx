@@ -19,6 +19,21 @@ interface AppHeaderProps {
 export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
+<<<<<<< HEAD
+
+    const currentUrl = page.url;
+
+    const isActive = (url: string) => {
+        return currentUrl.startsWith(url);
+    };
+
+    const getInitials = useInitials();
+
+    return (
+        <>
+            <div className="mx-auto w-full max-w-7xl px-8 pt-4 md:px-16">
+                <div className="flex h-16 w-full items-center justify-between rounded-full bg-[#F2F3F5] px-6 shadow-sm">
+=======
 
     return (
         <>
@@ -27,6 +42,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                 <div className="flex h-[72px] items-center justify-between rounded-full bg-[#f2f2f2] px-10 shadow-[0_2px_8px_rgba(0,0,0,0.18)]">
 
                     {/* LEFT */}
+>>>>>>> 62d330456c268a7c8cb846dc3c16759040de3b62
                     <div className="flex items-center gap-4">
 
                         {/* MOBILE MENU */}
@@ -42,6 +58,22 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                     <SheetHeader>
                                         <SheetTitle>Menu</SheetTitle>
                                     </SheetHeader>
+<<<<<<< HEAD
+                                    <div className="mt-6 flex h-full flex-1 flex-col space-y-4">
+                                        <div className="flex flex-col space-y-4 text-sm">
+                                            {mainNavItems.map((item) => (
+                                                <Link
+                                                    key={item.title}
+                                                    href={item.url}
+                                                    className={`font-medium transition-colors ${
+                                                        isActive(item.url) ? 'font-semibold text-[#253342]' : 'hover:text-slate-600'
+                                                    }`}
+                                                >
+                                                    {item.title}
+                                                </Link>
+                                            ))}
+                                        </div>
+=======
 
                                     <div className="mt-8 flex flex-col gap-5">
                                         {mainNavItems.map((item) => (
@@ -53,6 +85,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                                 {item.title}
                                             </Link>
                                         ))}
+>>>>>>> 62d330456c268a7c8cb846dc3c16759040de3b62
                                     </div>
                                 </SheetContent>
                             </Sheet>
@@ -76,7 +109,13 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                             <Link
                                 key={item.title}
                                 href={item.url}
+<<<<<<< HEAD
+                                className={`transition-colors ${
+                                    isActive(item.url) ? 'font-semibold text-[#253342]' : 'text-slate-700 hover:text-slate-500'
+                                }`}
+=======
                                 className="text-[15px] font-semibold text-[#1d1d1d] transition hover:opacity-70"
+>>>>>>> 62d330456c268a7c8cb846dc3c16759040de3b62
                             >
                                 {item.title}
                             </Link>
@@ -84,6 +123,9 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
 
                     </div>
 
+<<<<<<< HEAD
+                    <div className="hidden items-center space-x-4 lg:flex">
+=======
                     {/* RIGHT */}
                     <div className="hidden items-center gap-4 lg:flex">
 
@@ -102,6 +144,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                         </button>
 
                         {/* BUTTONS */}
+>>>>>>> 62d330456c268a7c8cb846dc3c16759040de3b62
                         {auth.user ? (
                             <>
                                 <Button
