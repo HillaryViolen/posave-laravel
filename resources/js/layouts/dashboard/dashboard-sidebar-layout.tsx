@@ -1,4 +1,5 @@
 import { AppContent, AppShell, AppSidebar, AppSidebarHeader } from '@/components';
+import { Chatbot } from '@/features/chatbot';
 import { ReactNode } from 'react';
 
 interface DashboardSidebarLayoutProps {
@@ -16,6 +17,8 @@ export function DashboardSidebarLayout({ children, title, description }: Dashboa
                 <AppSidebarHeader title={title} description={description} />
 
                 {children}
+
+                <Chatbot />
             </AppContent>
         </AppShell>
     );

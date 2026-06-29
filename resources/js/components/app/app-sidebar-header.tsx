@@ -1,5 +1,6 @@
 import { SidebarTrigger } from '@/components';
 import { Button } from '@/components/ui';
+import { useChatbot } from '@/features/chatbot';
 import { MessageSquare } from 'lucide-react';
 
 interface AppSidebarHeaderProps {
@@ -8,6 +9,7 @@ interface AppSidebarHeaderProps {
 }
 
 export function AppSidebarHeader({ title, description }: AppSidebarHeaderProps) {
+    const { open } = useChatbot();
     return (
         <header className="border-sidebar-border/50 bg-background/95 sticky top-0 z-[5] border-b backdrop-blur">
             <div className="flex items-start justify-between px-6 py-4">
@@ -21,7 +23,11 @@ export function AppSidebarHeader({ title, description }: AppSidebarHeaderProps) 
                     </div>
                 </div>
 
-                <Button variant="outline" className="h-10 rounded-md border-blue-200 bg-white text-[#003399] shadow-sm hover:bg-blue-50">
+                <Button
+                    onClick={open}
+                    variant="outline"
+                    className="h-10 rounded-md border-blue-200 bg-white text-[#003399] shadow-sm hover:bg-blue-50"
+                >
                     <MessageSquare className="mr-2 h-4 w-4" />
                     Tanya Temanmu
                 </Button>

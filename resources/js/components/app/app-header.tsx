@@ -6,11 +6,26 @@ import { Link, usePage } from '@inertiajs/react';
 import { Menu } from 'lucide-react';
 
 const mainNavItems: NavItem[] = [
-    { title: 'Tentang Kami', url: '/tentang-kami' },
-    { title: 'Layanan', url: '/layanan' },
-    { title: 'Artikel', url: '/artikel' },
-    { title: 'FAQ', url: '/faq' },
-    { title: 'Hubungi Kami', url: '/hubungi-kami' },
+    {
+        title: 'Tentang Kami',
+        routeName: 'home',
+    },
+    {
+        title: 'Layanan',
+        routeName: 'service.index',
+    },
+    {
+        title: 'Artikel',
+        routeName: 'artikel.index',
+    },
+    {
+        title: 'FAQ',
+        routeName: 'faq',
+    },
+    {
+        title: 'Hubungi Kami',
+        routeName: 'contact-us.index',
+    },
 ];
 
 interface AppHeaderProps {
@@ -21,13 +36,21 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
     const page = usePage<SharedData>();
     const { auth } = page.props;
 
-    const currentUrl = page.url;
+    const getInitials = useInitials();
 
-    const isActive = (url: string) => {
-        return currentUrl.startsWith(url);
+    const isActive = (routeName: string) => {
+        if (!routeName) return false;
+
+        return route().current(routeName);
     };
 
-    const getInitials = useInitials();
+    const getHref = (item: NavItem) => {
+        if (item.routeName) {
+            return route(item.routeName);
+        }
+
+        return item.url ?? '#';
+    };
 
     return (
         <>
@@ -47,14 +70,15 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                     <SheetHeader>
                                         <SheetTitle>Menu</SheetTitle>
                                     </SheetHeader>
-                                    <div className="mt-6 flex h-full flex-1 flex-col space-y-4">
+
+                                    <div className="mt-6 flex h-full flex-col space-y-4">
                                         <div className="flex flex-col space-y-4 text-sm">
                                             {mainNavItems.map((item) => (
                                                 <Link
                                                     key={item.title}
-                                                    href={item.url}
+                                                    href={getHref(item)}
                                                     className={`font-medium transition-colors ${
-                                                        isActive(item.url) ? 'font-semibold text-[#253342]' : 'hover:text-slate-600'
+                                                        isActive(item.routeName) ? 'font-semibold text-[#253342]' : 'hover:text-slate-600'
                                                     }`}
                                                 >
                                                     {item.title}
@@ -67,8 +91,8 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                         </div>
 
                         {/* LOGO */}
-                        <Link href="/" className="flex items-center">
-                            <img src="assets/landing-page/logo.png" alt="POSAVE" className="ml-5 h-[34px] w-auto scale-350" />
+                        <Link href={route('home')} className="flex items-center">
+                            <img src="/assets/landing-page/logo.png" alt="POSAVE" className="ml-5 h-[34px] w-auto scale-350" />
                         </Link>
                     </div>
 
@@ -77,9 +101,9 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                         {mainNavItems.map((item) => (
                             <Link
                                 key={item.title}
-                                href={item.url}
+                                href={getHref(item)}
                                 className={`transition-colors ${
-                                    isActive(item.url) ? 'font-semibold text-[#253342]' : 'text-slate-700 hover:text-slate-500'
+                                    isActive(item.routeName) ? 'font-semibold text-[#253342]' : 'text-slate-700 hover:text-slate-500'
                                 }`}
                             >
                                 {item.title}
@@ -87,6 +111,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                         ))}
                     </div>
 
+                    {/* RIGHT BUTTON */}
                     <div className="hidden items-center space-x-4 lg:flex">
                         {auth.user ? (
                             <>
@@ -95,14 +120,14 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                     className="h-[44px] rounded-[10px] border-[#233246] px-6 text-[15px] font-semibold text-[#233246]"
                                     asChild
                                 >
-                                    <Link href="/dashboard">Dashboard</Link>
+                                    <Link href={route('dashboard.index')}>Dashboard</Link>
                                 </Button>
 
                                 <Button
                                     className="h-[44px] rounded-[10px] bg-[#233246] px-6 text-[15px] font-semibold text-white hover:bg-[#1b2736]"
                                     asChild
                                 >
-                                    <Link method="post" href={route('logout')}>
+                                    <Link href={route('logout')} method="post">
                                         Logout
                                     </Link>
                                 </Button>
@@ -114,14 +139,14 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                                     className="h-[44px] rounded-[10px] border-[#233246] px-6 text-[15px] font-semibold text-[#233246]"
                                     asChild
                                 >
-                                    <Link href="/register">Daftar</Link>
+                                    <Link href={route('register')}>Daftar</Link>
                                 </Button>
 
                                 <Button
                                     className="h-[44px] rounded-[10px] bg-[#233246] px-6 text-[15px] font-semibold text-white hover:bg-[#1b2736]"
                                     asChild
                                 >
-                                    <Link href="/login">Masuk</Link>
+                                    <Link href={route('login')}>Masuk</Link>
                                 </Button>
                             </>
                         )}
