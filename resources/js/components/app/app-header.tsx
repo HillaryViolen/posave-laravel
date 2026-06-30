@@ -25,7 +25,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
 
     return (
         <>
-            <div className="w-full max-w-7xl px-8 pt-4 md:px-16">
+            <div className="w-full max-w-7xl px-8 pt-4 md:px-16 mx-auto">
                 <div className="flex h-16 w-full items-center justify-between rounded-full bg-[#F2F3F5] px-6 shadow-sm">
                     <div className="flex items-center gap-4">
                         <div className="lg:hidden">
@@ -67,7 +67,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
                         ))}
                     </div>
 
-                    <div className="flex items-center space-x-4">
+                    <div className="hidden lg:flex items-center space-x-4">
                         {auth.user ? (
                             <div className="flex items-center space-x-3">
                                 <Button

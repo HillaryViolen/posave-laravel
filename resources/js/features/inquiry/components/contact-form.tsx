@@ -60,7 +60,7 @@ export function ContactForm() {
                 </div>
 
                 {/* Tombol Kirim */}
-                <Button type="submit" disabled={processing} className="text-md h-12 w-full bg-[#003399] hover:bg-[#002266]">
+                <Button type="submit" disabled={processing} className="text-md h-12 w-full bg-[#22303F] hover:bg-[#002266]">
                     Kirim Pesan <Send className="ml-2 h-4 w-4" />
                 </Button>
 
