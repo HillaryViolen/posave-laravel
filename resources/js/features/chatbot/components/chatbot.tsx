@@ -34,7 +34,7 @@ export function Chatbot() {
                     activeConversationId={activeConversationId}
                     onSelect={selectConversation}
                     onNewChat={startNewConversation}
-                    onDeleted={loadConversations}
+                    onListChanged={loadConversations}
                 />
 
                 <div className="flex flex-1 flex-col">

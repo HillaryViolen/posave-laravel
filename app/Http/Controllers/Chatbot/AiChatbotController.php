@@ -176,4 +176,17 @@ class AiChatbotController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function renameConversation(Request $request, Chatbot $chatbot)
+    {
+        abort_if($chatbot->user_id !== $request->user()->id, 403);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
+
+        $chatbot->update(['title' => $request->input('title')]);
+
+        return response()->json(['success' => true, 'title' => $chatbot->title]);
+    }
 }

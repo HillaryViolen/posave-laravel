@@ -26,15 +26,10 @@ Route::middleware('auth')->prefix('dashboard')->name('dashboard.')->group(functi
     Route::resource('categories', InventoryCategoryController::class);
   });
 
-  Route::prefix('employees')->name('employees.')->group(function () {
-    Route::resource('employees', EmployeeController::class);
-  });
+  // Route::prefix('employees')->name('employees.')->group(function () {});
+  Route::resource('employees', EmployeeController::class);
 
-  Route::prefix('reports')->name('reports')->group(function () {
-    Route::resource('reports', ReportController::class);
-  });
+  Route::resource('reports', ReportController::class);
 
-  Route::prefix('messages')->name('messages')->group(function () {
-    Route::resource('messages', MessageController::class);
-  });
+  Route::resource('messages', MessageController::class);
 });
