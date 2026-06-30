@@ -2,46 +2,50 @@ import { Button, Heading, Separator } from '@/components';
 import { cn } from '@/lib/utils';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
+import { GroupIcon } from 'lucide-react';
 
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
-        url: '/settings/profile',
-        icon: null,
+        routeName: 'settings.profile.edit',
+        icon: GroupIcon,
     },
     {
         title: 'Password',
-        url: '/settings/password',
-        icon: null,
+        routeName: 'settings.password.edit',
+        icon: GroupIcon,
     },
     {
         title: 'Appearance',
-        url: '/settings/appearance',
-        icon: null,
+        routeName: 'settings.appearance',
+        icon: GroupIcon,
     },
 ];
 
 export function SettingsLayout({ children }: { children: React.ReactNode }) {
-    const currentPath = window.location.pathname;
+    const isActive = (routeName?: string) => {
+        if (!routeName) return false;
 
+        return route().current(routeName);
+    };
     return (
         <div className="px-4 py-6">
             <Heading title="Settings" description="Manage your profile and account settings" />
 
             <div className="flex flex-col space-y-8 lg:flex-row lg:space-y-0 lg:space-x-12">
                 <aside className="w-full max-w-xl lg:w-48">
-                    <nav className="flex flex-col space-y-1 space-x-0">
+                    <nav className="flex flex-col space-y-1">
                         {sidebarNavItems.map((item) => (
                             <Button
-                                key={item.url}
+                                key={item.routeName}
                                 size="sm"
                                 variant="ghost"
                                 asChild
                                 className={cn('w-full justify-start', {
-                                    'bg-muted': currentPath === item.url,
+                                    'bg-muted': isActive(item.routeName),
                                 })}
                             >
-                                <Link href={item.url} prefetch>
+                                <Link href={route(item.routeName!)} prefetch>
                                     {item.title}
                                 </Link>
                             </Button>

@@ -1,0 +1,43 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Models\Testimonial;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Illuminate\Database\Seeder;
+
+class TestimonialSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        Testimonial::create([
+            'name' => 'I Wayan Maha Arcaya',
+            'position' => 'CEO',
+            'company' => 'Serona',
+            'photo' => '/assets/landing-page/testi1.png',
+            'logo' => '/assets/landing-page/serona.png',
+            'message' => 'POSAVE membantu kami memantau transaksi dan stok lebih cepat tanpa proses yang rumit. Dashboardnya juga mudah dipahami oleh tim kami.',
+        ]);
+
+        Testimonial::create([
+            'name' => 'Vincent Fernandes',
+            'position' => 'CEO',
+            'company' => 'Viktorifit',
+            'photo' => '/assets/landing-page/testi2.jpg',
+            'logo' => '/assets/landing-page/viktorifit.png',
+            'message' => 'POSAVE membantu operasional bisnis kami menjadi lebih efisien. Monitoring transaksi, stok, dan laporan kini dapat dilakukan dengan cepat dalam satu dashboard.',
+        ]);
+
+        Testimonial::create([
+            'name' => 'Crisvito',
+            'position' => 'Founder',
+            'company' => 'Viktorifit',
+            'photo' => '/assets/landing-page/testi3.jpeg',
+            'logo' => '/assets/landing-page/viktorifit.png',
+            'message' => 'POSAVE membantu kami mengelola operasional bisnis dengan lebih efisien. Monitoring transaksi dan laporan kini menjadi lebih cepat dan praktis.',
+        ]);
+    }
+}

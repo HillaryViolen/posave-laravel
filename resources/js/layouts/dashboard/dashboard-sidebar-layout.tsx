@@ -1,13 +1,24 @@
 import { AppContent, AppShell, AppSidebar, AppSidebarHeader } from '@/components';
-import { type BreadcrumbItem } from '@/types';
+import { Chatbot } from '@/features/chatbot';
+import { ReactNode } from 'react';
 
-export function DashboardSidebarLayout({ children, breadcrumbs = [] }: { children: React.ReactNode; breadcrumbs?: BreadcrumbItem[] }) {
+interface DashboardSidebarLayoutProps {
+    children: ReactNode;
+    title?: string;
+    description?: string;
+}
+
+export function DashboardSidebarLayout({ children, title, description }: DashboardSidebarLayoutProps) {
     return (
         <AppShell variant="sidebar">
             <AppSidebar />
+
             <AppContent variant="sidebar">
-                <AppSidebarHeader breadcrumbs={breadcrumbs} />
+                <AppSidebarHeader title={title} description={description} />
+
                 {children}
+
+                <Chatbot />
             </AppContent>
         </AppShell>
     );

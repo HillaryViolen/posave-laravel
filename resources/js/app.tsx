@@ -1,7 +1,7 @@
-import '@fontsource/poppins/400.css'; // Regular
-import '@fontsource/poppins/500.css'; // Medium
-import '@fontsource/poppins/600.css'; // Semi-Bold
-import '@fontsource/poppins/700.css'; // Bold
+import '@fontsource/poppins/400.css';
+import '@fontsource/poppins/500.css';
+import '@fontsource/poppins/600.css';
+import '@fontsource/poppins/700.css';
 
 import '../css/app.css';
 
@@ -19,10 +19,17 @@ const appName = import.meta.env.VITE_APP_NAME || 'Posave';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
-    resolve: (name) => resolvePageComponent(`./features/${name.replace('/', '/pages/')}.tsx`, import.meta.glob('./features/**/pages/**/*.tsx')),
+    resolve: (name) => {
+        const parts = name.split('/');
+        const pageName = parts.pop();
+        const folderPath = parts.join('/');
+
+        const path = folderPath ? `./features/${folderPath}/pages/${pageName}.tsx` : `./features/${pageName}/pages/${pageName}.tsx`;
+
+        return resolvePageComponent(path, import.meta.glob('./features/**/pages/**/*.tsx'));
+    },
     setup({ el, App, props }) {
         const root = createRoot(el);
-
         root.render(<App {...props} />);
     },
     progress: {
@@ -30,5 +37,4 @@ createInertiaApp({
     },
 });
 
-// This will set light / dark mode on load...
 initializeTheme();

@@ -1,37 +1,19 @@
-import { AppLogo, NavFooter, NavMain, NavUser } from '@/components';
+import { AppLogo, NavMain, NavUser } from '@/components';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
-import { type NavItem } from '@/types';
+import { mainNavItems } from '@/data';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid } from 'lucide-react';
-
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        url: '/dashboard',
-        icon: LayoutGrid,
-    },
-];
-
-const footerNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        url: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
-    {
-        title: 'Documentation',
-        url: 'https://laravel.com/docs/starter-kits',
-        icon: BookOpen,
-    },
-];
 
 export function AppSidebar() {
     return (
-        <Sidebar collapsible="icon" variant="inset">
-            <SidebarHeader>
+        <Sidebar collapsible="icon" variant="inset" className="border-r-0 bg-[var(--sidebar)] text-[var(--white)]">
+            <SidebarHeader className="border-b-0 bg-[var(--sidebar)] text-[var(--white)]">
                 <SidebarMenu>
                     <SidebarMenuItem>
-                        <SidebarMenuButton size="lg" asChild>
+                        <SidebarMenuButton
+                            asChild
+                            size="lg"
+                            className="text-[var(--white)] hover:bg-transparent hover:text-[var(--white)] data-[active=true]:bg-transparent data-[active=true]:text-[var(--white)]"
+                        >
                             <Link href="/dashboard" prefetch>
                                 <AppLogo />
                             </Link>
@@ -40,12 +22,11 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            <SidebarContent>
+            <SidebarContent className="bg-[var(--sidebar)] text-[var(--white)]">
                 <NavMain items={mainNavItems} />
             </SidebarContent>
 
-            <SidebarFooter>
-                <NavFooter items={footerNavItems} className="mt-auto" />
+            <SidebarFooter className="border-t border-white/10 bg-[var(--sidebar)] text-[var(--white)]">
                 <NavUser />
             </SidebarFooter>
         </Sidebar>

@@ -7,8 +7,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-    --font-sans:
-        'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
@@ -80,50 +79,66 @@
     /* --success: #2E61E8; */
     /* --success-background: rgba(46, 97, 232, 0.1); */
 
+    /* ─── Raw palette (konstanta, tidak berubah antar mode) ─── */
     --black: #000000;
-    --white: #F4F4F4;
-    --neutral-white: #FFFFFF;
+    --white: #f4f4f4;
+    --neutral-white: #ffffff;
 
-    --primary-900: #22303F;
-    --primary-800: #2A3A4C;
-    --primary-700: #31455A;
-    --primary-600: #394F67;
-    --primary-500: #415A75;
-    
-    --secondary-900: #2C6485;
-    --secondary-800: #316F93;
-    --secondary-700: #377BA3;
-    --secondary-600: #3D8AB8;
-    --secondary-500: #489ED1;
+    --primary-900: #22303f;
+    --primary-800: #2a3a4c;
+    --primary-700: #31455a;
+    --primary-600: #394f67;
+    --primary-500: #415a75;
 
-    --accent-900: #C9E1F0;
-    --accent-800: #A9CEE6;
-    --accent-700: #8FBFDA;
-    --accent-600: #659DC2;
-    --accent-500: #3C79A4;
+    --secondary-900: #2c6485;
+    --secondary-800: #316f93;
+    --secondary-700: #377ba3;
+    --secondary-600: #3d8ab8;
+    --secondary-500: #489ed1;
 
-    --grey-text: #707170;
-    --sidebar: #22303F;
-    --header: #22303F;
-    --subheading: #546272;
-    --second-accent: #E7E8E7;
-    --text-light: #FBFBFB;
+    --accent-900: #c9e1f0;
+    --accent-800: #a9cee6;
+    --accent-700: #8fbfda;
+    --accent-600: #659dc2;
+    --accent-500: #3c79a4;
 
-    --success: #32843F;
-    --success-background: F2F9F4;
-    
-    --warning: #E75F1A;
-    --warning-background: #FEF5EE;
-    
-    --danger: #E94A4D;
-    --danger-background: #FEF0F0;
+    /* ─── Semantic tokens — light mode ─── */
+    --grey-text: var(--primary-600); /* #394f67 */
+    --grey-text-muted: var(--primary-500); /* #415a75 */
+    --sidebar: var(--primary-900);
+    --header: var(--primary-900);
+    --subheading: var(--primary-800); /* #2a3a4c */
+    --second-accent: #f1f5f9; /* slate-100 */
+    --page-bg: rgba(248, 250, 252, 0.5); /* slate-50/50 — match bg-slate-50/50 asli */
+    --surface-badge: #e2e8f0; /* slate-200 */
+    --surface-header: var(--primary-900); /* #22303f — header tabel & btn utama */
+    --surface-header-hover: var(--primary-800); /* #2a3a4c */
+    --text-light: #ffffff; /* putih murni untuk teks di atas bg gelap */
 
-    --category-color-1: #9F6FD5;
-    --category-bg-color-1: #FEF4E1;
+    --success: #16a34a; /* green-600 */
+    --success-background: #dcfce7; /* green-100 */
 
-    --category-color-2: #FA9F16;
-    --category-bg-color-3: #F2EBFA;
+    --warning: #e75f1a;
+    --warning-background: #fef5ee;
 
+    --danger: #ef4444; /* red-500 */
+    --danger-background: #fee2e2; /* red-100 */
+
+    --category-color-1: #9f6fd5;
+    --category-bg-color-1: #fef4e1;
+
+    --category-color-2: #fa9f16;
+    --category-bg-color-3: #f2ebfa;
+
+    /* Pemasukan icon — blue */
+    --income-icon-bg: #dbeafe; /* blue-100 */
+    --income-icon-text: #2563eb; /* blue-600 */
+
+    /* Testimonial swiper dots */
+    --dot-base: var(--primary-900);
+    --dot-active: var(--accent-700);
+
+    /* ─── shadcn/ui tokens — light mode ─── */
     --background: hsl(0, 0%, 100%);
     --foreground: hsl(0, 0%, 3.9%);
     --card: hsl(0, 0%, 100%);
@@ -140,7 +155,8 @@
     --accent-foreground: hsl(0, 0%, 9%);
     --destructive: hsl(0, 84.2%, 60.2%);
     --destructive-foreground: hsl(0, 0%, 98%);
-    --border: hsl(0, 0%, 92.8%);
+    --border: hsl(0, 0%, 89.8%); /* slate-200 ~#e2e8f0 */
+    --border-strong: #cbd5e1; /* slate-300 */
     --input: hsl(0, 0%, 89.8%);
     --ring: hsl(0, 0%, 3.9%);
     --chart-1: hsl(12, 76%, 61%);
@@ -160,6 +176,40 @@
 }
 
 .dark {
+    /* ─── Semantic tokens — dark mode override ─── */
+    --grey-text: var(--accent-800); /* #a9cee6 — cukup terang di dark */
+    --grey-text-muted: var(--accent-900); /* #c9e1f0 — lebih muted */
+    --subheading: var(--accent-900); /* #c9e1f0 — teks utama di dark */
+    --second-accent: var(--primary-800); /* #2a3a4c — bg subtle di dark */
+    --page-bg: rgba(34, 48, 63, 0.5); /* primary-900/50 */
+    --surface-badge: var(--primary-700); /* #31455a */
+    --surface-header: var(--primary-900); /* #22303f */
+    --surface-header-hover: var(--primary-800); /* #2a3a4c */
+    --text-light: #ffffff;
+
+    --success: #4ade80;
+    --success-background: #052e16;
+
+    --warning: #fb923c;
+    --warning-background: #431407;
+
+    --danger: #f87171;
+    --danger-background: #450a0a;
+
+    --category-color-1: #c084fc;
+    --category-bg-color-1: #2d1a4a;
+
+    --category-color-2: #fbbf24;
+    --category-bg-color-3: #1e1030;
+
+    --income-icon-bg: #1e3a5f;
+    --income-icon-text: #60a5fa;
+
+    /* Testimonial swiper dots */
+    --dot-base: var(--accent-800);
+    --dot-active: var(--secondary-500);
+
+    /* ─── shadcn/ui tokens — dark mode ─── */
     --background: hsl(0, 0%, 3.9%);
     --foreground: hsl(0, 0%, 98%);
     --card: hsl(0, 0%, 3.9%);
@@ -177,6 +227,7 @@
     --destructive: hsl(0, 84%, 60%);
     --destructive-foreground: hsl(0, 0%, 98%);
     --border: hsl(0, 0%, 14.9%);
+    --border-strong: hsl(0, 0%, 20%);
     --input: hsl(0, 0%, 14.9%);
     --ring: hsl(0, 0%, 83.1%);
     --chart-1: hsl(220, 70%, 50%);
@@ -194,6 +245,37 @@
     --sidebar-ring: hsl(217.2, 91.2%, 59.8%);
 }
 
+.testimonial-swiper {
+    overflow: visible !important;
+    padding-bottom: 20px;
+}
+
+.testimonial-swiper .swiper-slide {
+    opacity: 0.35;
+    transform: scale(0.92);
+    transition: all 0.4s ease;
+}
+
+.testimonial-swiper .swiper-slide-active {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.custom-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    background: var(--dot-base);
+    opacity: 0.35;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.custom-dot-active {
+    opacity: 1;
+    background: var(--dot-active);
+}
+
 @layer base {
     * {
         @apply border-border;
@@ -202,4 +284,8 @@
     body {
         @apply bg-background text-foreground;
     }
+}
+
+body {
+    overflow-x: hidden;
 }

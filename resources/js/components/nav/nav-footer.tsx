@@ -1,3 +1,4 @@
+import React from 'react';
 import { Icon } from '@/components';
 import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui';
 import { type NavItem } from '@/types';

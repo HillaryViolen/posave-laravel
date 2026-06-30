@@ -1,0 +1,1 @@
+export * from "./sosial-login-button"

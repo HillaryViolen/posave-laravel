@@ -1,13 +1,14 @@
 import { DashboardSidebarLayout } from '@/layouts';
-import { type BreadcrumbItem } from '@/types';
+import { ReactNode } from 'react';
 
 interface AppLayoutProps {
-    children: React.ReactNode;
-    breadcrumbs?: BreadcrumbItem[];
+    children: ReactNode;
+    title?: string;
+    description?: string;
 }
 
-export const DashboardLayout = ({ children, breadcrumbs, ...props }: AppLayoutProps) => (
-    <DashboardSidebarLayout breadcrumbs={breadcrumbs} {...props}>
+export const DashboardLayout = ({ children, title, description }: AppLayoutProps) => (
+    <DashboardSidebarLayout title={title} description={description}>
         {children}
     </DashboardSidebarLayout>
 );

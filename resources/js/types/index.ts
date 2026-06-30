@@ -16,11 +16,16 @@ export interface NavGroup {
 
 export interface NavItem {
     title: string;
-    url: string;
-    icon?: LucideIcon | null;
-    isActive?: boolean;
-}
+    routeName: string;
+    url?: string;
+    icon?: LucideIcon;
 
+    children?: {
+        title: string;
+        routeName: string;
+        url?: string;
+    }[];
+}
 export interface SharedData {
     name: string;
     quote: { message: string; author: string };
