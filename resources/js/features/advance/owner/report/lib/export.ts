@@ -206,7 +206,9 @@ export async function exportReportPdf(report: ReportExport) {
         },
     });
 
-    doc.save(`${report.filenameBase}.pdf`);
+    // Pakai jalur download blob yang sama dengan CSV/Excel — lebih andal daripada
+    // doc.save() bawaan jsPDF yang kadang gagal senyap di lingkungan Vite/ESM.
+    triggerDownload(doc.output('blob'), `${report.filenameBase}.pdf`);
 }
 
 /* ---------------------------------------------------------------- helper -- */

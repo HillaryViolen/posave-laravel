@@ -16,6 +16,9 @@ export function ExportMenu({ onExport }: { onExport: (format: ExportFormat) => v
         try {
             setBusy(format);
             await onExport(format);
+        } catch (err) {
+            console.error('Export gagal:', err);
+            alert('Export gagal diproses. Coba lagi atau gunakan format lain.');
         } finally {
             setBusy(null);
         }
@@ -26,11 +29,11 @@ export function ExportMenu({ onExport }: { onExport: (format: ExportFormat) => v
             <DropdownMenuTrigger asChild>
                 <button
                     disabled={busy !== null}
-                    className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--neutral-white)] px-3 text-sm font-medium text-[var(--subheading)] transition-colors hover:bg-[var(--second-accent)] disabled:opacity-60"
+                    className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-[var(--surface-header)] px-4 text-sm font-semibold text-[var(--text-light)] shadow-sm transition-opacity hover:opacity-90 disabled:opacity-60"
                 >
                     {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                     Export
-                    <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                    <ChevronDown className="h-3.5 w-3.5 opacity-80" />
                 </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[172px] border-[var(--border)] bg-[var(--neutral-white)] shadow-md">
