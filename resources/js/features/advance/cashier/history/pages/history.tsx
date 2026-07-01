@@ -1,8 +1,9 @@
-import { AppShell, AppSidebar } from '@/components';
+import { AppShell, AppSidebar, SidebarTrigger } from '@/components';
 import { Badge, Button, Input, Select, SelectContent, SelectItem, SelectTrigger, SelectValue, Separator, Sheet, SheetContent } from '@/components/ui';
 import { cashierNavItems } from '@/data';
+import { Chatbot, useChatbot } from '@/features/chatbot';
 import { Head } from '@inertiajs/react';
-import { CalendarDays, ChevronLeft, ChevronRight, Mail, Printer, Search } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Mail, MessageSquare, Printer, Search } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 type CartItem = { name: string; price: number; qty: number; note: string };
@@ -96,6 +97,7 @@ const STATUS_BADGE_STYLES: Record<Transaction['status'], string> = {
 };
 
 export default function HistoryPage() {
+    const { open } = useChatbot();
     const dateInputRef = useRef<HTMLInputElement>(null);
     const [search, setSearch] = useState('');
     const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -147,7 +149,7 @@ export default function HistoryPage() {
                     <div className="p-5 space-y-4">
                         {/* Status + invoice */}
                         <div className="flex items-center justify-between">
-                            <Badge className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE_STYLES[selected.status]}`}>
+                            <Badge variant="outline" className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE_STYLES[selected.status]}`}>
                                 {selected.status}
                             </Badge>
                             <span className="text-sm font-bold text-white">{selected.invoice}</span>
@@ -265,6 +267,7 @@ export default function HistoryPage() {
 
                     {/* Search + AI */}
                     <div className="flex items-center gap-4 p-6">
+                        <SidebarTrigger />
                         <div className="relative max-w-sm flex-1">
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <Input
@@ -275,10 +278,12 @@ export default function HistoryPage() {
                             />
                         </div>
                         <Button
+                            onClick={open}
                             variant="outline"
-                            className="ml-auto rounded-full border-blue-200 bg-blue-50 font-medium text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                            className="ml-auto h-10 rounded-md border-blue-200 bg-white text-[#003399] shadow-sm hover:bg-blue-50"
                         >
-                            🤖 <span className="hidden sm:inline">Tanya Temanmu</span>
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Tanya Temanmu
                         </Button>
                     </div>
 
@@ -366,7 +371,7 @@ export default function HistoryPage() {
                                                     <span className="text-sm font-semibold text-slate-700">
                                                         Rp. {tx.total.toLocaleString('id-ID')}
                                                     </span>
-                                                    <Badge className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[tx.status]}`}>
+                                                    <Badge variant="outline" className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[tx.status]}`}>
                                                         {tx.status}
                                                     </Badge>
                                                 </div>
@@ -386,7 +391,7 @@ export default function HistoryPage() {
                                                     Rp. {tx.total.toLocaleString('id-ID')}
                                                 </span>
                                                 <span className="flex justify-end">
-                                                    <Badge className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[tx.status]}`}>
+                                                    <Badge variant="outline" className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[tx.status]}`}>
                                                         {tx.status}
                                                     </Badge>
                                                 </span>
@@ -416,6 +421,8 @@ export default function HistoryPage() {
                     </SheetContent>
                 </Sheet>
             </main>
+
+            <Chatbot />
         </AppShell>
     );
 }

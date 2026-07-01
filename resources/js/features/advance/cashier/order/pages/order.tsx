@@ -1,8 +1,9 @@
-import { AppShell, AppSidebar } from '@/components';
+import { AppShell, AppSidebar, SidebarTrigger } from '@/components';
 import { cashierNavItems } from '@/data';
 import { Badge, Button, Card, CardContent, Input, Separator, Sheet, SheetContent } from '@/components/ui';
+import { Chatbot, useChatbot } from '@/features/chatbot';
 import { Head } from '@inertiajs/react';
-import { Banknote, ChevronLeft, ChevronRight, QrCode, Search, ShoppingCart } from 'lucide-react';
+import { Banknote, ChevronLeft, ChevronRight, MessageSquare, QrCode, Search, ShoppingCart } from 'lucide-react';
 import { useState } from 'react';
 
 const CATEGORIES = [
@@ -26,6 +27,7 @@ const QUICK_AMOUNTS = [20000, 50000, 50000, 100000];
 type CartItem = { id: number; name: string; price: number; qty: number; note: string };
 
 export default function OrderPage() {
+    const { open } = useChatbot();
     const [activeCategory, setActiveCategory] = useState('Snack');
     const [selectedProductId, setSelectedProductId] = useState<number | null>(1);
     const [cart, setCart] = useState<CartItem[]>([
@@ -272,6 +274,7 @@ export default function OrderPage() {
 
                     {/* Search + AI button */}
                     <div className="mb-6 flex items-center gap-4">
+                        <SidebarTrigger />
                         <div className="relative max-w-sm flex-1">
                             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <Input
@@ -280,10 +283,12 @@ export default function OrderPage() {
                             />
                         </div>
                         <Button
+                            onClick={open}
                             variant="outline"
-                            className="ml-auto rounded-full border-blue-200 bg-blue-50 font-medium text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                            className="ml-auto h-10 rounded-md border-blue-200 bg-white text-[#003399] shadow-sm hover:bg-blue-50"
                         >
-                            🤖 Tanya Temanmu
+                            <MessageSquare className="mr-2 h-4 w-4" />
+                            Tanya Temanmu
                         </Button>
                     </div>
 
@@ -401,6 +406,8 @@ export default function OrderPage() {
                     </SheetContent>
                 </Sheet>
             </main>
+
+            <Chatbot />
         </AppShell>
     );
 }
