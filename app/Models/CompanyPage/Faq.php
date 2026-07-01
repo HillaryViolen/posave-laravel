@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Models\CompanyProfile;
+namespace App\Models\CompanyPage;
 
+use App\Models\CompanyPage\FaqCategory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\CompanyProfile;
 
 use App\Http\Controllers\Controller;
-use App\Models\Inquiry;
+use App\Models\CompanyPage\Inquiry;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 

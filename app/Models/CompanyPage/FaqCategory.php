@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\CompanyProfile;
+namespace App\Models\CompanyPage;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
