@@ -2,13 +2,23 @@ import { DashboardSidebarLayout } from '@/layouts';
 import { formatNumber, formatPct, formatRupiah } from '@/lib/format';
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowUpRight, Boxes, Clock, CreditCard, FileText, Package, Percent, PiggyBank, Plus, Receipt, ReceiptText, TrendingUp, UserPlus, Wallet } from 'lucide-react';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { SalesFilterBar, type OutletOption, type SalesFilters } from '../../components/sales-filter-bar';
-import { CategoryDonut, type CategorySlice } from '../components/category-donut';
 import { DeltaBadge } from '../components/delta-badge';
-import { HourlySalesChart, type HourPoint } from '../components/hourly-sales-chart';
 import { PaymentBreakdown, type PaymentSlice } from '../components/payment-breakdown';
-import { SalesTrendChart, type TrendMetric, type TrendPoint } from '../components/sales-trend-chart';
+import type { CategorySlice } from '../components/category-donut';
+import type { HourPoint } from '../components/hourly-sales-chart';
+import type { TrendMetric, TrendPoint } from '../components/sales-trend-chart';
+
+// Chart berbasis recharts di-lazy-load: shell dashboard (KPI, tabel, dsb) tampil
+// instan, recharts di-split ke chunk terpisah dan dimuat setelah paint pertama.
+const SalesTrendChart = lazy(() => import('../components/sales-trend-chart').then((m) => ({ default: m.SalesTrendChart })));
+const HourlySalesChart = lazy(() => import('../components/hourly-sales-chart').then((m) => ({ default: m.HourlySalesChart })));
+const CategoryDonut = lazy(() => import('../components/category-donut').then((m) => ({ default: m.CategoryDonut })));
+
+function ChartSkeleton({ className }: { className?: string }) {
+    return <div className={`animate-pulse rounded-lg bg-[var(--second-accent)] ${className ?? 'h-[240px]'}`} />;
+}
 
 interface Kpi {
     value: number;
@@ -156,7 +166,9 @@ export default function Dashboard({ filters, outlets, kpis, salesTrend, hourlySa
                                 </Link>
                             </div>
                         </div>
-                        <SalesTrendChart data={salesTrend} metric={metric} />
+                        <Suspense fallback={<ChartSkeleton className="h-[260px]" />}>
+                            <SalesTrendChart data={salesTrend} metric={metric} />
+                        </Suspense>
                         <div className="mt-2 flex items-center gap-4 text-[11px] text-[var(--grey-text)]">
                             <span className="flex items-center gap-1.5">
                                 <span className="h-2 w-4 rounded-full bg-[#377ba3]" /> Periode ini
@@ -169,7 +181,9 @@ export default function Dashboard({ filters, outlets, kpis, salesTrend, hourlySa
 
                     <div className="rounded-2xl border border-[var(--border)] bg-[var(--neutral-white)] p-4 shadow-sm sm:p-6 lg:col-span-4">
                         <h3 className="mb-4 text-sm font-semibold text-[var(--subheading)]">Ringkasan Kategori</h3>
-                        <CategoryDonut data={categorySummary} />
+                        <Suspense fallback={<ChartSkeleton className="h-[240px]" />}>
+                            <CategoryDonut data={categorySummary} />
+                        </Suspense>
                     </div>
                 </div>
 
@@ -181,7 +195,9 @@ export default function Dashboard({ filters, outlets, kpis, salesTrend, hourlySa
                             <h3 className="text-sm font-semibold text-[var(--subheading)]">Jam Ramai</h3>
                             <span className="text-xs text-[var(--grey-text)]">— penjualan per jam</span>
                         </div>
-                        <HourlySalesChart data={hourlySales} />
+                        <Suspense fallback={<ChartSkeleton className="h-[220px]" />}>
+                            <HourlySalesChart data={hourlySales} />
+                        </Suspense>
                     </div>
 
                     <div className="rounded-2xl border border-[var(--border)] bg-[var(--neutral-white)] p-4 shadow-sm sm:p-6 lg:col-span-4">
