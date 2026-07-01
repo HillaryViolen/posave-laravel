@@ -1,9 +1,14 @@
 import { AppLogo, NavMain, NavUser } from '@/components';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { mainNavItems } from '@/data';
+import type { NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
 
-export function AppSidebar() {
+interface AppSidebarProps {
+    items?: NavItem[];
+}
+
+export function AppSidebar({ items = mainNavItems }: AppSidebarProps) {
     return (
         <Sidebar collapsible="icon" variant="inset" className="border-r-0 bg-[var(--sidebar)] text-[var(--white)]">
             <SidebarHeader className="border-b-0 bg-[var(--sidebar)] text-[var(--white)]">
@@ -23,7 +28,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent className="bg-[var(--sidebar)] text-[var(--white)]">
-                <NavMain items={mainNavItems} />
+                <NavMain items={items} />
             </SidebarContent>
 
             <SidebarFooter className="border-t border-white/10 bg-[var(--sidebar)] text-[var(--white)]">

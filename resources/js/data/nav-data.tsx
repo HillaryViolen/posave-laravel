@@ -1,5 +1,5 @@
 import type { NavItem } from '@/types';
-import { BookOpen, Folder, Group, LayoutGrid, MessageCircle, Package, ReceiptPoundSterling } from 'lucide-react';
+import { BookOpen, ClipboardList, Folder, Group, LayoutGrid, MessageCircle, Package, ReceiptPoundSterling, ShoppingCart } from 'lucide-react';
 
 export const mainNavItems: NavItem[] = [
     {
@@ -58,6 +58,24 @@ export const mainNavItems: NavItem[] = [
         title: 'Laporan',
         routeName: '',
         icon: ReceiptPoundSterling,
+    },
+    {
+        title: 'Pesan',
+        routeName: '',
+        icon: MessageCircle,
+    },
+];
+
+export const cashierNavItems: NavItem[] = [
+    {
+        title: 'Pesanan',
+        routeName: 'cashier.order.index',
+        icon: ShoppingCart,
+    },
+    {
+        title: 'Riwayat Pesanan',
+        routeName: 'cashier.history.index',
+        icon: ClipboardList,
     },
     {
         title: 'Pesan',
