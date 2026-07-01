@@ -3,10 +3,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { DashboardSidebarLayout } from '@/layouts';
 import { formatNumber, formatPct, formatRupiah } from '@/lib/format';
 import { Head } from '@inertiajs/react';
-import { Download, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { SalesFilterBar, type OutletOption, type SalesFilters } from '../../components/sales-filter-bar';
 import { DeltaBadge } from '../../dashboard/components/delta-badge';
+import { ExportMenu } from '../components/export-menu';
+import { cur, num, pct, runExport, type Cell, type ExportColumn, type ExportFormat, type ReportExport } from '../lib/export';
 
 interface Statement {
     grossSales: number;
@@ -72,27 +74,20 @@ function deltaPct(current: number, previous: number): number {
     return Math.round(((current - previous) / Math.abs(previous)) * 1000) / 10;
 }
 
-function downloadCsv(filename: string, headers: string[], rows: (string | number)[][]) {
-    // Delimiter ";" agar langsung terbagi kolom di Excel (locale Indonesia).
-    const DELIMITER = ';';
-    const cell = (v: string | number) => {
-        const s = String(v);
-        return /["\n\r;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-    const csv = [headers, ...rows].map((r) => r.map(cell).join(DELIMITER)).join('\r\n');
-    // BOM (﻿) supaya karakter non-ASCII terbaca benar di Excel.
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
-}
+const STATEMENT_COLUMNS: ExportColumn[] = [
+    { header: 'Keterangan', align: 'left', width: 34 },
+    { header: 'Periode Ini', align: 'right' },
+    { header: 'Periode Lalu', align: 'right' },
+    { header: 'Perubahan %', align: 'right' },
+];
 
 export default function Report({ filters, outlets, statement, productSales, categorySales }: Props) {
     const [tab, setTab] = useState<TabKey>('penjualan');
     const { current, previous } = statement;
+
+    const outletName = filters.outlet_id ? (outlets.find((o) => o.id === filters.outlet_id)?.name ?? 'Outlet') : 'Semua Outlet';
+    const subtitle = `Periode ${filters.label} · ${outletName}`;
+    const periodSuffix = `${filters.from}_sd_${filters.to}`;
 
     const salesLines: Line[] = [
         { label: 'Gross Sales', current: current.grossSales, previous: previous.grossSales },
@@ -115,13 +110,19 @@ export default function Report({ filters, outlets, statement, productSales, cate
         { label: 'Margin', current: current.margin, previous: previous.margin, bold: true, format: 'percent' },
     ];
 
-    const exportStatement = (lines: Line[], name: string) => {
-        downloadCsv(
-            `${name}-${filters.from}_sd_${filters.to}.csv`,
-            ['Keterangan', 'Periode Ini', 'Periode Lalu', 'Perubahan %'],
-            lines.map((l) => [l.label, Math.round(l.current), Math.round(l.previous), deltaPct(l.current, l.previous)]),
-        );
-    };
+    const buildStatementExport = (lines: Line[], title: string, filenameBase: string): ReportExport => ({
+        title,
+        subtitle,
+        columns: STATEMENT_COLUMNS,
+        filenameBase: `${filenameBase}-${periodSuffix}`,
+        boldRows: lines.flatMap((l, i) => (l.bold ? [i] : [])),
+        rows: lines.map((l): Cell[] => [
+            l.label,
+            l.format === 'percent' ? pct(l.current) : cur(l.current),
+            l.format === 'percent' ? pct(l.previous) : cur(l.previous),
+            pct(deltaPct(l.current, l.previous)),
+        ]),
+    });
 
     return (
         <DashboardSidebarLayout title="Laporan" description="Lihat dan kelola ringkasan dari penjualan anda">
@@ -154,16 +155,16 @@ export default function Report({ filters, outlets, statement, productSales, cate
 
                     {/* Konten laporan */}
                     <div className="lg:col-span-9">
-                        {tab === 'penjualan' && <StatementCard lines={salesLines} onExport={() => exportStatement(salesLines, 'laporan-penjualan')} />}
+                        {tab === 'penjualan' && <StatementCard lines={salesLines} report={buildStatementExport(salesLines, 'Laporan Penjualan', 'laporan-penjualan')} />}
                         {tab === 'laba' && (
                             <StatementCard
                                 lines={labaLines}
                                 note="Laba Kotor adalah Nett Sales dikurangi Harga Pokok Penjualan (COGS). Pastikan semua produk memiliki COGS agar laba kotor akurat."
-                                onExport={() => exportStatement(labaLines, 'laba-kotor')}
+                                report={buildStatementExport(labaLines, 'Laba Kotor', 'laba-kotor')}
                             />
                         )}
-                        {tab === 'produk' && <ProductTable rows={productSales} period={filters} />}
-                        {tab === 'kategori' && <CategoryTable rows={categorySales} period={filters} />}
+                        {tab === 'produk' && <ProductTable rows={productSales} subtitle={subtitle} periodSuffix={periodSuffix} />}
+                        {tab === 'kategori' && <CategoryTable rows={categorySales} subtitle={subtitle} periodSuffix={periodSuffix} />}
                     </div>
                 </div>
             </div>
@@ -177,12 +178,12 @@ function lineValue(line: Line): string {
     return line.deduction && line.current > 0 ? `− ${formatted}` : formatted;
 }
 
-function StatementCard({ lines, note, onExport }: { lines: Line[]; note?: string; onExport: () => void }) {
+function StatementCard({ lines, note, report }: { lines: Line[]; note?: string; report: ReportExport }) {
     return (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--neutral-white)] p-6 shadow-sm">
             <div className="mb-4 flex items-start justify-between gap-3">
                 {note ? <p className="text-sm leading-relaxed text-[var(--grey-text)]">{note}</p> : <span />}
-                <ExportButton onClick={onExport} />
+                <ExportMenu onExport={(f) => runExport(f, report)} />
             </div>
 
             {/* Header kolom */}
@@ -214,18 +215,6 @@ function StatementCard({ lines, note, onExport }: { lines: Line[]; note?: string
                 ))}
             </dl>
         </div>
-    );
-}
-
-function ExportButton({ onClick }: { onClick: () => void }) {
-    return (
-        <button
-            onClick={onClick}
-            className="inline-flex h-9 shrink-0 items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--neutral-white)] px-3 text-sm font-medium text-[var(--subheading)] transition-colors hover:bg-[var(--second-accent)]"
-        >
-            <Download className="h-4 w-4" />
-            Export CSV
-        </button>
     );
 }
 
@@ -261,7 +250,7 @@ function TableToolbar({
     setQuery: (v: string) => void;
     sort: SortKey;
     setSort: (v: SortKey) => void;
-    onExport: () => void;
+    onExport: (format: ExportFormat) => void | Promise<void>;
 }) {
     return (
         <div className="flex flex-wrap items-center justify-between gap-3 p-4">
@@ -282,27 +271,36 @@ function TableToolbar({
                         ))}
                     </SelectContent>
                 </Select>
-                <ExportButton onClick={onExport} />
+                <ExportMenu onExport={onExport} />
             </div>
         </div>
     );
 }
 
-function ProductTable({ rows, period }: { rows: ProductRow[]; period: SalesFilters }) {
+function ProductTable({ rows, subtitle, periodSuffix }: { rows: ProductRow[]; subtitle: string; periodSuffix: string }) {
     const [query, setQuery] = useState('');
     const [sort, setSort] = useState<SortKey>('omzet_desc');
     const data = useFilteredRows(rows, query, sort);
 
-    const onExport = () =>
-        downloadCsv(
-            `penjualan-barang-${period.from}_sd_${period.to}.csv`,
-            ['Nama Produk', 'Kategori', 'Terjual', 'Penjualan', 'HPP', 'Margin', 'Margin %'],
-            data.map((r) => [r.name, r.category, r.qty, Math.round(r.omzet), Math.round(r.hpp), Math.round(r.margin), r.marginPct]),
-        );
+    const report: ReportExport = {
+        title: 'Penjualan Barang',
+        subtitle,
+        columns: [
+            { header: 'Nama Produk', align: 'left', width: 32 },
+            { header: 'Kategori', align: 'left', width: 20 },
+            { header: 'Terjual', align: 'right' },
+            { header: 'Penjualan', align: 'right' },
+            { header: 'HPP', align: 'right' },
+            { header: 'Margin', align: 'right' },
+            { header: 'Margin %', align: 'right' },
+        ],
+        filenameBase: `penjualan-barang-${periodSuffix}`,
+        rows: data.map((r): Cell[] => [r.name, r.category, num(r.qty), cur(r.omzet), cur(r.hpp), cur(r.margin), pct(r.marginPct)]),
+    };
 
     return (
         <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--neutral-white)] shadow-sm">
-            <TableToolbar query={query} setQuery={setQuery} sort={sort} setSort={setSort} onExport={onExport} />
+            <TableToolbar query={query} setQuery={setQuery} sort={sort} setSort={setSort} onExport={(f) => runExport(f, report)} />
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                     <thead className="bg-[var(--surface-header)] text-[var(--text-light)]">
@@ -344,21 +342,29 @@ function ProductTable({ rows, period }: { rows: ProductRow[]; period: SalesFilte
     );
 }
 
-function CategoryTable({ rows, period }: { rows: CategoryRow[]; period: SalesFilters }) {
+function CategoryTable({ rows, subtitle, periodSuffix }: { rows: CategoryRow[]; subtitle: string; periodSuffix: string }) {
     const [query, setQuery] = useState('');
     const [sort, setSort] = useState<SortKey>('omzet_desc');
     const data = useFilteredRows(rows, query, sort);
 
-    const onExport = () =>
-        downloadCsv(
-            `kategori-penjualan-${period.from}_sd_${period.to}.csv`,
-            ['Nama Kategori', 'Terjual', 'Penjualan', 'HPP', 'Margin', 'Margin %'],
-            data.map((r) => [r.name, r.qty, Math.round(r.omzet), Math.round(r.hpp), Math.round(r.margin), r.marginPct]),
-        );
+    const report: ReportExport = {
+        title: 'Kategori Penjualan',
+        subtitle,
+        columns: [
+            { header: 'Nama Kategori', align: 'left', width: 28 },
+            { header: 'Terjual', align: 'right' },
+            { header: 'Penjualan', align: 'right' },
+            { header: 'HPP', align: 'right' },
+            { header: 'Margin', align: 'right' },
+            { header: 'Margin %', align: 'right' },
+        ],
+        filenameBase: `kategori-penjualan-${periodSuffix}`,
+        rows: data.map((r): Cell[] => [r.name, num(r.qty), cur(r.omzet), cur(r.hpp), cur(r.margin), pct(r.marginPct)]),
+    };
 
     return (
         <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--neutral-white)] shadow-sm">
-            <TableToolbar query={query} setQuery={setQuery} sort={sort} setSort={setSort} onExport={onExport} />
+            <TableToolbar query={query} setQuery={setQuery} sort={sort} setSort={setSort} onExport={(f) => runExport(f, report)} />
             <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                     <thead className="bg-[var(--surface-header)] text-[var(--text-light)]">
