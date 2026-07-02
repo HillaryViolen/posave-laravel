@@ -21,6 +21,7 @@ const BRAND_RGB = {
     headerFill: [34, 48, 63] as [number, number, number],
     stripe: [241, 245, 249] as [number, number, number],
     subtle: [57, 79, 103] as [number, number, number],
+    border: [226, 232, 240] as [number, number, number],
 };
 
 type CellKind = 'currency' | 'number' | 'percent';
@@ -39,6 +40,13 @@ export interface ExportColumn {
     width?: number;
 }
 
+/** Identitas usaha untuk kop laporan cetak. Nanti bisa diisi dari Company Profile. */
+export interface CompanyInfo {
+    name: string;
+    address?: string;
+    phone?: string;
+}
+
 export interface ReportExport {
     /** Judul di dalam file (mis. "Laporan Penjualan"). */
     title: string;
@@ -50,6 +58,8 @@ export interface ReportExport {
     filenameBase: string;
     /** Index baris data yang perlu ditebalkan (mis. Nett Sales, Total Collected). */
     boldRows?: number[];
+    /** Kop usaha untuk header PDF (opsional). */
+    company?: CompanyInfo;
 }
 
 /** Teks tampilan untuk PDF. */
@@ -105,8 +115,11 @@ type XlsxCell = {
     fontSize?: number;
 };
 
-/** Signature minimal write-excel-file (mode baris) — hindari friksi overload tipe library. */
-type WriteXlsxFile = (rows: XlsxCell[][], options: { columns?: { width?: number }[]; fileName?: string }) => Promise<void>;
+/**
+ * Signature minimal write-excel-file v4 (mode baris) — hindari friksi overload tipe library.
+ * v4 TIDAK mengunduh langsung; ia mengembalikan objek { toBlob() } (di build /browser).
+ */
+type WriteXlsxFile = (rows: XlsxCell[][], options?: { columns?: { width?: number }[] }) => Promise<{ toBlob: () => Promise<Blob> }> | { toBlob: () => Promise<Blob> };
 
 export async function exportReportExcel(report: ReportExport) {
     // Subpath /browser: build tanpa dependensi Node (fs/stream), aman untuk Vite.
@@ -147,7 +160,9 @@ export async function exportReportExcel(report: ReportExport) {
     const data = [titleRow, ...(subtitleRow.length ? [subtitleRow] : []), headerRow, ...dataRows];
     const columns = report.columns.map((c) => ({ width: c.width ?? (c.align === 'right' ? 16 : 28) }));
 
-    await writeXlsxFile(data, { columns, fileName: `${report.filenameBase}.xlsx` });
+    // v4: ambil Blob dari objek hasil, lalu unduh via jalur yang sama & terbukti (CSV/PDF).
+    const workbook = await writeXlsxFile(data, { columns });
+    triggerDownload(await workbook.toBlob(), `${report.filenameBase}.xlsx`);
 }
 
 /* ------------------------------------------------------------------ PDF --- */
@@ -162,20 +177,56 @@ export async function exportReportPdf(report: ReportExport) {
     const pageHeight = doc.internal.pageSize.getHeight();
     const marginX = 40;
 
-    // Judul + sub-judul (halaman pertama).
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(16);
-    doc.setTextColor(BRAND_RGB.headerFill[0], BRAND_RGB.headerFill[1], BRAND_RGB.headerFill[2]);
-    doc.text(report.title, marginX, 46);
+    const company = report.company ?? { name: 'Posave' };
+    const hf = BRAND_RGB.headerFill;
+    const sub = BRAND_RGB.subtle;
+    const brd = BRAND_RGB.border;
+    let y = 46;
 
-    let headerBottom = 52;
+    // === Kop usaha ===
+    // Nama usaha (kiri) + waktu cetak (kanan).
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(17);
+    doc.setTextColor(hf[0], hf[1], hf[2]);
+    doc.text(company.name, marginX, y);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(sub[0], sub[1], sub[2]);
+    const generated = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+    doc.text(`Dicetak: ${generated}`, pageWidth - marginX, y - 3, { align: 'right' });
+
+    // Alamat / telepon usaha (jika tersedia — mis. dari Company Profile nanti).
+    const contact = [company.address, company.phone].filter(Boolean).join('  ·  ');
+    if (contact) {
+        y += 14;
+        doc.setFontSize(9);
+        doc.text(contact, marginX, y);
+    }
+
+    // Garis pemisah kop.
+    y += 10;
+    doc.setDrawColor(brd[0], brd[1], brd[2]);
+    doc.setLineWidth(1);
+    doc.line(marginX, y, pageWidth - marginX, y);
+
+    // Judul laporan.
+    y += 22;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(13);
+    doc.setTextColor(hf[0], hf[1], hf[2]);
+    doc.text(report.title, marginX, y);
+
+    // Meta: periode + outlet.
     if (report.subtitle) {
+        y += 15;
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(10);
-        doc.setTextColor(BRAND_RGB.subtle[0], BRAND_RGB.subtle[1], BRAND_RGB.subtle[2]);
-        doc.text(report.subtitle, marginX, 62);
-        headerBottom = 70;
+        doc.setTextColor(sub[0], sub[1], sub[2]);
+        doc.text(report.subtitle, marginX, y);
     }
+
+    const headerBottom = y;
 
     const columnStyles: Record<number, { halign: 'left' | 'right' }> = {};
     report.columns.forEach((c, i) => {
@@ -183,7 +234,7 @@ export async function exportReportPdf(report: ReportExport) {
     });
 
     autoTable(doc, {
-        startY: headerBottom + 8,
+        startY: headerBottom + 14,
         head: [report.columns.map((c) => c.header)],
         body: report.rows.map((r) => r.map(cellText)),
         styles: { fontSize: 9, cellPadding: 5, lineColor: [226, 232, 240], lineWidth: 0.5 },
@@ -199,9 +250,8 @@ export async function exportReportPdf(report: ReportExport) {
         didDrawPage: () => {
             doc.setFont('helvetica', 'normal');
             doc.setFontSize(8);
-            doc.setTextColor(BRAND_RGB.subtle[0], BRAND_RGB.subtle[1], BRAND_RGB.subtle[2]);
-            const generated = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
-            doc.text(`Posave · dicetak ${generated}`, marginX, pageHeight - 16);
+            doc.setTextColor(sub[0], sub[1], sub[2]);
+            doc.text(company.name, marginX, pageHeight - 16);
             doc.text(`Halaman ${doc.getNumberOfPages()}`, pageWidth - marginX, pageHeight - 16, { align: 'right' });
         },
     });

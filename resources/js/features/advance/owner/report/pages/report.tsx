@@ -8,7 +8,10 @@ import { useMemo, useState } from 'react';
 import { SalesFilterBar, type OutletOption, type SalesFilters } from '../../components/sales-filter-bar';
 import { DeltaBadge } from '../../dashboard/components/delta-badge';
 import { ExportMenu } from '../components/export-menu';
-import { cur, num, pct, runExport, type Cell, type ExportColumn, type ExportFormat, type ReportExport } from '../lib/export';
+import { cur, num, pct, runExport, type Cell, type CompanyInfo, type ExportColumn, type ExportFormat, type ReportExport } from '../lib/export';
+
+// Kop usaha untuk header PDF. Sementara statis; nanti bisa dari Company Profile.
+const COMPANY: CompanyInfo = { name: 'Posave' };
 
 interface Statement {
     grossSales: number;
@@ -113,6 +116,7 @@ export default function Report({ filters, outlets, statement, productSales, cate
     const buildStatementExport = (lines: Line[], title: string, filenameBase: string): ReportExport => ({
         title,
         subtitle,
+        company: COMPANY,
         columns: STATEMENT_COLUMNS,
         filenameBase: `${filenameBase}-${periodSuffix}`,
         boldRows: lines.flatMap((l, i) => (l.bold ? [i] : [])),
@@ -285,6 +289,7 @@ function ProductTable({ rows, subtitle, periodSuffix }: { rows: ProductRow[]; su
     const report: ReportExport = {
         title: 'Penjualan Barang',
         subtitle,
+        company: COMPANY,
         columns: [
             { header: 'Nama Produk', align: 'left', width: 32 },
             { header: 'Kategori', align: 'left', width: 20 },
@@ -350,6 +355,7 @@ function CategoryTable({ rows, subtitle, periodSuffix }: { rows: CategoryRow[]; 
     const report: ReportExport = {
         title: 'Kategori Penjualan',
         subtitle,
+        company: COMPANY,
         columns: [
             { header: 'Nama Kategori', align: 'left', width: 28 },
             { header: 'Terjual', align: 'right' },
