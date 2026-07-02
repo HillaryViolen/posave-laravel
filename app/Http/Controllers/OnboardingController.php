@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Onboarding;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Auth\Branch;
@@ -18,10 +18,10 @@ class OnboardingController extends Controller
         $user = Auth::user();
 
         if ($user->company_id) {
-            return redirect()->route('dashboard');
+            return redirect()->route('dashboard.index');
         }
 
-        return Inertia::render('onboarding/pages/index');
+        return Inertia::render('onboarding/onboarding-page');
     }
 
     public function setup(Request $request)

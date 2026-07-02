@@ -86,7 +86,7 @@ class OtpController extends Controller
         // Login dan redirect ke onboarding
         Auth::login($user);
 
-        return redirect()->route('login');
+        return redirect()->route('onboarding');
     }
 
     // Kirim ulang OTP

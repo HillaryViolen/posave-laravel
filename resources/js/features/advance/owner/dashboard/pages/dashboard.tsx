@@ -1,13 +1,28 @@
 import { DashboardSidebarLayout } from '@/layouts';
 import { formatNumber, formatPct, formatRupiah } from '@/lib/format';
 import { Head, Link, router } from '@inertiajs/react';
-import { ArrowUpRight, Boxes, Clock, CreditCard, FileText, Package, Percent, PiggyBank, Plus, Receipt, ReceiptText, TrendingUp, UserPlus, Wallet } from 'lucide-react';
+import {
+    ArrowUpRight,
+    Boxes,
+    Clock,
+    CreditCard,
+    FileText,
+    Package,
+    Percent,
+    PiggyBank,
+    Plus,
+    Receipt,
+    ReceiptText,
+    TrendingUp,
+    UserPlus,
+    Wallet,
+} from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 import { SalesFilterBar, type OutletOption, type SalesFilters } from '../../components/sales-filter-bar';
-import { DeltaBadge } from '../components/delta-badge';
-import { PaymentBreakdown, type PaymentSlice } from '../components/payment-breakdown';
 import type { CategorySlice } from '../components/category-donut';
+import { DeltaBadge } from '../components/delta-badge';
 import type { HourPoint } from '../components/hourly-sales-chart';
+import { PaymentBreakdown, type PaymentSlice } from '../components/payment-breakdown';
 import type { TrendMetric, TrendPoint } from '../components/sales-trend-chart';
 
 // Chart berbasis recharts di-lazy-load: shell dashboard (KPI, tabel, dsb) tampil
@@ -62,7 +77,13 @@ interface Props {
 }
 
 const QUICK_ACTIONS = [
-    { label: 'Tambah Produk', icon: Plus, routeName: 'dashboard.inventory.items.create', color: 'var(--income-icon-text)', bg: 'var(--income-icon-bg)' },
+    {
+        label: 'Tambah Produk',
+        icon: Plus,
+        routeName: 'dashboard.inventory.items.create',
+        color: 'var(--income-icon-text)',
+        bg: 'var(--income-icon-bg)',
+    },
     { label: 'Lihat Produk', icon: Package, routeName: 'dashboard.inventory.items.index', color: 'var(--success)', bg: 'var(--success-background)' },
     { label: 'Tambah Karyawan', icon: UserPlus, routeName: '', color: 'var(--category-color-1)', bg: 'var(--category-bg-color-3)' },
     { label: 'Laporan Penjualan', icon: ReceiptText, routeName: 'dashboard.reports.index', color: 'var(--warning)', bg: 'var(--warning-background)' },
@@ -110,7 +131,17 @@ function quickActionHref(routeName: string) {
     return routeName ? route(routeName) : '#';
 }
 
-export default function Dashboard({ filters, outlets, kpis, salesTrend, hourlySales, paymentBreakdown, categorySummary, topProducts, recentTransactions }: Props) {
+export default function Dashboard({
+    filters,
+    outlets,
+    kpis,
+    salesTrend,
+    hourlySales,
+    paymentBreakdown,
+    categorySummary,
+    topProducts,
+    recentTransactions,
+}: Props) {
     const [metric, setMetric] = useState<TrendMetric>('omzet');
 
     // Tombol "Cetak" di dashboard mengarahkan ke halaman Laporan (bawa filter aktif).
@@ -132,17 +163,61 @@ export default function Dashboard({ filters, outlets, kpis, salesTrend, hourlySa
                 <SalesFilterBar routeName="dashboard.index" outlets={outlets} filters={filters} onPrint={goToReports} />
 
                 <p className="-mt-2 text-xs text-[var(--grey-text)]">
-                    Menampilkan data <span className="font-medium text-[var(--subheading)]">{filters.label}</span> · dibandingkan dengan periode sebelumnya.
+                    Menampilkan data <span className="font-medium text-[var(--subheading)]">{filters.label}</span> · dibandingkan dengan periode
+                    sebelumnya.
                 </p>
 
                 {/* KPI */}
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
-                    <KpiCard icon={Wallet} label="Total Penjualan" value={formatRupiah(kpis.totalSales.value)} color="var(--success)" bg="var(--success-background)" delta={kpis.totalSales.deltaPct} />
-                    <KpiCard icon={Receipt} label="Total Transaksi" value={formatNumber(kpis.totalTransactions.value)} color="var(--income-icon-text)" bg="var(--income-icon-bg)" delta={kpis.totalTransactions.deltaPct} />
-                    <KpiCard icon={Boxes} label="Produk Terjual" value={formatNumber(kpis.productsSold.value)} suffix="Item" color="var(--warning)" bg="var(--warning-background)" delta={kpis.productsSold.deltaPct} />
-                    <KpiCard icon={TrendingUp} label="Rata-rata / Transaksi" value={formatRupiah(kpis.averageSale.value)} color="var(--category-color-1)" bg="var(--category-bg-color-3)" delta={kpis.averageSale.deltaPct} />
-                    <KpiCard icon={PiggyBank} label="Laba Kotor" value={formatRupiah(kpis.grossProfit.value)} color="var(--success)" bg="var(--success-background)" delta={kpis.grossProfit.deltaPct} />
-                    <KpiCard icon={Percent} label="Margin" value={formatPct(kpis.margin.value)} color="var(--income-icon-text)" bg="var(--income-icon-bg)" delta={kpis.margin.deltaPct} />
+                    <KpiCard
+                        icon={Wallet}
+                        label="Total Penjualan"
+                        value={formatRupiah(kpis.totalSales.value)}
+                        color="var(--success)"
+                        bg="var(--success-background)"
+                        delta={kpis.totalSales.deltaPct}
+                    />
+                    <KpiCard
+                        icon={Receipt}
+                        label="Total Transaksi"
+                        value={formatNumber(kpis.totalTransactions.value)}
+                        color="var(--income-icon-text)"
+                        bg="var(--income-icon-bg)"
+                        delta={kpis.totalTransactions.deltaPct}
+                    />
+                    <KpiCard
+                        icon={Boxes}
+                        label="Produk Terjual"
+                        value={formatNumber(kpis.productsSold.value)}
+                        suffix="Item"
+                        color="var(--warning)"
+                        bg="var(--warning-background)"
+                        delta={kpis.productsSold.deltaPct}
+                    />
+                    <KpiCard
+                        icon={TrendingUp}
+                        label="Rata-rata / Transaksi"
+                        value={formatRupiah(kpis.averageSale.value)}
+                        color="var(--category-color-1)"
+                        bg="var(--category-bg-color-3)"
+                        delta={kpis.averageSale.deltaPct}
+                    />
+                    <KpiCard
+                        icon={PiggyBank}
+                        label="Laba Kotor"
+                        value={formatRupiah(kpis.grossProfit.value)}
+                        color="var(--success)"
+                        bg="var(--success-background)"
+                        delta={kpis.grossProfit.deltaPct}
+                    />
+                    <KpiCard
+                        icon={Percent}
+                        label="Margin"
+                        value={formatPct(kpis.margin.value)}
+                        color="var(--income-icon-text)"
+                        bg="var(--income-icon-bg)"
+                        delta={kpis.margin.deltaPct}
+                    />
                 </div>
 
                 {/* Tren + kategori */}
@@ -155,12 +230,17 @@ export default function Dashboard({ filters, outlets, kpis, salesTrend, hourlySa
                                     <DeltaBadge value={kpis.totalSales.deltaPct} compact />
                                 </div>
                                 <p className="mt-1 text-2xl font-bold text-[var(--subheading)]">
-                                    {metric === 'omzet' ? formatRupiah(kpis.totalSales.value) : `${formatNumber(kpis.totalTransactions.value)} transaksi`}
+                                    {metric === 'omzet'
+                                        ? formatRupiah(kpis.totalSales.value)
+                                        : `${formatNumber(kpis.totalTransactions.value)} transaksi`}
                                 </p>
                             </div>
                             <div className="flex items-center gap-3">
                                 <MetricToggle metric={metric} onChange={setMetric} />
-                                <Link href={route('dashboard.reports.index')} className="flex items-center gap-1 text-xs font-medium text-[var(--secondary-700)] hover:underline">
+                                <Link
+                                    href={route('dashboard.reports.index')}
+                                    className="flex items-center gap-1 text-xs font-medium text-[var(--secondary-700)] hover:underline"
+                                >
                                     Lihat Laporan
                                     <ArrowUpRight className="h-3.5 w-3.5" />
                                 </Link>
@@ -264,7 +344,10 @@ export default function Dashboard({ filters, outlets, kpis, salesTrend, hourlySa
                                     href={quickActionHref(action.routeName)}
                                     className="flex flex-col items-center gap-2 rounded-xl border border-[var(--border)] p-3 text-center transition-colors hover:bg-[var(--second-accent)]"
                                 >
-                                    <span className="flex h-10 w-10 items-center justify-center rounded-full" style={{ backgroundColor: action.bg, color: action.color }}>
+                                    <span
+                                        className="flex h-10 w-10 items-center justify-center rounded-full"
+                                        style={{ backgroundColor: action.bg, color: action.color }}
+                                    >
                                         <action.icon className="h-5 w-5" />
                                     </span>
                                     <span className="text-[11px] leading-tight font-medium text-[var(--grey-text)]">{action.label}</span>
@@ -290,7 +373,9 @@ function MetricToggle({ metric, onChange }: { metric: TrendMetric; onChange: (m:
                     key={o.value}
                     onClick={() => onChange(o.value)}
                     className={`h-full rounded px-3 text-xs font-medium transition-colors ${
-                        metric === o.value ? 'bg-[var(--surface-header)] text-[var(--text-light)]' : 'text-[var(--grey-text)] hover:bg-[var(--second-accent)]'
+                        metric === o.value
+                            ? 'bg-[var(--surface-header)] text-[var(--text-light)]'
+                            : 'text-[var(--grey-text)] hover:bg-[var(--second-accent)]'
                     }`}
                 >
                     {o.label}

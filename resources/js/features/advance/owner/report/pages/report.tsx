@@ -191,7 +191,11 @@ export default function Report({ filters, outlets, statement, productSales, cate
                     {/* Konten laporan */}
                     <div className="lg:col-span-9">
                         {tab === 'penjualan' && (
-                            <StatementCard lines={salesLines} compare={compare} report={buildStatementExport(salesLines, 'Laporan Penjualan', 'laporan-penjualan')} />
+                            <StatementCard
+                                lines={salesLines}
+                                compare={compare}
+                                report={buildStatementExport(salesLines, 'Laporan Penjualan', 'laporan-penjualan')}
+                            />
                         )}
                         {tab === 'laba' && (
                             <StatementCard
@@ -234,7 +238,9 @@ function StatementCard({ lines, note, report, compare }: { lines: Line[]; note?:
             </div>
 
             {/* Header kolom */}
-            <div className={`grid ${grid} items-center gap-4 rounded-t-md bg-[var(--surface-header)] px-4 py-2.5 text-xs font-medium text-[var(--text-light)]`}>
+            <div
+                className={`grid ${grid} items-center gap-4 rounded-t-md bg-[var(--surface-header)] px-4 py-2.5 text-xs font-medium text-[var(--text-light)]`}
+            >
                 <span>Keterangan</span>
                 <span className="text-right">{compare ? 'Periode Ini' : 'Nilai'}</span>
                 {compare && <span className="hidden text-right sm:block">Periode Lalu</span>}
@@ -302,7 +308,12 @@ function TableToolbar({
     return (
         <div className="flex flex-wrap items-center justify-between gap-3 p-4">
             <div className="relative max-w-xs flex-1">
-                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cari…" className="h-10 border-[var(--border)] bg-[var(--neutral-white)] pr-10" />
+                <Input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Cari…"
+                    className="h-10 border-[var(--border)] bg-[var(--neutral-white)] pr-10"
+                />
                 <Search className="absolute top-2.5 right-3 h-5 w-5 text-[var(--grey-text)]" />
             </div>
             <div className="flex items-center gap-3">
