@@ -1,7 +1,7 @@
-import React from 'react';
-import { X } from 'lucide-react';
 import { Button } from '@/components';
 import { useForm } from '@inertiajs/react';
+import { X } from 'lucide-react';
+import React from 'react';
 
 interface EmployeeAccessCreateModalProps {
     onClose: () => void;
@@ -32,7 +32,7 @@ export function EmployeeAccessCreateModal({ onClose }: EmployeeAccessCreateModal
             <div className="w-full max-w-md rounded-2xl bg-[var(--neutral-white)] p-6 shadow-xl">
                 <div className="mb-5 flex items-center justify-between">
                     <h3 className="text-lg font-bold text-[var(--subheading)]">Buat Kategori Baru</h3>
-                    <button onClick={handleClose}>
+                    <button onClick={handleClose} aria-label="button-x">
                         <X className="h-5 w-5 text-[var(--grey-text)] hover:text-[var(--subheading)]" />
                     </button>
                 </div>
@@ -45,7 +45,7 @@ export function EmployeeAccessCreateModal({ onClose }: EmployeeAccessCreateModal
                             value={data.name}
                             onChange={(e) => setData('name', e.target.value)}
                             placeholder="Contoh: Administrator, Kasir..."
-                            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                            className="border-input focus-visible:ring-ring w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
                         />
                         {errors.name && <span className="text-sm text-red-500">{errors.name}</span>}
                     </div>

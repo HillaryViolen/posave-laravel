@@ -1,11 +1,9 @@
-import React, { useState, useRef } from 'react';
-import { Head, Link, router, useForm } from '@inertiajs/react';
-import { DashboardSidebarLayout } from '@/layouts';
 import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import { EmployeeActionsMenu, EmployeeDetailModal, EmployeeEditModal } from '@/features/advance/owner/employee/components';
+import { DashboardSidebarLayout } from '@/layouts';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ChevronDown, MoreVertical, Plus, Printer } from 'lucide-react';
-import { EmployeeActionsMenu } from '../components/employee-actions-menu';
-import { EmployeeDetailModal } from '../components/employee-detail-modal';
-import { EmployeeEditModal } from '../components/employee-edit-modal';
+import React, { useRef, useState } from 'react';
 
 export interface Employee {
     id: number;
@@ -103,11 +101,11 @@ export default function EmployeeList({ employees, branches, filters }: EmployeeL
     };
 
     const handleFilterBranch = (branch: string) => {
-        router.get(
-            route('dashboard.employees.index'),
-            branch === 'all' ? {} : { branch },
-            { preserveState: true, preserveScroll: true, replace: true }
-        );
+        router.get(route('dashboard.employees.index'), branch === 'all' ? {} : { branch }, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true,
+        });
         setOpenBranchFilter(false);
     };
 
@@ -117,7 +115,6 @@ export default function EmployeeList({ employees, branches, filters }: EmployeeL
         <DashboardSidebarLayout title="Daftar Karyawan" description="kelola semua daftar karyawan anda">
             <Head title="Daftar Karyawan" />
             <div className="min-h-screen bg-[var(--page-bg)] p-6">
-
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
                     <div className="relative flex flex-wrap items-center gap-3">
                         <Button
@@ -133,7 +130,7 @@ export default function EmployeeList({ employees, branches, filters }: EmployeeL
                             <>
                                 <div className="fixed inset-0 z-40" onClick={() => setOpenBranchFilter(false)} />
 
-                                <div className="absolute left-0 top-full z-50 mt-1 w-48 overflow-hidden rounded-xl bg-[var(--neutral-white)] py-1 shadow-lg">
+                                <div className="absolute top-full left-0 z-50 mt-1 w-48 overflow-hidden rounded-xl bg-[var(--neutral-white)] py-1 shadow-lg">
                                     <button
                                         onClick={() => handleFilterBranch('all')}
                                         className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${
@@ -210,23 +207,27 @@ export default function EmployeeList({ employees, branches, filters }: EmployeeL
                                         <TableCell className="text-[var(--grey-text)]">{employee.branch}</TableCell>
                                         <TableCell className="text-[var(--grey-text)]">{employee.active_date}</TableCell>
                                         <TableCell>
-                                            <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-                                                employee.slot_status === 'on_shift'
-                                                    ? 'bg-green-100 text-green-600'
-                                                    : employee.slot_status === 'off'
-                                                    ? 'bg-yellow-100 text-yellow-600'
-                                                    : 'bg-gray-100 text-gray-500'
-                                            }`}>
+                                            <span
+                                                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                                                    employee.slot_status === 'on_shift'
+                                                        ? 'bg-green-100 text-green-600'
+                                                        : employee.slot_status === 'off'
+                                                          ? 'bg-yellow-100 text-yellow-600'
+                                                          : 'bg-gray-100 text-gray-500'
+                                                }`}
+                                            >
                                                 {employee.slot_status === 'on_shift'
                                                     ? 'Bertugas'
                                                     : employee.slot_status === 'off'
-                                                    ? 'Libur'
-                                                    : 'Tersedia'}
+                                                      ? 'Libur'
+                                                      : 'Tersedia'}
                                             </span>
                                         </TableCell>
                                         <TableCell className="relative">
                                             <Button
-                                                ref={(el) => { buttonRefs.current[employee.id] = el; }}
+                                                ref={(el) => {
+                                                    buttonRefs.current[employee.id] = el;
+                                                }}
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => toggleMenu(employee.id)}
@@ -240,7 +241,6 @@ export default function EmployeeList({ employees, branches, filters }: EmployeeL
                         </TableBody>
                     </Table>
                 </div>
-
             </div>
 
             {activeMenuEmployee && (
@@ -254,13 +254,9 @@ export default function EmployeeList({ employees, branches, filters }: EmployeeL
                 />
             )}
 
-            {detailEmployee && (
-                <EmployeeDetailModal employee={detailEmployee} onClose={() => setDetailEmployee(null)} />
-            )}
+            {detailEmployee && <EmployeeDetailModal employee={detailEmployee} onClose={() => setDetailEmployee(null)} />}
 
-            {editEmployee && (
-                <EmployeeEditModal form={editForm} onSubmit={handleSubmitEdit} onClose={handleCloseEdit} />
-            )}
+            {editEmployee && <EmployeeEditModal form={editForm} onSubmit={handleSubmitEdit} onClose={handleCloseEdit} />}
         </DashboardSidebarLayout>
     );
 }

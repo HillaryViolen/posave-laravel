@@ -18,15 +18,15 @@ Route::prefix('dashboard')->name('dashboard.')->group(function () {
   Route::get('/', [DashboardController::class, 'index'])->name('index');
 
   Route::prefix('inventory')->name('inventory.')->group(function () {
-      Route::resource('items', ItemController::class);
-      Route::resource('suppliers', SupplierController::class);
-      Route::resource('purchase-orders', PurchaseOrderController::class);
-      Route::resource('transfers', TransferController::class);
-      Route::resource('adjustments', AdjustmentController::class);
-      Route::resource('categories', CategoryController::class);
+    Route::resource('items', ItemController::class);
+    Route::resource('suppliers', SupplierController::class);
+    Route::resource('purchase-orders', PurchaseOrderController::class);
+    Route::resource('transfers', TransferController::class);
+    Route::resource('adjustments', AdjustmentController::class);
+    Route::resource('categories', CategoryController::class);
   });
 
-  Route::resource('employees', EmployeeController::class));
+  Route::resource('employees', EmployeeController::class);
   Route::resource('employees-access', EmployeeAccessController::class);
 
   Route::resource('reports', ReportController::class);

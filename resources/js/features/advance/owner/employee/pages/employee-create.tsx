@@ -1,8 +1,8 @@
-import React from 'react';
-import { Head, useForm, Link } from '@inertiajs/react';
-import { DashboardSidebarLayout } from '@/layouts';
 import { Button, Input } from '@/components';
+import { DashboardSidebarLayout } from '@/layouts';
+import { Head, Link, useForm } from '@inertiajs/react';
 import { ChevronLeft } from 'lucide-react';
+import React from 'react';
 
 interface EmployeeCreateProps {
     roles: string[];
@@ -38,13 +38,12 @@ export default function EmployeeCreate({ roles }: EmployeeCreateProps) {
 
                 <div className="max-w-2xl rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] p-6 shadow-sm">
                     <form onSubmit={submit} className="flex flex-col gap-5">
-
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">Nama Karyawan</label>
                             <Input
                                 type="text"
                                 value={data.name}
-                                onChange={e => setData('name', e.target.value)}
+                                onChange={(e) => setData('name', e.target.value)}
                                 placeholder="Masukkan nama lengkap"
                             />
                             {errors.name && <span className="text-sm text-red-500">{errors.name}</span>}
@@ -53,13 +52,18 @@ export default function EmployeeCreate({ roles }: EmployeeCreateProps) {
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">Role</label>
                             <select
-                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                aria-label="role"
+                                className="border-input focus-visible:ring-ring w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
                                 value={data.role}
-                                onChange={e => setData('role', e.target.value)}
+                                onChange={(e) => setData('role', e.target.value)}
                             >
-                                <option value="" disabled>Pilih Role</option>
+                                <option value="" disabled>
+                                    Pilih Role
+                                </option>
                                 {roles.map((role) => (
-                                    <option key={role} value={role}>{role}</option>
+                                    <option key={role} value={role}>
+                                        {role}
+                                    </option>
                                 ))}
                             </select>
                             {errors.role && <span className="text-sm text-red-500">{errors.role}</span>}
@@ -67,28 +71,21 @@ export default function EmployeeCreate({ roles }: EmployeeCreateProps) {
 
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">Cabang</label>
-                            <Input
-                                type="text"
-                                value={data.branch}
-                                onChange={e => setData('branch', e.target.value)}
-                            />
+                            <Input type="text" value={data.branch} onChange={(e) => setData('branch', e.target.value)} />
                         </div>
 
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">Tanggal Aktif</label>
-                            <Input
-                                type="date"
-                                value={data.active_date}
-                                onChange={e => setData('active_date', e.target.value)}
-                            />
+                            <Input type="date" value={data.active_date} onChange={(e) => setData('active_date', e.target.value)} />
                         </div>
 
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">Slot Status</label>
                             <select
-                                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                aria-label="slot"
+                                className="border-input focus-visible:ring-ring w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
                                 value={data.slot_status}
-                                onChange={e => setData('slot_status', e.target.value)}
+                                onChange={(e) => setData('slot_status', e.target.value)}
                             >
                                 <option value="available">Tersedia</option>
                                 <option value="on_shift">Bertugas</option>
@@ -101,7 +98,6 @@ export default function EmployeeCreate({ roles }: EmployeeCreateProps) {
                                 {processing ? 'Menyimpan...' : 'Simpan Karyawan'}
                             </Button>
                         </div>
-
                     </form>
                 </div>
             </div>

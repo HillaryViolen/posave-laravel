@@ -1,3 +1,12 @@
+import {
+    CategorySlice,
+    DeltaBadge,
+    HourPoint,
+    PaymentBreakdown,
+    TrendMetric,
+    TrendPoint,
+    type PaymentSlice,
+} from '@/features/advance/owner/dashboard/components';
 import { DashboardSidebarLayout } from '@/layouts';
 import { formatNumber, formatPct, formatRupiah } from '@/lib/format';
 import { Head, Link, router } from '@inertiajs/react';
@@ -19,11 +28,6 @@ import {
 } from 'lucide-react';
 import { lazy, Suspense, useState } from 'react';
 import { SalesFilterBar, type OutletOption, type SalesFilters } from '../../components/sales-filter-bar';
-import type { CategorySlice } from '../components/category-donut';
-import { DeltaBadge } from '../components/delta-badge';
-import type { HourPoint } from '../components/hourly-sales-chart';
-import { PaymentBreakdown, type PaymentSlice } from '../components/payment-breakdown';
-import type { TrendMetric, TrendPoint } from '../components/sales-trend-chart';
 
 // Chart berbasis recharts di-lazy-load: shell dashboard (KPI, tabel, dsb) tampil
 // instan, recharts di-split ke chunk terpisah dan dimuat setelah paint pertama.

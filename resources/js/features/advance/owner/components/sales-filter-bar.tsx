@@ -103,6 +103,7 @@ export function SalesFilterBar({ routeName, outlets, filters, extraParams = {}, 
                 {filters.range === 'custom' && (
                     <div className="flex h-10 w-full items-center gap-2 rounded-md border border-[var(--border)] bg-[var(--neutral-white)] px-3 shadow-sm sm:w-auto">
                         <input
+                            aria-label="input-date"
                             type="date"
                             value={from}
                             max={to}
@@ -112,6 +113,7 @@ export function SalesFilterBar({ routeName, outlets, filters, extraParams = {}, 
                         />
                         <span className="text-[var(--grey-text)]">–</span>
                         <input
+                            aria-label="input-date"
                             type="date"
                             value={to}
                             min={from}

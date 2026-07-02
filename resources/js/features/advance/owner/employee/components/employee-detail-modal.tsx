@@ -1,6 +1,5 @@
-import React from 'react';
-import { X } from 'lucide-react';
 import { Button } from '@/components';
+import { X } from 'lucide-react';
 import type { Employee } from '../pages/employee-list';
 
 interface EmployeeDetailModalProps {
@@ -14,7 +13,7 @@ export function EmployeeDetailModal({ employee, onClose }: EmployeeDetailModalPr
             <div className="w-full max-w-md rounded-2xl bg-[var(--neutral-white)] p-6 shadow-xl">
                 <div className="mb-5 flex items-center justify-between">
                     <h3 className="text-lg font-bold text-[var(--subheading)]">Detail Karyawan</h3>
-                    <button onClick={onClose}>
+                    <button onClick={onClose} aria-label="button-x">
                         <X className="h-5 w-5 text-[var(--grey-text)] hover:text-[var(--subheading)]" />
                     </button>
                 </div>
@@ -44,18 +43,16 @@ export function EmployeeDetailModal({ employee, onClose }: EmployeeDetailModalPr
 
                     <div>
                         <span className="block text-sm font-medium text-[var(--grey-text)]">Slot Status</span>
-                        <span className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-medium ${
-                            employee.slot_status === 'on_shift'
-                                ? 'bg-green-100 text-green-600'
-                                : employee.slot_status === 'off'
-                                ? 'bg-yellow-100 text-yellow-600'
-                                : 'bg-gray-100 text-gray-500'
-                        }`}>
-                            {employee.slot_status === 'on_shift'
-                                ? 'Bertugas'
-                                : employee.slot_status === 'off'
-                                ? 'Libur'
-                                : 'Tersedia'}
+                        <span
+                            className={`mt-1 inline-block rounded-full px-3 py-1 text-xs font-medium ${
+                                employee.slot_status === 'on_shift'
+                                    ? 'bg-green-100 text-green-600'
+                                    : employee.slot_status === 'off'
+                                      ? 'bg-yellow-100 text-yellow-600'
+                                      : 'bg-gray-100 text-gray-500'
+                            }`}
+                        >
+                            {employee.slot_status === 'on_shift' ? 'Bertugas' : employee.slot_status === 'off' ? 'Libur' : 'Tersedia'}
                         </span>
                     </div>
                 </div>

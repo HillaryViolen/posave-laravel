@@ -63,6 +63,6 @@ class OnboardingController extends Controller
             'role'       => 'owner',
         ]);
 
-        return redirect()->route('dashboard');
+        return redirect()->route('dashboard.index');
     }
 }

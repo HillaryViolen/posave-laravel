@@ -46,11 +46,11 @@ export const mainNavItems: NavItem[] = [
         children: [
             {
                 title: 'Daftar Karyawan',
-                routeName: '',
+                routeName: 'dashboard.employees.index',
             },
             {
                 title: 'Akses Karyawan',
-                routeName: '',
+                routeName: 'dashboard.employees-access.index',
             },
         ],
     },
