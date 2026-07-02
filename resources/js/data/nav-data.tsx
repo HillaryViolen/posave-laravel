@@ -56,7 +56,7 @@ export const mainNavItems: NavItem[] = [
     },
     {
         title: 'Laporan',
-        routeName: '',
+        routeName: 'dashboard.reports.index',
         icon: ReceiptPoundSterling,
     },
     {

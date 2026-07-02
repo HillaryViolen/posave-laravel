@@ -131,7 +131,7 @@ export default function Faq({ categories, faqs }: Props) {
                         {/* Accordion */}
                         <div className="flex flex-1 flex-col gap-3 pt-3">
                             {filteredFaqs.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center py-16 text-center ">
+                                <div className="flex flex-col items-center justify-center py-16 text-center">
                                     <svg className="mb-4 h-10 w-10 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path
                                             strokeLinecap="round"
