@@ -84,8 +84,15 @@ const STATEMENT_COLUMNS: ExportColumn[] = [
     { header: 'Perubahan %', align: 'right' },
 ];
 
+// Tanpa perbandingan: laporan murni periode ini.
+const STATEMENT_COLUMNS_SINGLE: ExportColumn[] = [
+    { header: 'Keterangan', align: 'left', width: 34 },
+    { header: 'Nilai', align: 'right' },
+];
+
 export default function Report({ filters, outlets, statement, productSales, categorySales }: Props) {
     const [tab, setTab] = useState<TabKey>('penjualan');
+    const [compare, setCompare] = useState(true);
     const { current, previous } = statement;
 
     const outletName = filters.outlet_id ? (outlets.find((o) => o.id === filters.outlet_id)?.name ?? 'Outlet') : 'Semua Outlet';
@@ -113,19 +120,22 @@ export default function Report({ filters, outlets, statement, productSales, cate
         { label: 'Margin', current: current.margin, previous: previous.margin, bold: true, format: 'percent' },
     ];
 
+    // Nilai deduksi (Discounts/Refunds/COGS) diekspor sebagai negatif agar tanda minus
+    // muncul & secara akuntansi benar. Persentase memakai nilai asli.
+    const valueCell = (l: Line, v: number): Cell => (l.format === 'percent' ? pct(v) : cur(l.deduction ? -v : v));
+
     const buildStatementExport = (lines: Line[], title: string, filenameBase: string): ReportExport => ({
         title,
         subtitle,
         company: COMPANY,
-        columns: STATEMENT_COLUMNS,
+        columns: compare ? STATEMENT_COLUMNS : STATEMENT_COLUMNS_SINGLE,
         filenameBase: `${filenameBase}-${periodSuffix}`,
         boldRows: lines.flatMap((l, i) => (l.bold ? [i] : [])),
-        rows: lines.map((l): Cell[] => [
-            l.label,
-            l.format === 'percent' ? pct(l.current) : cur(l.current),
-            l.format === 'percent' ? pct(l.previous) : cur(l.previous),
-            pct(deltaPct(l.current, l.previous)),
-        ]),
+        rows: lines.map((l): Cell[] =>
+            compare
+                ? [l.label, valueCell(l, l.current), valueCell(l, l.previous), pct(deltaPct(l.current, l.previous))]
+                : [l.label, valueCell(l, l.current)],
+        ),
     });
 
     return (
@@ -135,9 +145,21 @@ export default function Report({ filters, outlets, statement, productSales, cate
             <div className="flex min-h-screen flex-col gap-6 bg-[var(--page-bg)] p-4 sm:p-6">
                 <SalesFilterBar routeName="dashboard.reports.index" outlets={outlets} filters={filters} showPrint={false} />
 
-                <p className="-mt-2 text-xs text-[var(--grey-text)]">
-                    Periode <span className="font-medium text-[var(--subheading)]">{filters.label}</span> · dibandingkan periode sebelumnya.
-                </p>
+                <div className="-mt-2 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs text-[var(--grey-text)]">
+                        Periode <span className="font-medium text-[var(--subheading)]">{filters.label}</span>
+                        {compare ? ' · dibandingkan periode sebelumnya.' : ' · laporan periode ini.'}
+                    </p>
+                    <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-[var(--subheading)] select-none">
+                        <input
+                            type="checkbox"
+                            checked={compare}
+                            onChange={(e) => setCompare(e.target.checked)}
+                            className="h-4 w-4 cursor-pointer accent-[var(--surface-header)]"
+                        />
+                        Bandingkan periode sebelumnya
+                    </label>
+                </div>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                     {/* Sub-nav laporan */}
@@ -159,10 +181,13 @@ export default function Report({ filters, outlets, statement, productSales, cate
 
                     {/* Konten laporan */}
                     <div className="lg:col-span-9">
-                        {tab === 'penjualan' && <StatementCard lines={salesLines} report={buildStatementExport(salesLines, 'Laporan Penjualan', 'laporan-penjualan')} />}
+                        {tab === 'penjualan' && (
+                            <StatementCard lines={salesLines} compare={compare} report={buildStatementExport(salesLines, 'Laporan Penjualan', 'laporan-penjualan')} />
+                        )}
                         {tab === 'laba' && (
                             <StatementCard
                                 lines={labaLines}
+                                compare={compare}
                                 note="Laba Kotor adalah Nett Sales dikurangi Harga Pokok Penjualan (COGS). Pastikan semua produk memiliki COGS agar laba kotor akurat."
                                 report={buildStatementExport(labaLines, 'Laba Kotor', 'laba-kotor')}
                             />
@@ -176,13 +201,15 @@ export default function Report({ filters, outlets, statement, productSales, cate
     );
 }
 
-function lineValue(line: Line): string {
-    if (line.format === 'percent') return formatPct(line.current);
-    const formatted = formatRupiah(line.current);
-    return line.deduction && line.current > 0 ? `− ${formatted}` : formatted;
+// Nilai satu sel; deduksi (Discounts/Refunds/COGS) diberi tanda minus di kedua kolom.
+function fmtValue(value: number, line: Line): string {
+    if (line.format === 'percent') return formatPct(value);
+    const formatted = formatRupiah(value);
+    return line.deduction && value > 0 ? `− ${formatted}` : formatted;
 }
 
-function StatementCard({ lines, note, report }: { lines: Line[]; note?: string; report: ReportExport }) {
+function StatementCard({ lines, note, report, compare }: { lines: Line[]; note?: string; report: ReportExport; compare: boolean }) {
+    const grid = compare ? 'grid-cols-[1fr_auto] sm:grid-cols-[1fr_140px_140px_90px]' : 'grid-cols-[1fr_auto]';
     return (
         <div className="rounded-2xl border border-[var(--border)] bg-[var(--neutral-white)] p-4 shadow-sm sm:p-6">
             <div className="mb-4 flex items-start justify-between gap-3">
@@ -191,30 +218,34 @@ function StatementCard({ lines, note, report }: { lines: Line[]; note?: string; 
             </div>
 
             {/* Header kolom */}
-            <div className="grid grid-cols-[1fr_auto] items-center gap-4 rounded-t-md bg-[var(--surface-header)] px-4 py-2.5 text-xs font-medium text-[var(--text-light)] sm:grid-cols-[1fr_140px_140px_90px]">
+            <div className={`grid ${grid} items-center gap-4 rounded-t-md bg-[var(--surface-header)] px-4 py-2.5 text-xs font-medium text-[var(--text-light)]`}>
                 <span>Keterangan</span>
-                <span className="text-right">Periode Ini</span>
-                <span className="hidden text-right sm:block">Periode Lalu</span>
-                <span className="hidden text-right sm:block">Δ</span>
+                <span className="text-right">{compare ? 'Periode Ini' : 'Nilai'}</span>
+                {compare && <span className="hidden text-right sm:block">Periode Lalu</span>}
+                {compare && <span className="hidden text-right sm:block">Δ</span>}
             </div>
 
             <dl className="divide-y divide-[var(--border)]">
                 {lines.map((line) => (
-                    <div key={line.label} className="grid grid-cols-[1fr_auto] items-center gap-4 px-4 py-3.5 sm:grid-cols-[1fr_140px_140px_90px]">
+                    <div key={line.label} className={`grid ${grid} items-center gap-4 px-4 py-3.5`}>
                         <dt className={`text-sm ${line.bold ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'}`}>{line.label}</dt>
                         <dd
                             className={`text-right text-sm ${line.bold ? 'font-bold text-[var(--subheading)]' : 'font-medium text-[var(--grey-text)]'} ${
                                 line.deduction && line.current > 0 ? 'text-[var(--danger)]' : ''
                             }`}
                         >
-                            {lineValue(line)}
+                            {fmtValue(line.current, line)}
                         </dd>
-                        <dd className="hidden text-right text-sm text-[var(--grey-text)] sm:block">
-                            {line.format === 'percent' ? formatPct(line.previous) : formatRupiah(line.previous)}
-                        </dd>
-                        <dd className="hidden justify-end sm:flex">
-                            <DeltaBadge value={deltaPct(line.current, line.previous)} invert={line.deduction} compact />
-                        </dd>
+                        {compare && (
+                            <dd className={`hidden text-right text-sm sm:block ${line.deduction && line.previous > 0 ? 'text-[var(--danger)]' : 'text-[var(--grey-text)]'}`}>
+                                {fmtValue(line.previous, line)}
+                            </dd>
+                        )}
+                        {compare && (
+                            <dd className="hidden justify-end sm:flex">
+                                <DeltaBadge value={deltaPct(line.current, line.previous)} invert={line.deduction} compact />
+                            </dd>
+                        )}
                     </div>
                 ))}
             </dl>
