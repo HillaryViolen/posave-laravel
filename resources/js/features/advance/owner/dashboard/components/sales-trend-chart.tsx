@@ -42,7 +42,8 @@ export function SalesTrendChart({ data, metric }: { data: TrendPoint[]; metric: 
 
     return (
         <ResponsiveContainer width="100%" height={260}>
-            <AreaChart data={chartData} margin={{ top: 10, right: 8, left: 8, bottom: 0 }}>
+            {/* right margin cukup agar label tanggal terakhir (hari ini) tidak terpotong */}
+            <AreaChart data={chartData} margin={{ top: 10, right: 28, left: 8, bottom: 0 }}>
                 <defs>
                     <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor={LINE_COLOR} stopOpacity={0.25} />
