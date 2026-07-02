@@ -150,15 +150,24 @@ export default function Report({ filters, outlets, statement, productSales, cate
                         Periode <span className="font-medium text-[var(--subheading)]">{filters.label}</span>
                         {compare ? ' · dibandingkan periode sebelumnya.' : ' · laporan periode ini.'}
                     </p>
-                    <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-[var(--subheading)] select-none">
-                        <input
-                            type="checkbox"
-                            checked={compare}
-                            onChange={(e) => setCompare(e.target.checked)}
-                            className="h-4 w-4 cursor-pointer accent-[var(--surface-header)]"
-                        />
+                    <button
+                        type="button"
+                        role="switch"
+                        aria-checked={compare}
+                        onClick={() => setCompare((v) => !v)}
+                        className="flex cursor-pointer items-center gap-2.5 text-xs font-medium text-[var(--grey-text)] select-none"
+                    >
                         Bandingkan periode sebelumnya
-                    </label>
+                        <span
+                            className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                                compare ? 'bg-[var(--surface-header)]' : 'bg-[var(--border)]'
+                            }`}
+                        >
+                            <span
+                                className={`inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${compare ? 'translate-x-[18px]' : 'translate-x-0.5'}`}
+                            />
+                        </span>
+                    </button>
                 </div>
 
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -212,6 +221,13 @@ function fmtValue(value: number, line: Line): string {
     return line.deduction && value > 0 ? `− ${formatted}` : formatted;
 }
 
+// Warna font: merah bila nilai tampil negatif (deduksi, atau angka memang negatif spt Rounding).
+function valueColor(value: number, line: Line): string {
+    const negative = line.format !== 'percent' && (line.deduction ? value > 0 : value < 0);
+    if (negative) return 'text-[var(--danger)]';
+    return line.bold ? 'text-[var(--subheading)]' : 'text-[var(--grey-text)]';
+}
+
 function StatementCard({ lines, note, report, compare }: { lines: Line[]; note?: string; report: ReportExport; compare: boolean }) {
     const grid = compare ? 'grid-cols-[1fr_auto] sm:grid-cols-[1fr_140px_140px_90px]' : 'grid-cols-[1fr_auto]';
     return (
@@ -234,20 +250,12 @@ function StatementCard({ lines, note, report, compare }: { lines: Line[]; note?:
             <dl className="divide-y divide-[var(--border)]">
                 {lines.map((line) => (
                     <div key={line.label} className={`grid ${grid} items-center gap-4 px-4 py-3.5`}>
-                        <dt className={`text-sm ${line.bold ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'}`}>
-                            {line.label}
-                        </dt>
-                        <dd
-                            className={`text-right text-sm ${line.bold ? 'font-bold text-[var(--subheading)]' : 'font-medium text-[var(--grey-text)]'} ${
-                                line.deduction && line.current > 0 ? 'text-[var(--danger)]' : ''
-                            }`}
-                        >
+                        <dt className={`text-sm ${line.bold ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'}`}>{line.label}</dt>
+                        <dd className={`text-right text-sm ${line.bold ? 'font-bold' : 'font-medium'} ${valueColor(line.current, line)}`}>
                             {fmtValue(line.current, line)}
                         </dd>
                         {compare && (
-                            <dd
-                                className={`hidden text-right text-sm sm:block ${line.deduction && line.previous > 0 ? 'text-[var(--danger)]' : 'text-[var(--grey-text)]'}`}
-                            >
+                            <dd className={`hidden text-right text-sm sm:block ${valueColor(line.previous, line)}`}>
                                 {fmtValue(line.previous, line)}
                             </dd>
                         )}
