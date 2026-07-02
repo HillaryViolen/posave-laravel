@@ -13,8 +13,7 @@ use App\Http\Controllers\Advance\Owner\MessageController;
 use App\Http\Controllers\Advance\Owner\ReportController;
 use Illuminate\Support\Facades\Route;
 
-
-Route::middleware('auth')->prefix('dashboard')->name('dashboard.')->group(function () {
+Route::prefix('dashboard')->name('dashboard.')->group(function () {
 
   Route::get('/', [DashboardController::class, 'index'])->name('index');
 
@@ -27,19 +26,10 @@ Route::middleware('auth')->prefix('dashboard')->name('dashboard.')->group(functi
       Route::resource('categories', CategoryController::class);
   });
 
-  // Route::prefix('employees')->name('employees.')->group(function () {
-  //   Route::resource('/', EmployeeController::class);
-  //   Route::resource('access', EmployeeAccessController::class);
-  // });
+  Route::resource('employees', EmployeeController::class));
+  Route::resource('employees-access', EmployeeAccessController::class);
 
-  Route::resource('employees', EmployeeController::class)->names('employees');
-Route::resource('employees-access', EmployeeAccessController::class)->names('employees.access');
+  Route::resource('reports', ReportController::class);
 
-  Route::prefix('reports')->name('reports')->group(function () {
-    Route::resource('/', ReportController::class);
-  });
-
-  Route::prefix('messages')->name('messages')->group(function () {
-    Route::resource('/', MessageController::class);
-  });
+  Route::resource('messages', MessageController::class);
 });

@@ -113,7 +113,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
 
                     {/* RIGHT BUTTON */}
                     <div className="hidden items-center space-x-4 lg:flex">
-                        {auth.user ? (
+                        {auth?.user ? (
                             <>
                                 <Button
                                     variant="outline"

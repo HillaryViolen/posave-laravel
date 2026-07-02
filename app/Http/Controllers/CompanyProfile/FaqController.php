@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\CompanyProfile;
 
 use App\Http\Controllers\Controller;
+use App\Models\CompanyPage\Faq;
+use App\Models\CompanyPage\FaqCategory;
 use Inertia\Response;
-use App\Models\Faq;
-use App\Models\FaqCategory;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
