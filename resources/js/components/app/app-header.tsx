@@ -52,6 +52,8 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
         return item.url ?? '#';
     };
 
+    console.log(page);
+
     return (
         <>
             <div className="sticky top-0 z-100 mx-auto w-full max-w-7xl px-8 pt-4 md:px-16">
@@ -113,7 +115,7 @@ export function AppHeader({ breadcrumbs = [] }: AppHeaderProps) {
 
                     {/* RIGHT BUTTON */}
                     <div className="hidden items-center space-x-4 lg:flex">
-                        {auth.user ? (
+                        {auth?.user ? (
                             <>
                                 <Button
                                     variant="outline"

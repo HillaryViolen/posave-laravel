@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Faq;
-use App\Models\FaqCategory;
+use App\Models\CompanyPage\Faq;
+use App\Models\CompanyPage\FaqCategory;
 use Illuminate\Database\Seeder;
 
 class FaqSeeder extends Seeder

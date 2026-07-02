@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\CompanyProfile;
 
 use App\Http\Controllers\Controller;
-use App\Models\CompanyProfile\Faq;
-use App\Models\CompanyProfile\FaqCategory;
+use App\Models\CompanyPage\Faq;
+use App\Models\CompanyPage\FaqCategory;
 use Inertia\Response;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

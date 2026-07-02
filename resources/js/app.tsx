@@ -6,10 +6,12 @@ import '@fontsource/poppins/700.css';
 import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/react';
+import axios from 'axios';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 import { route as routeFn } from 'ziggy-js';
 import { initializeTheme } from './features/settings/hooks/use-appearance';
+axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 declare global {
     const route: typeof routeFn;

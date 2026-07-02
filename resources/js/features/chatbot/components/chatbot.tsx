@@ -17,9 +17,15 @@ export function Chatbot() {
     } = useChatMessages();
 
     useEffect(() => {
-        if (isOpen) {
-            loadConversations();
-        }
+        if (isOpen) loadConversations();
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (isOpen) document.body.style.overflow = 'hidden';
+        else document.body.style.overflow = '';
+        return () => {
+            document.body.style.overflow = '';
+        };
     }, [isOpen]);
 
     if (!isOpen) return null;
@@ -34,7 +40,7 @@ export function Chatbot() {
                     activeConversationId={activeConversationId}
                     onSelect={selectConversation}
                     onNewChat={startNewConversation}
-                    onDeleted={loadConversations}
+                    onListChanged={loadConversations}
                 />
 
                 <div className="flex flex-1 flex-col">

@@ -1,5 +1,4 @@
 import { Bot } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
 import type { Message } from '../types';
 
 interface ChatBodyProps {
@@ -43,9 +42,7 @@ export function ChatBody({ messages, isLoadingHistory, isWaitingReply }: ChatBod
                         }`}
                     >
                         {msg.role === 'assistant' ? (
-                            <div className="prose prose-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 max-w-none">
-                                <ReactMarkdown>{msg.content}</ReactMarkdown>
-                            </div>
+                            <div className="prose prose-sm prose-p:my-2 prose-ul:my-2 prose-ol:my-2 max-w-none">{msg.content}</div>
                         ) : (
                             msg.content
                         )}

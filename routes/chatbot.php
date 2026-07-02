@@ -9,4 +9,5 @@ Route::middleware('auth')->group(function () {
   Route::get('/chatbot/conversations', [AiChatbotController::class, 'listConversations']);
   Route::get('/chatbot/conversations/{chatbot}/messages', [AiChatbotController::class, 'getMessages']);
   Route::delete('/chatbot/conversations/{chatbot}', [AiChatbotController::class, 'deleteConversation']);
+  Route::patch('/chatbot/conversations/{chatbot}', [AiChatbotController::class, 'renameConversation']);
 });

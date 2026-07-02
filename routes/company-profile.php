@@ -3,7 +3,7 @@
 use App\Http\Controllers\CompanyProfile\BlogController;
 use App\Http\Controllers\CompanyProfile\FaqController;
 use App\Http\Controllers\CompanyProfile\InquiryController;
-use App\Models\CompanyProfile\Testimonial;
+use App\Models\CompanyPage\Testimonial;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
