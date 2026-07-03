@@ -35,7 +35,41 @@ class SalesSeeder extends Seeder
         $cashiers = $this->seedCashiers($company, $outlets);
         $products = $this->seedCatalog();
 
+        $this->seedDemoAccounts($company, $outlets);
         $this->seedTransactions($outlets, $cashiers, $products);
+    }
+
+    /**
+     * Akun uji per peran untuk tim (selain owner test@example.com di DatabaseSeeder).
+     * Semua ber-password "password".
+     *
+     * @param  array<int, array{outlet: Outlet, branch: Branch, code: string, weight: float}>  $outlets
+     */
+    private function seedDemoAccounts(Company $company, array $outlets): void
+    {
+        $mainBranch = $outlets[0]['branch'];
+
+        User::firstOrCreate(
+            ['email' => 'manajer@posave.test'],
+            [
+                'name' => 'Rina Wijaya',
+                'password' => bcrypt('password'),
+                'role' => 'branch_manager',
+                'company_id' => $company->id,
+                'branch_id' => $mainBranch->id,
+            ],
+        );
+
+        User::firstOrCreate(
+            ['email' => 'kasir@posave.test'],
+            [
+                'name' => 'Sari Puspita',
+                'password' => bcrypt('password'),
+                'role' => 'cashier',
+                'company_id' => $company->id,
+                'branch_id' => $mainBranch->id,
+            ],
+        );
     }
 
     /**
