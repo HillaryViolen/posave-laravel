@@ -1,82 +1,140 @@
-import { Button, Input, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
 import { DashboardSidebarLayout } from '@/layouts';
-import { Head } from '@inertiajs/react';
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Plus, Printer, Search } from 'lucide-react';
-import React from 'react';
+import { Head, router } from '@inertiajs/react';
+import { ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Plus, Printer, Search } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { InventoryTransferActionsMenu, type Transfer } from '../components/inventory-transfer-actions-menu';
+import { InventoryTransferCreateModal } from '../components/inventory-transfer-create-modal';
 
-const transfers = [
-    {
-        date: 'Kamis, 12 Desember 2026',
-        total: 2,
-        items: [
-            {
-                time: '10:23',
-                sender: 'Cabang 1',
-                receiver: 'Cabang 2',
-                number: '#KI-7817',
-                items: 2,
-                status: 'waiting',
-            },
-            {
-                time: '10:23',
-                sender: 'Cabang 1',
-                receiver: 'Cabang 2',
-                number: '#KI-7817',
-                items: 2,
-                status: 'success',
-            },
-        ],
-    },
-    {
-        date: 'Kamis, 12 Desember 2026',
-        total: 2,
-        items: [
-            {
-                time: '10:23',
-                sender: 'Cabang 1',
-                receiver: 'Cabang 2',
-                number: '#KI-7817',
-                items: 2,
-                status: 'waiting',
-            },
-            {
-                time: '10:23',
-                sender: 'Cabang 1',
-                receiver: 'Cabang 2',
-                number: '#KI-7817',
-                items: 2,
-                status: 'success',
-            },
-        ],
-    },
-];
+interface InventoryItemOption {
+    id: number;
+    name: string;
+    sku: string;
+}
 
-export default function TransferPage() {
+interface InventoryTransferListProps {
+    transfers: {
+        data: Transfer[];
+        links: { url: string | null; label: string; active: boolean }[];
+        from: number;
+        to: number;
+        total: number;
+    };
+    inventoryItems: InventoryItemOption[];
+    filters: { branch?: string; date?: string; status?: string; search?: string; per_page?: string };
+}
+
+const statusLabel: Record<string, { text: string; className: string }> = {
+    waiting: { text: 'Waiting', className: 'bg-yellow-100 text-yellow-600' },
+    success: { text: 'Success', className: 'bg-green-100 text-green-600' },
+    cancelled: { text: 'Cancelled', className: 'bg-red-100 text-red-600' },
+};
+
+export default function InventoryTransferList({ transfers, inventoryItems, filters }: InventoryTransferListProps) {
+    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
+    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [branch, setBranch] = useState(filters.branch ?? '');
+    const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
+
+    const currentDate = filters.date ?? new Date().toISOString().slice(0, 10);
+
+    const applyFilters = (overrides: Record<string, string | undefined>) => {
+        router.get(
+            route('dashboard.inventory.transfers.index'),
+            { ...filters, ...overrides },
+            { preserveState: true, preserveScroll: true, replace: true },
+        );
+    };
+
+    const shiftDate = (days: number) => {
+        const d = new Date(currentDate);
+        d.setDate(d.getDate() + days);
+        applyFilters({ date: d.toISOString().slice(0, 10) });
+    };
+
+    const toggleMenu = (id: number) => {
+        if (openMenuId === id) {
+            setOpenMenuId(null);
+            return;
+        }
+        const btn = buttonRefs.current[id];
+        if (btn) {
+            const rect = btn.getBoundingClientRect();
+            setMenuPosition({ top: rect.bottom + window.scrollY + 4, left: rect.right + window.scrollX - 176 });
+        }
+        setOpenMenuId(id);
+    };
+
+    const closeMenu = () => setOpenMenuId(null);
+
+    const handleUpdateStatus = (id: number, status: 'success' | 'cancelled') => {
+        router.put(route('dashboard.inventory.transfers.update', id), { status });
+        closeMenu();
+    };
+
+    const handleDelete = (id: number) => {
+        if (confirm('Yakin ingin menghapus kiriman ini?')) {
+            router.delete(route('dashboard.inventory.transfers.destroy', id));
+        }
+        closeMenu();
+    };
+
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        applyFilters({ search: search || undefined });
+    };
+
+    const handleBranchFilter = (e: React.FormEvent) => {
+        e.preventDefault();
+        applyFilters({ branch: branch || undefined });
+    };
+
+    const activeMenuTransfer = transfers.data.find((t) => t.id === openMenuId);
+
+    const formattedDate = new Date(currentDate).toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    });
+
     return (
-        <DashboardSidebarLayout title="Kiriman" description="Kelola pembelian barang dari pemasok anda">
-            <Head title="Kirim Barang" />
-            <div className="min-h-screen bg-[var(--page-bg)] p-6">
+        <DashboardSidebarLayout title="Kiriman" description="Kelola pengiriman barang antar toko anda">
+            <Head title="Kiriman" />
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--page-bg)] p-6">
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex flex-wrap items-center gap-3">
-                        <Button variant="outline" className="bg-[var(--neutral-white)]">
-                            OUTLET 1
-                            <ChevronDown className="ml-2 h-4 w-4" />
-                        </Button>
+                    <div className="flex items-center gap-3">
+                        <form onSubmit={handleBranchFilter}>
+                            <input
+                                type="text"
+                                value={branch}
+                                onChange={(e) => setBranch(e.target.value)}
+                                onBlur={() => applyFilters({ branch: branch || undefined })}
+                                placeholder="Filter toko"
+                                className="h-10 rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 text-sm"
+                            />
+                        </form>
 
-                        <div className="flex items-center gap-3 rounded-lg border bg-[var(--neutral-white)] px-4 py-2">
-                            <ChevronLeft className="h-4 w-4 cursor-pointer text-[var(--grey-text-muted)]" />
-                            <CalendarDays className="h-4 w-4 text-[var(--grey-text-muted)]" />
-                            <span className="text-sm font-medium text-[var(--primary-700)]">12 December 2026</span>
-                            <ChevronRight className="h-4 w-4 cursor-pointer text-[var(--grey-text-muted)]" />
+                        <div className="flex items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 py-2">
+                            <button aria-label="left" onClick={() => shiftDate(-1)}>
+                                <ChevronLeft className="h-4 w-4" />
+                            </button>
+                            <span className="text-sm">{formattedDate}</span>
+                            <button aria-label="input-right" onClick={() => shiftDate(1)}>
+                                <ChevronRight className="h-4 w-4" />
+                            </button>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                        <Button className="bg-[var(--primary-800)] text-[var(--neutral-white)] hover:bg-[var(--primary-700)]">
+                        <Button
+                            onClick={() => setShowCreateModal(true)}
+                            className="bg-[var(--surface-header)] hover:bg-[var(--surface-header-hover)]"
+                        >
                             <Plus className="mr-2 h-4 w-4" />
                             Buat Kiriman
                         </Button>
-
                         <Button variant="outline" className="bg-[var(--neutral-white)]">
                             <Printer className="mr-2 h-4 w-4" />
                             Cetak
@@ -84,22 +142,40 @@ export default function TransferPage() {
                     </div>
                 </div>
 
-                <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-                    <div className="relative w-full max-w-md">
-                        <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text-muted)]" />
-                        <Input placeholder="Search" className="bg-[var(--neutral-white)] pl-10" />
-                    </div>
+                <div className="mb-4 flex items-center justify-between gap-4">
+                    <form onSubmit={handleSearch} className="flex items-center gap-2">
+                        <div className="relative">
+                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search"
+                                className="focus:ring-ring h-10 rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] pr-4 pl-9 text-sm focus:ring-1 focus:outline-none"
+                            />
+                        </div>
+                    </form>
 
-                    <Button variant="outline" className="bg-[var(--neutral-white)]">
-                        Semua Status
-                        <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
+                    <div className="relative">
+                        <select
+                            aria-label="input-status"
+                            value={filters.status ?? ''}
+                            onChange={(e) => applyFilters({ status: e.target.value || undefined })}
+                            className="h-10 appearance-none rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 pr-9 text-sm"
+                        >
+                            <option value="">Semua Status</option>
+                            <option value="waiting">Waiting</option>
+                            <option value="success">Success</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
+                    </div>
                 </div>
 
-                <div className="overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
+                <div className="max-h-full overflow-y-auto rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
                     <Table>
                         <TableHeader className="bg-[var(--surface-header)]">
-                            <TableRow className="border-none hover:bg-[var(--surface-header-hover)]">
+                            <TableRow className="border-none hover:bg-[var(--surface-header)]">
                                 <TableHead className="text-[var(--text-light)]">Tanggal Kirim</TableHead>
                                 <TableHead className="text-[var(--text-light)]">Pengirim</TableHead>
                                 <TableHead className="text-[var(--text-light)]">Penerima</TableHead>
@@ -111,96 +187,104 @@ export default function TransferPage() {
                         </TableHeader>
 
                         <TableBody>
-                            {transfers.map((group, groupIndex) => (
-                                <React.Fragment key={groupIndex}>
-                                    <TableRow className="bg-[var(--second-accent)] hover:bg-[var(--second-accent)]">
-                                        <TableCell colSpan={6}>
-                                            <div className="flex items-center gap-2 font-medium text-[var(--primary-700)]">
-                                                <CalendarDays className="h-4 w-4 text-[var(--grey-text-muted)]" />
-                                                {group.date}
+                            {transfers.data.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="py-10 text-center text-[var(--grey-text)]">
+                                        Belum ada kiriman, buat kiriman terlebih dahulu
+                                    </TableCell>
+                                </TableRow>
+                            ) : (
+                                transfers.data.map((transfer) => (
+                                    <TableRow key={transfer.id}>
+                                        <TableCell>
+                                            <div className="font-medium">
+                                                {new Date(transfer.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                            <div className="text-xs text-[var(--grey-text)]">
+                                                {new Date(transfer.date).toLocaleDateString('id-ID', {
+                                                    day: 'numeric',
+                                                    month: 'long',
+                                                    year: 'numeric',
+                                                })}
                                             </div>
                                         </TableCell>
-
+                                        <TableCell>{transfer.sender_branch}</TableCell>
+                                        <TableCell>{transfer.receiver_branch}</TableCell>
+                                        <TableCell>#{transfer.transfer_number}</TableCell>
+                                        <TableCell>{transfer.items_count} barang</TableCell>
                                         <TableCell>
-                                            <span className="rounded-full bg-[var(--surface-badge)] px-3 py-1 text-xs font-medium whitespace-nowrap text-[var(--primary-700)]">
-                                                {group.total} PO
+                                            <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusLabel[transfer.status].className}`}>
+                                                {statusLabel[transfer.status].text}
                                             </span>
                                         </TableCell>
+                                        <TableCell className="relative">
+                                            <Button
+                                                ref={(el) => {
+                                                    buttonRefs.current[transfer.id] = el;
+                                                }}
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => toggleMenu(transfer.id)}
+                                            >
+                                                <MoreVertical className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
                                     </TableRow>
-
-                                    {group.items.map((transfer, index) => (
-                                        <TableRow key={index}>
-                                            <TableCell>
-                                                <div className="flex flex-col">
-                                                    <span className="font-semibold text-[var(--primary-700)]">{transfer.time}</span>
-                                                    <span className="text-xs text-[var(--grey-text-muted)]">12 December 2026</span>
-                                                </div>
-                                            </TableCell>
-
-                                            <TableCell className="font-medium text-[var(--grey-text)]">{transfer.sender}</TableCell>
-
-                                            <TableCell className="font-medium text-[var(--grey-text)]">{transfer.receiver}</TableCell>
-
-                                            <TableCell className="font-semibold text-[var(--primary-700)]">{transfer.number}</TableCell>
-
-                                            <TableCell className="font-medium text-[var(--grey-text)]">{transfer.items} barang</TableCell>
-
-                                            <TableCell>
-                                                {transfer.status === 'waiting' ? (
-                                                    <span className="rounded-full bg-[var(--warning-background)] px-3 py-1 text-xs font-medium text-[var(--warning)]">
-                                                        Waiting
-                                                    </span>
-                                                ) : (
-                                                    <span className="rounded-full bg-[var(--success-background)] px-3 py-1 text-xs font-medium text-[var(--success)]">
-                                                        Success
-                                                    </span>
-                                                )}
-                                            </TableCell>
-
-                                            <TableCell>
-                                                <Button variant="ghost" size="icon">
-                                                    <MoreVertical className="h-4 w-4" />
-                                                </Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </React.Fragment>
-                            ))}
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </div>
 
-                <div className="mt-5 flex flex-wrap items-center justify-between gap-4">
-                    <p className="text-sm text-[var(--grey-text-muted)]">Menampilkan 1-6 dari 120 Kiriman</p>
+                <div className="mt-auto flex items-center justify-between pt-4">
+                    <span className="text-sm text-[var(--grey-text)]">
+                        Menampilkan {transfers.from ?? 0}-{transfers.to ?? 0} dari {transfers.total} Kiriman
+                    </span>
 
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline" size="icon" className="h-8 w-8">
-                            <ChevronLeft className="h-4 w-4" />
-                        </Button>
-                        <Button className="h-8 w-8 bg-[var(--primary-800)] text-[var(--neutral-white)]">1</Button>
-                        <Button variant="outline" className="h-8 w-8">
-                            2
-                        </Button>
-                        <Button variant="outline" className="h-8 w-8">
-                            3
-                        </Button>
-                        <Button variant="outline" className="h-8 px-3">
-                            ...
-                        </Button>
-                        <Button variant="outline" className="h-8 px-3">
-                            20
-                        </Button>
-                        <Button variant="outline" size="icon" className="h-8 w-8">
-                            <ChevronRight className="h-4 w-4" />
-                        </Button>
+                    <div className="flex items-center gap-1">
+                        {transfers.links.map((link, i) => (
+                            <button
+                                aria-label="button"
+                                key={i}
+                                disabled={!link.url}
+                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
+                                className={`rounded-lg px-3 py-1.5 text-sm ${
+                                    link.active
+                                        ? 'bg-[var(--surface-header)] font-medium text-white'
+                                        : 'bg-[var(--neutral-white)] text-[var(--grey-text)] hover:bg-[var(--surface-badge)] disabled:cursor-not-allowed disabled:opacity-40'
+                                }`}
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                            />
+                        ))}
                     </div>
 
-                    <Button variant="outline" className="bg-[var(--neutral-white)]">
-                        6 per halaman
-                        <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
+                    <div className="relative">
+                        <select
+                            aria-label="input-page"
+                            value={filters.per_page ?? '6'}
+                            onChange={(e) => applyFilters({ per_page: e.target.value })}
+                            className="h-9 appearance-none rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 pr-9 text-sm"
+                        >
+                            <option value="6">6 per halaman</option>
+                            <option value="12">12 per halaman</option>
+                            <option value="24">24 per halaman</option>
+                        </select>
+                        <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
+                    </div>
                 </div>
             </div>
+
+            {activeMenuTransfer && (
+                <InventoryTransferActionsMenu
+                    transfer={activeMenuTransfer}
+                    position={menuPosition}
+                    onClose={closeMenu}
+                    onUpdateStatus={handleUpdateStatus}
+                    onDelete={handleDelete}
+                />
+            )}
+
+            {showCreateModal && <InventoryTransferCreateModal inventoryItems={inventoryItems} onClose={() => setShowCreateModal(false)} />}
         </DashboardSidebarLayout>
     );
 }

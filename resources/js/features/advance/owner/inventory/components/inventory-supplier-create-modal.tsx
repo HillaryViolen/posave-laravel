@@ -4,23 +4,24 @@ import { Store, UploadCloud, X } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
 interface InventorySupplierCreateModalProps {
+    categories: { id: number; name: string }[];
     onClose: () => void;
 }
 
-export function InventorySupplierCreateModal({ onClose }: InventorySupplierCreateModalProps) {
+export function InventorySupplierCreateModal({ categories, onClose }: InventorySupplierCreateModalProps) {
     const [preview, setPreview] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm<{
         name: string;
-        category: string;
+        category_id: string;
         address: string;
         phone: string;
         email: string;
         logo: File | null;
     }>({
         name: '',
-        category: '',
+        category_id: '',
         address: '',
         phone: '',
         email: '',
@@ -88,14 +89,17 @@ export function InventorySupplierCreateModal({ onClose }: InventorySupplierCreat
                             </div>
                             <div>
                                 <label className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">Kategori</label>
-                                <input
-                                    type="text"
-                                    value={data.category}
-                                    onChange={(e) => setData('category', e.target.value)}
-                                    placeholder="Contoh: Sembako, Minuman..."
+                                <select
+                                    value={data.category_id}
+                                    onChange={(e) => setData('category_id', e.target.value)}
                                     className="border-input focus-visible:ring-ring w-full rounded-lg border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
-                                />
-                                {errors.category && <span className="text-xs text-red-500">{errors.category}</span>}
+                                >
+                                    <option value="" disabled>Pilih Kategori</option>
+                                    {categories.map((cat) => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                                {errors.category_id && <span className="text-xs text-red-500">{errors.category_id}</span>}
                             </div>
                         </div>
 

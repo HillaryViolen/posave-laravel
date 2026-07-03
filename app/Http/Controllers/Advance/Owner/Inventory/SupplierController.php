@@ -17,13 +17,13 @@ class SupplierController extends Controller
     {
         $perPage = $request->per_page ?? 6;
 
-        $suppliers = Supplier::when($request->category, function ($query) use ($request) {
-                $query->where('category', $request->category);
-            })
+        $suppliers = Supplier::with('category')
             ->when($request->search, function ($query) use ($request) {
                 $query->where('name', 'like', '%' . $request->search . '%');
             })
-            ->latest()
+            ->when($request->category_id, function ($query) use ($request) {
+                $query->where('category_id', $request->category_id);
+            })
             ->paginate($perPage)
             ->withQueryString();
 
@@ -31,8 +31,8 @@ class SupplierController extends Controller
 
         return Inertia::render('advance/owner/inventory/inventory-supplier', [
             'suppliers' => $suppliers,
-            'categories' => Category::select('id', 'name')->get(),
-            'filters' => $request->only('search', 'category', 'per_page'),
+            'categories' => $categories,
+            'filters' => $request->only('search', 'category_id', 'per_page'),
         ]);
     }
 
@@ -52,7 +52,7 @@ class SupplierController extends Controller
         //
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'category' => 'nullable|string|max:255',
+            'category_id' => 'nullable|exists:inventory_categories,id',
             'address' => 'nullable|string',
             'phone' => 'nullable|string|max:50',
             'email' => 'nullable|email|max:255',

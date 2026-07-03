@@ -4,13 +4,14 @@ import {
     InventorySupplierCreateModal,
     InventorySupplierEditModal,
     type Supplier,
+    InventoryPagination
 } from '@/features/advance/owner/inventory/components';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
 import { ChevronDown, Mail, MapPin, MoreVertical, Phone, Plus, Printer, Search, Store } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
-interface InventorySupplierListProps {
+interface InventorySupplierProps {
     suppliers?: {
         data: Supplier[];
         total: number;
@@ -18,15 +19,15 @@ interface InventorySupplierListProps {
         to: number;
         links: { url: string | null; label: string; active: boolean }[];
     };
-    categories?: string[];
-    filters?: { search?: string; category?: string; per_page?: string };
+    categories: { id: number; name: string }[];
+    filters?: { search?: string; category_id?: string; per_page?: string };
 }
 
 export default function InventorySupplier({
     suppliers = { data: [], total: 0, from: 0, to: 0, links: [] },
     categories = [],
     filters = {},
-}: InventorySupplierListProps) {
+}: InventorySupplierProps) {
     const [openMenuId, setOpenMenuId] = useState<number | null>(null);
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -44,10 +45,7 @@ export default function InventorySupplier({
     };
 
     const toggleMenu = (id: number) => {
-        if (openMenuId === id) {
-            setOpenMenuId(null);
-            return;
-        }
+        if (openMenuId === id) { setOpenMenuId(null); return; }
         const btn = buttonRefs.current[id];
         if (btn) {
             const rect = btn.getBoundingClientRect();
@@ -58,10 +56,7 @@ export default function InventorySupplier({
 
     const closeMenu = () => setOpenMenuId(null);
 
-    const handleEdit = (supplier: Supplier) => {
-        setEditSupplier(supplier);
-        closeMenu();
-    };
+    const handleEdit = (supplier: Supplier) => { setEditSupplier(supplier); closeMenu(); };
 
     const handleDelete = (id: number) => {
         if (confirm('Yakin ingin menghapus pemasok ini?')) {
@@ -75,19 +70,24 @@ export default function InventorySupplier({
         applyFilters({ search: search || undefined });
     };
 
-    const handleFilterCategory = (category?: string) => {
-        applyFilters({ category });
+    const handleFilterCategory = (categoryId?: string) => {
+        applyFilters({ category_id: categoryId });
         setOpenCategoryFilter(false);
     };
 
     const activeMenuSupplier = suppliers?.data?.find((s) => s.id === openMenuId);
+    const activeCategoryName = categories.find((c) => String(c.id) === filters?.category_id)?.name;
 
     return (
         <DashboardSidebarLayout title="Pemasok" description="Kelola daftar pemasok barang-barang anda">
             <Head title="Pemasok" />
             <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--page-bg)] p-6">
+
+                {/* Toolbar */}
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex flex-wrap items-center gap-3">
+
+                        {/* Search */}
                         <form onSubmit={handleSearch}>
                             <div className="relative">
                                 <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
@@ -101,13 +101,14 @@ export default function InventorySupplier({
                             </div>
                         </form>
 
+                        {/* Filter Kategori */}
                         <div className="relative">
                             <Button
                                 variant="outline"
                                 className="bg-[var(--neutral-white)] text-[var(--subheading)]"
                                 onClick={() => setOpenCategoryFilter(!openCategoryFilter)}
                             >
-                                {filters?.category ?? 'Semua Kategori'}
+                                {activeCategoryName ?? 'Semua Kategori'}
                                 <ChevronDown className="ml-2 h-4 w-4" />
                             </Button>
 
@@ -117,17 +118,21 @@ export default function InventorySupplier({
                                     <div className="absolute top-full left-0 z-50 mt-1 w-48 overflow-hidden rounded-xl bg-[var(--neutral-white)] py-1 shadow-lg">
                                         <button
                                             onClick={() => handleFilterCategory(undefined)}
-                                            className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${!filters?.category ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'}`}
+                                            className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${
+                                                !filters?.category_id ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'
+                                            }`}
                                         >
                                             Semua Kategori
                                         </button>
-                                        {categories?.map((cat) => (
+                                        {categories.map((cat) => (
                                             <button
-                                                key={cat}
-                                                onClick={() => handleFilterCategory(cat)}
-                                                className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${filters?.category === cat ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'}`}
+                                                key={cat.id}
+                                                onClick={() => handleFilterCategory(String(cat.id))}
+                                                className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${
+                                                    filters?.category_id === String(cat.id) ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'
+                                                }`}
                                             >
-                                                {cat}
+                                                {cat.name}
                                             </button>
                                         ))}
                                     </div>
@@ -151,6 +156,7 @@ export default function InventorySupplier({
                     </div>
                 </div>
 
+                {/* Table */}
                 <div className="max-h-full overflow-y-auto rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
                     <Table>
                         <TableHeader className="bg-[var(--surface-header)]">
@@ -167,7 +173,7 @@ export default function InventorySupplier({
                             {suppliers?.data?.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="py-10 text-center text-[var(--grey-text)]">
-                                        {filters?.search || filters?.category
+                                        {filters?.search || filters?.category_id
                                             ? 'Pemasok tidak ditemukan'
                                             : 'Belum ada pemasok, tambah pemasok terlebih dahulu'}
                                     </TableCell>
@@ -192,7 +198,7 @@ export default function InventorySupplier({
                                                     <div className="font-medium text-[var(--subheading)]">{supplier.name}</div>
                                                     {supplier.category && (
                                                         <span className="mt-0.5 inline-block rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-600">
-                                                            {supplier.category}
+                                                            {supplier.category.name}
                                                         </span>
                                                     )}
                                                 </div>
@@ -218,9 +224,7 @@ export default function InventorySupplier({
                                         </TableCell>
                                         <TableCell className="relative">
                                             <Button
-                                                ref={(el) => {
-                                                    buttonRefs.current[supplier.id] = el;
-                                                }}
+                                                ref={(el) => { buttonRefs.current[supplier.id] = el; }}
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => toggleMenu(supplier.id)}
@@ -235,41 +239,16 @@ export default function InventorySupplier({
                     </Table>
                 </div>
 
-                <div className="mt-auto flex items-center justify-between pt-4">
-                    <span className="text-sm text-[var(--grey-text)]">
-                        Menampilkan {suppliers?.from ?? 0}-{suppliers?.to ?? 0} dari {suppliers?.total ?? 0} Pemasok
-                    </span>
-
-                    <div className="flex items-center gap-1">
-                        {suppliers?.links?.map((link, i) => (
-                            <button
-                                key={i}
-                                disabled={!link.url}
-                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                className={`rounded-lg px-3 py-1.5 text-sm ${
-                                    link.active
-                                        ? 'bg-[var(--surface-header)] font-medium text-white'
-                                        : 'bg-[var(--neutral-white)] text-[var(--grey-text)] hover:bg-[var(--surface-badge)] disabled:cursor-not-allowed disabled:opacity-40'
-                                }`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="relative">
-                        <select
-                            aria-label="page"
-                            value={filters?.per_page ?? '6'}
-                            onChange={(e) => applyFilters({ per_page: e.target.value })}
-                            className="h-9 appearance-none rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 pr-9 text-sm"
-                        >
-                            <option value="6">6 per halaman</option>
-                            <option value="12">12 per halaman</option>
-                            <option value="24">24 per halaman</option>
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
-                    </div>
-                </div>
+                {/* Pagination */}
+                <InventoryPagination
+                    from={suppliers?.from ?? 0}
+                    to={suppliers?.to ?? 0}
+                    total={suppliers?.total ?? 0}
+                    links={suppliers?.links ?? []}
+                    itemLabel="Pemasok"
+                    perPage={filters?.per_page ?? '6'}
+                    onPerPageChange={(value) => applyFilters({ per_page: value })}
+                />
             </div>
 
             {activeMenuSupplier && (
@@ -282,9 +261,20 @@ export default function InventorySupplier({
                 />
             )}
 
-            {showCreateModal && <InventorySupplierCreateModal onClose={() => setShowCreateModal(false)} />}
+            {showCreateModal && (
+                <InventorySupplierCreateModal
+                    categories={categories}
+                    onClose={() => setShowCreateModal(false)}
+                />
+            )}
 
-            {editSupplier && <InventorySupplierEditModal supplier={editSupplier} onClose={() => setEditSupplier(null)} />}
+            {editSupplier && (
+                <InventorySupplierEditModal
+                    supplier={editSupplier}
+                    categories={categories}
+                    onClose={() => setEditSupplier(null)}
+                />
+            )}
         </DashboardSidebarLayout>
     );
 }

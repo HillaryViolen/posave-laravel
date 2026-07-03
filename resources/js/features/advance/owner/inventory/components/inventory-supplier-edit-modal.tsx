@@ -6,16 +6,17 @@ import type { Supplier } from './inventory-supplier-actions-menu';
 
 interface InventorySupplierEditModalProps {
     supplier: Supplier;
+    categories: { id: number; name: string }[];
     onClose: () => void;
 }
 
-export function InventorySupplierEditModal({ supplier, onClose }: InventorySupplierEditModalProps) {
+export function InventorySupplierEditModal({ supplier, categories, onClose }: InventorySupplierEditModalProps) {
     const [preview, setPreview] = useState<string | null>(supplier.logo ? `/storage/${supplier.logo}` : null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm<{
         name: string;
-        category: string;
+        category_id: string;
         address: string;
         phone: string;
         email: string;
@@ -23,12 +24,12 @@ export function InventorySupplierEditModal({ supplier, onClose }: InventorySuppl
         _method: string;
     }>({
         name: supplier.name,
-        category: supplier.category ?? '',
+        category_id: supplier.category ? String(supplier.category.id) : '',
         address: supplier.address ?? '',
         phone: supplier.phone ?? '',
         email: supplier.email ?? '',
         logo: null,
-        _method: 'put',
+        _method: 'PUT',
     });
 
     const handleLogo = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,17 +42,11 @@ export function InventorySupplierEditModal({ supplier, onClose }: InventorySuppl
         e.preventDefault();
         post(route('dashboard.inventory.suppliers.update', supplier.id), {
             forceFormData: true,
-            onSuccess: () => {
-                reset();
-                onClose();
-            },
+            onSuccess: () => { reset(); onClose(); },
         });
     };
 
-    const handleClose = () => {
-        reset();
-        onClose();
-    };
+    const handleClose = () => { reset(); onClose(); };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -75,11 +70,11 @@ export function InventorySupplierEditModal({ supplier, onClose }: InventorySuppl
 
                 <form onSubmit={handleSubmit}>
                     <div className="flex max-h-[60vh] flex-col gap-4 overflow-y-auto p-6">
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">Nama Pemasok</label>
                                 <input
-                                    aria-label="input-pemasok"
                                     type="text"
                                     value={data.name}
                                     onChange={(e) => setData('name', e.target.value)}
@@ -89,21 +84,23 @@ export function InventorySupplierEditModal({ supplier, onClose }: InventorySuppl
                             </div>
                             <div>
                                 <label className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">Kategori</label>
-                                <input
-                                    aria-label="input-kategori"
-                                    type="text"
-                                    value={data.category}
-                                    onChange={(e) => setData('category', e.target.value)}
+                                <select
+                                    value={data.category_id}
+                                    onChange={(e) => setData('category_id', e.target.value)}
                                     className="border-input focus-visible:ring-ring w-full rounded-lg border bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none"
-                                />
-                                {errors.category && <span className="text-xs text-red-500">{errors.category}</span>}
+                                >
+                                    <option value="" disabled>Pilih Kategori</option>
+                                    {categories.map((cat) => (
+                                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                </select>
+                                {errors.category_id && <span className="text-xs text-red-500">{errors.category_id}</span>}
                             </div>
                         </div>
 
                         <div>
                             <label className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">Alamat</label>
                             <textarea
-                                aria-label="input-alamat"
                                 value={data.address}
                                 onChange={(e) => setData('address', e.target.value)}
                                 rows={2}
@@ -116,7 +113,6 @@ export function InventorySupplierEditModal({ supplier, onClose }: InventorySuppl
                             <div>
                                 <label className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">Nomor Telepon</label>
                                 <input
-                                    aria-label="input-notlp"
                                     type="text"
                                     value={data.phone}
                                     onChange={(e) => setData('phone', e.target.value)}
@@ -127,7 +123,6 @@ export function InventorySupplierEditModal({ supplier, onClose }: InventorySuppl
                             <div>
                                 <label className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">Email</label>
                                 <input
-                                    aria-label="input-email"
                                     type="email"
                                     value={data.email}
                                     onChange={(e) => setData('email', e.target.value)}
@@ -153,19 +148,20 @@ export function InventorySupplierEditModal({ supplier, onClose }: InventorySuppl
                                     </div>
                                 )}
                                 <div>
-                                    <p className="text-sm font-medium text-[var(--subheading)]">Ganti logo</p>
+                                    <p className="text-sm font-medium text-[var(--subheading)]">
+                                        {preview ? 'Ganti logo' : 'Klik untuk upload logo'}
+                                    </p>
                                     <p className="text-xs text-[var(--grey-text)]">PNG, JPG atau WEBP. Maksimal 2MB</p>
                                 </div>
                             </div>
-                            <input aria-label="input-logo" ref={fileInputRef} type="file" accept="image/*" onChange={handleLogo} className="hidden" />
+                            <input ref={fileInputRef} type="file" accept="image/*" onChange={handleLogo} className="hidden" aria-label="file-input" />
                             {errors.logo && <span className="text-xs text-red-500">{errors.logo}</span>}
                         </div>
+
                     </div>
 
                     <div className="flex justify-end gap-2 border-t border-[var(--border-strong)] px-6 py-4">
-                        <Button type="button" variant="outline" onClick={handleClose}>
-                            Batal
-                        </Button>
+                        <Button type="button" variant="outline" onClick={handleClose}>Batal</Button>
                         <Button type="submit" disabled={processing}>
                             {processing ? 'Menyimpan...' : 'Simpan Perubahan'}
                         </Button>

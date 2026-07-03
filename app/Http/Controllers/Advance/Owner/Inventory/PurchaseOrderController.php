@@ -39,7 +39,7 @@ class PurchaseOrderController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        return Inertia::render('advance/owner/inventory/inventory-po-list', [
+        return Inertia::render('advance/owner/inventory/inventory-po', [
             'purchaseOrders' => $purchaseOrders,
             'suppliers' => Supplier::select('id', 'name')->get(),
             'inventoryItems' => Item::select('id', 'name', 'sku', 'price')->get(),

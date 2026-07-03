@@ -28,7 +28,7 @@ class ItemController extends Controller
 
         $categories = Category::select('id', 'name')->get();
 
-        return Inertia::render('advance/owner/inventory/inventory-item-list', [
+        return Inertia::render('advance/owner/inventory/inventory-item', [
             'items' => $items,
             'categories' => $categories,
             'filters' => $request->only('search', 'category_id'),

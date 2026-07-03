@@ -21,7 +21,7 @@ class CategoryController extends Controller
             ->paginate(5)
             ->withQueryString();
 
-        return Inertia::render('advance/owner/inventory/inventory-category-list', [
+        return Inertia::render('advance/owner/inventory/inventory-category', [
             'categories' => $categories,
             'filters' => $request->only('search'),
         ]);

@@ -36,7 +36,7 @@ class TransferController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        return Inertia::render('advance/owner/inventory/inventory-transfer-list', [
+        return Inertia::render('advance/owner/inventory/inventory-transfer', [
             'transfers' => $transfers,
             'inventoryItems' => Item::select('id', 'name', 'sku')->get(),
             'filters' => $request->only('branch', 'date', 'status', 'search', 'per_page'),

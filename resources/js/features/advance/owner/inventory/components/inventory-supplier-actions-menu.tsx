@@ -4,7 +4,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 export interface Supplier {
     id: number;
     name: string;
-    category: string | null;
+   category: { id: number; name: string } | null;
     address: string | null;
     phone: string | null;
     email: string | null;
