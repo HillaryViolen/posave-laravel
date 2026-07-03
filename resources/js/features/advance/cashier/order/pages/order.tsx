@@ -1,6 +1,6 @@
 import { AppShell, AppSidebar, SidebarTrigger } from '@/components';
-import { cashierNavItems } from '@/data';
 import { Badge, Button, Card, CardContent, Input, Separator, Sheet, SheetContent } from '@/components/ui';
+import { cashierNavItems } from '@/data';
 import { Chatbot, useChatbot } from '@/features/chatbot';
 import { Head } from '@inertiajs/react';
 import { Banknote, ChevronLeft, ChevronRight, MessageSquare, QrCode, Search, ShoppingCart } from 'lucide-react';
@@ -46,8 +46,7 @@ export default function OrderPage() {
     const kembalian = customerMoney > totalTagihan ? customerMoney - totalTagihan : 0;
     const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
-    const updateNote = (index: number, note: string) =>
-        setCart((prev) => prev.map((item, i) => (i === index ? { ...item, note } : item)));
+    const updateNote = (index: number, note: string) => setCart((prev) => prev.map((item, i) => (i === index ? { ...item, note } : item)));
 
     const handleLanjutPembayaran = () => {
         setShowPayment(true);
@@ -66,7 +65,7 @@ export default function OrderPage() {
     const orderDetailInner = (
         <>
             <div className="p-5">
-                <h2 className="text-base font-bold uppercase tracking-widest">Order Detail</h2>
+                <h2 className="text-base font-bold tracking-widest uppercase">Order Detail</h2>
                 <div className="mt-1 flex items-center justify-between text-[11px]">
                     <span className="font-medium text-slate-300">Kopiakin Resto</span>
                     <span className="text-slate-400">Tuesday, 2 Feb 2021</span>
@@ -74,7 +73,7 @@ export default function OrderPage() {
             </div>
             <Separator className="bg-white/10" />
 
-            <div className="flex justify-between px-5 pb-2 pt-3 text-[11px] text-slate-400">
+            <div className="flex justify-between px-5 pt-3 pb-2 text-[11px] text-slate-400">
                 <span>Item</span>
                 <div className="flex gap-8">
                     <span>Qty</span>
@@ -87,11 +86,9 @@ export default function OrderPage() {
                     <div key={index} className="space-y-1.5">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/20 text-lg">
-                                    🥛
-                                </div>
+                                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/20 text-lg">🥛</div>
                                 <div>
-                                    <p className="text-xs font-semibold leading-tight text-slate-200">{item.name}</p>
+                                    <p className="text-xs leading-tight font-semibold text-slate-200">{item.name}</p>
                                     <p className="text-[10px] text-slate-400">Rp. {item.price.toLocaleString('id-ID')}</p>
                                 </div>
                             </div>
@@ -99,9 +96,7 @@ export default function OrderPage() {
                                 <Badge className="rounded border border-white/20 bg-white/10 px-2 py-0.5 text-xs font-bold text-white">
                                     {item.qty}
                                 </Badge>
-                                <span className="text-[11px] font-medium text-slate-300">
-                                    Rp. {(item.price * item.qty).toLocaleString('id-ID')}
-                                </span>
+                                <span className="text-[11px] font-medium text-slate-300">Rp. {(item.price * item.qty).toLocaleString('id-ID')}</span>
                             </div>
                         </div>
                         <Input
@@ -135,10 +130,7 @@ export default function OrderPage() {
                     Cetak
                 </Button>
                 {!showPayment && (
-                    <Button
-                        onClick={handleLanjutPembayaran}
-                        className="h-11 w-full bg-white text-xs font-bold text-slate-900 hover:bg-slate-100"
-                    >
+                    <Button onClick={handleLanjutPembayaran} className="h-11 w-full bg-white text-xs font-bold text-slate-900 hover:bg-slate-100">
                         Lanjut Pembayaran
                     </Button>
                 )}
@@ -187,9 +179,7 @@ export default function OrderPage() {
 
                 <div className="flex items-center justify-between">
                     <span className="text-xs text-sky-200">Total Tagihan</span>
-                    <span className="text-sm font-bold text-white">
-                        Rp. {totalTagihan.toLocaleString('id-ID')}
-                    </span>
+                    <span className="text-sm font-bold text-white">Rp. {totalTagihan.toLocaleString('id-ID')}</span>
                 </div>
 
                 {paymentMethod === 'cash' && (
@@ -219,9 +209,7 @@ export default function OrderPage() {
                         />
                         <div className="flex items-center justify-between text-xs">
                             <span className="text-sky-200">Kembalian</span>
-                            <span className="font-bold text-white">
-                                Rp. {kembalian.toLocaleString('id-ID')}
-                            </span>
+                            <span className="font-bold text-white">Rp. {kembalian.toLocaleString('id-ID')}</span>
                         </div>
                     </div>
                 )}
@@ -236,10 +224,7 @@ export default function OrderPage() {
                                 <span className="text-[10px] text-slate-500">Scan untuk POSAVE</span>
                             </div>
                         ) : (
-                            <Button
-                                onClick={() => setShowQris(true)}
-                                className="bg-white px-8 text-xs font-bold text-slate-900 hover:bg-slate-100"
-                            >
+                            <Button onClick={() => setShowQris(true)} className="bg-white px-8 text-xs font-bold text-slate-900 hover:bg-slate-100">
                                 Tampilkan Qris
                             </Button>
                         )}
@@ -256,9 +241,7 @@ export default function OrderPage() {
                 >
                     Cancel
                 </Button>
-                <Button className="h-11 w-full bg-white text-xs font-bold text-slate-900 hover:bg-slate-100">
-                    Confirm payment
-                </Button>
+                <Button className="h-11 w-full bg-white text-xs font-bold text-slate-900 hover:bg-slate-100">Confirm payment</Button>
             </div>
         </>
     );
@@ -267,20 +250,15 @@ export default function OrderPage() {
         <AppShell variant="sidebar">
             <Head title="Kasir - POSAVE" />
             <AppSidebar items={cashierNavItems} />
-            <main className="flex flex-1 h-screen overflow-hidden">
-
+            <main className="flex h-screen flex-1 overflow-hidden">
                 {/* ── LEFT: Menu area ─────────────────────────────────── */}
                 <div className="flex flex-1 flex-col overflow-y-auto bg-white p-6">
-
                     {/* Search + AI button */}
                     <div className="mb-6 flex items-center gap-4">
                         <SidebarTrigger />
                         <div className="relative max-w-sm flex-1">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                            <Input
-                                placeholder="Search"
-                                className="h-10 rounded-full border-slate-200 bg-slate-50 pl-10"
-                            />
+                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <Input placeholder="Search" className="h-10 rounded-full border-slate-200 bg-slate-50 pl-10" />
                         </div>
                         <Button
                             onClick={open}
@@ -334,18 +312,14 @@ export default function OrderPage() {
                                         key={product.id}
                                         onClick={() => setSelectedProductId(product.id)}
                                         className={`cursor-pointer overflow-hidden transition ${
-                                            isSelected
-                                                ? 'border-2 border-blue-500 shadow-md'
-                                                : 'border border-slate-200 hover:shadow-sm'
+                                            isSelected ? 'border-2 border-blue-500 shadow-md' : 'border border-slate-200 hover:shadow-sm'
                                         }`}
                                     >
                                         <CardContent className="flex flex-col items-center p-3">
                                             <div className="mb-3 flex h-24 w-full items-center justify-center rounded-xl bg-slate-100 text-4xl">
                                                 🍟
                                             </div>
-                                            <p className="text-center text-xs font-bold leading-tight text-slate-700">
-                                                {product.name}
-                                            </p>
+                                            <p className="text-center text-xs leading-tight font-bold text-slate-700">{product.name}</p>
                                             <p className="mb-3 text-center text-xs text-slate-500">{product.subtitle}</p>
                                             <Button
                                                 size="sm"
@@ -363,22 +337,16 @@ export default function OrderPage() {
                 </div>
 
                 {/* ── MIDDLE: Order Detail (desktop only) ─────────────── */}
-                <div className="hidden lg:flex w-[340px] flex-col border-l border-white/10 bg-[var(--sidebar)] text-white">
-                    {orderDetailInner}
-                </div>
+                <div className="hidden w-[340px] flex-col border-l border-white/10 bg-[var(--sidebar)] text-white lg:flex">{orderDetailInner}</div>
 
                 {/* ── RIGHT: Payment panel (desktop only) ──────────────── */}
-                {showPayment && (
-                    <div className="hidden lg:flex w-[320px] flex-col border-l border-sky-950 bg-sky-900 text-white">
-                        {paymentInner}
-                    </div>
-                )}
+                {showPayment && <div className="hidden w-[320px] flex-col border-l border-sky-950 bg-sky-900 text-white lg:flex">{paymentInner}</div>}
 
                 {/* ── FAB: opens Sheet on mobile/tablet ────────────────── */}
                 {cartCount > 0 && (
                     <button
                         onClick={() => setSheetOpen(true)}
-                        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-[var(--sidebar)] px-5 py-3.5 text-white shadow-2xl lg:hidden"
+                        className="fixed right-6 bottom-6 z-40 flex items-center gap-2 rounded-full bg-[var(--sidebar)] px-5 py-3.5 text-white shadow-2xl lg:hidden"
                     >
                         <ShoppingCart className="h-4 w-4" />
                         <span className="text-sm font-bold">
@@ -397,12 +365,10 @@ export default function OrderPage() {
                 >
                     <SheetContent
                         side="right"
-                        className="flex w-[85vw] flex-col p-0 text-white border-l-0 sm:max-w-[400px]"
+                        className="flex w-[85vw] flex-col border-l-0 p-0 text-white sm:max-w-[400px]"
                         style={{ background: showPayment ? 'rgb(12 74 110)' : 'var(--sidebar)' }}
                     >
-                        <div className="flex flex-1 flex-col overflow-hidden">
-                            {showPayment ? paymentInner : orderDetailInner}
-                        </div>
+                        <div className="flex flex-1 flex-col overflow-hidden">{showPayment ? paymentInner : orderDetailInner}</div>
                     </SheetContent>
                 </Sheet>
             </main>

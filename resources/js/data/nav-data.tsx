@@ -96,6 +96,53 @@ export const mainNavItems: NavItem[] = [
     },
 ];
 
+export const branchManagerNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        routeName: 'dashboard.index',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Penyimpanan',
+        url: '#',
+        icon: Package,
+        routeName: '',
+        children: [
+            {
+                title: 'Daftar Barang',
+                routeName: 'dashboard.inventory.items.index',
+            },
+            {
+                title: 'Pembelian',
+                routeName: 'dashboard.inventory.purchase-orders.index',
+            },
+            {
+                title: 'Kiriman',
+                routeName: 'dashboard.inventory.transfers.index',
+            },
+            {
+                title: 'Perubahan',
+                routeName: 'dashboard.inventory.adjustments.index',
+            },
+        ],
+    },
+    {
+        title: 'Karyawan',
+        icon: Group,
+        routeName: 'dashboard.employees.index',
+    },
+    {
+        title: 'Laporan',
+        routeName: 'dashboard.reports.index',
+        icon: ReceiptPoundSterling,
+    },
+    {
+        title: 'Pesan',
+        routeName: 'messaging.index',
+        icon: MessageCircle,
+    },
+];
+
 export const cashierNavItems: NavItem[] = [
     {
         title: 'Pesanan',

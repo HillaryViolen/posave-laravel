@@ -110,14 +110,22 @@ export default function HistoryPage() {
         year: 'numeric',
     });
 
-    const prevDay = () => setActiveDate((d) => { const n = new Date(d); n.setDate(n.getDate() - 1); return n; });
-    const nextDay = () => setActiveDate((d) => { const n = new Date(d); n.setDate(n.getDate() + 1); return n; });
+    const prevDay = () =>
+        setActiveDate((d) => {
+            const n = new Date(d);
+            n.setDate(n.getDate() - 1);
+            return n;
+        });
+    const nextDay = () =>
+        setActiveDate((d) => {
+            const n = new Date(d);
+            n.setDate(n.getDate() + 1);
+            return n;
+        });
 
     const transactions = search
         ? DUMMY_TRANSACTIONS.filter(
-              (t) =>
-                  t.invoice.toLowerCase().includes(search.toLowerCase()) ||
-                  t.paymentMethod.toLowerCase().includes(search.toLowerCase()),
+              (t) => t.invoice.toLowerCase().includes(search.toLowerCase()) || t.paymentMethod.toLowerCase().includes(search.toLowerCase()),
           )
         : DUMMY_TRANSACTIONS;
 
@@ -135,7 +143,7 @@ export default function HistoryPage() {
         <>
             {/* Header */}
             <div className="p-5">
-                <h2 className="text-base font-bold uppercase tracking-widest">History Order Detail</h2>
+                <h2 className="text-base font-bold tracking-widest uppercase">History Order Detail</h2>
                 <div className="mt-1 flex items-center justify-between text-[11px]">
                     <span className="font-medium text-slate-300">Kopiakin Resto</span>
                     {selected && <span className="text-slate-400">{selected.dateLabel}</span>}
@@ -146,10 +154,13 @@ export default function HistoryPage() {
             {/* Detail body */}
             <div className="flex-1 overflow-y-auto">
                 {selected ? (
-                    <div className="p-5 space-y-4">
+                    <div className="space-y-4 p-5">
                         {/* Status + invoice */}
                         <div className="flex items-center justify-between">
-                            <Badge variant="outline" className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE_STYLES[selected.status]}`}>
+                            <Badge
+                                variant="outline"
+                                className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE_STYLES[selected.status]}`}
+                            >
                                 {selected.status}
                             </Badge>
                             <span className="text-sm font-bold text-white">{selected.invoice}</span>
@@ -159,13 +170,13 @@ export default function HistoryPage() {
                         <div className="space-y-1.5 text-xs">
                             <div className="flex justify-between">
                                 <span className="text-slate-400">Waktu</span>
-                                <span className="text-slate-200 font-medium">
+                                <span className="font-medium text-slate-200">
                                     {selected.date}, {selected.time}
                                 </span>
                             </div>
                             <div className="flex justify-between">
                                 <span className="text-slate-400">Metode Pembayaran</span>
-                                <span className="text-slate-200 font-medium">{selected.paymentMethod}</span>
+                                <span className="font-medium text-slate-200">{selected.paymentMethod}</span>
                             </div>
                         </div>
 
@@ -190,12 +201,8 @@ export default function HistoryPage() {
                                                 🥛
                                             </div>
                                             <div>
-                                                <p className="text-xs font-semibold leading-tight text-slate-200">
-                                                    {item.name}
-                                                </p>
-                                                <p className="text-[10px] text-slate-400">
-                                                    Rp. {item.price.toLocaleString('id-ID')}
-                                                </p>
+                                                <p className="text-xs leading-tight font-semibold text-slate-200">{item.name}</p>
+                                                <p className="text-[10px] text-slate-400">Rp. {item.price.toLocaleString('id-ID')}</p>
                                             </div>
                                         </div>
                                         <div className="flex flex-shrink-0 items-center gap-3">
@@ -218,9 +225,7 @@ export default function HistoryPage() {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex h-full items-center justify-center text-xs text-slate-500">
-                        Pilih transaksi untuk melihat detail
-                    </div>
+                    <div className="flex h-full items-center justify-center text-xs text-slate-500">Pilih transaksi untuk melihat detail</div>
                 )}
             </div>
 
@@ -261,15 +266,13 @@ export default function HistoryPage() {
             <AppSidebar items={cashierNavItems} />
 
             <main className="flex h-screen flex-1 overflow-hidden">
-
                 {/* ── LEFT: Transaction list ───────────────────────────── */}
                 <div className="flex flex-1 flex-col overflow-hidden bg-white">
-
                     {/* Search + AI */}
                     <div className="flex items-center gap-4 p-6">
                         <SidebarTrigger />
                         <div className="relative max-w-sm flex-1">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
                             <Input
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
@@ -300,11 +303,12 @@ export default function HistoryPage() {
                                 <CalendarDays className="h-4 w-4 text-slate-400" />
                                 {formattedDate}
                                 <input
+                                    aria-label="input"
                                     ref={dateInputRef}
                                     type="date"
                                     value={activeDate.toISOString().split('T')[0]}
                                     onChange={(e) => e.target.value && setActiveDate(new Date(e.target.value + 'T00:00:00'))}
-                                    className="absolute bottom-0 left-0 h-0 w-0 opacity-0 pointer-events-none"
+                                    className="pointer-events-none absolute bottom-0 left-0 h-0 w-0 opacity-0"
                                 />
                             </div>
                             <button onClick={nextDay} className="rounded p-1 hover:bg-slate-100">
@@ -328,7 +332,7 @@ export default function HistoryPage() {
 
                     {/* Table */}
                     <div className="flex-1 overflow-y-auto">
-                        <div className="px-6 pb-6 pt-4">
+                        <div className="px-6 pt-4 pb-6">
                             {/* Column headers — hidden on small screens, shown on sm+ */}
                             <div className="mb-3 hidden grid-cols-[1.2fr_1fr_1fr_1fr_1fr] px-4 sm:grid">
                                 {[
@@ -364,14 +368,19 @@ export default function HistoryPage() {
                                             <div className="flex items-start justify-between sm:hidden">
                                                 <div>
                                                     <p className="text-sm font-semibold text-slate-700">{tx.invoice}</p>
-                                                    <p className="text-xs text-slate-500">{tx.date} · {tx.time}</p>
+                                                    <p className="text-xs text-slate-500">
+                                                        {tx.date} · {tx.time}
+                                                    </p>
                                                     <p className="mt-0.5 text-xs text-slate-500">{tx.paymentMethod.toUpperCase()}</p>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1.5">
                                                     <span className="text-sm font-semibold text-slate-700">
                                                         Rp. {tx.total.toLocaleString('id-ID')}
                                                     </span>
-                                                    <Badge variant="outline" className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[tx.status]}`}>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[tx.status]}`}
+                                                    >
                                                         {tx.status}
                                                     </Badge>
                                                 </div>
@@ -384,14 +393,15 @@ export default function HistoryPage() {
                                                     <p className="text-sm font-medium text-slate-700">{tx.time}</p>
                                                     <p className="text-xs text-slate-400">{tx.date}</p>
                                                 </div>
-                                                <span className="text-center text-sm text-slate-600">
-                                                    {tx.paymentMethod.toUpperCase()}
-                                                </span>
+                                                <span className="text-center text-sm text-slate-600">{tx.paymentMethod.toUpperCase()}</span>
                                                 <span className="text-center text-sm font-semibold text-slate-700">
                                                     Rp. {tx.total.toLocaleString('id-ID')}
                                                 </span>
                                                 <span className="flex justify-end">
-                                                    <Badge variant="outline" className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[tx.status]}`}>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${STATUS_STYLES[tx.status]}`}
+                                                    >
                                                         {tx.status}
                                                     </Badge>
                                                 </span>
@@ -405,19 +415,12 @@ export default function HistoryPage() {
                 </div>
 
                 {/* ── RIGHT: History Order Detail (desktop only) ────────── */}
-                <div className="hidden lg:flex w-[340px] flex-col border-l border-white/10 bg-[var(--sidebar)] text-white">
-                    {historyDetailInner}
-                </div>
+                <div className="hidden w-[340px] flex-col border-l border-white/10 bg-[var(--sidebar)] text-white lg:flex">{historyDetailInner}</div>
 
                 {/* ── Sheet: History Order Detail on mobile/tablet ──────── */}
                 <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-                    <SheetContent
-                        side="right"
-                        className="flex w-[85vw] flex-col p-0 text-white border-l-0 bg-[var(--sidebar)] sm:max-w-[400px]"
-                    >
-                        <div className="flex flex-1 flex-col overflow-hidden">
-                            {historyDetailInner}
-                        </div>
+                    <SheetContent side="right" className="flex w-[85vw] flex-col border-l-0 bg-[var(--sidebar)] p-0 text-white sm:max-w-[400px]">
+                        <div className="flex flex-1 flex-col overflow-hidden">{historyDetailInner}</div>
                     </SheetContent>
                 </Sheet>
             </main>
