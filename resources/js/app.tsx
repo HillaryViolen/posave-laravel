@@ -6,7 +6,7 @@ import '@fontsource/poppins/700.css';
 import '../css/app.css';
 
 import { createInertiaApp } from '@inertiajs/react';
-import { configureEcho } from '@laravel/echo-react';
+import { configureEcho, echo } from '@laravel/echo-react';
 import axios from 'axios';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
@@ -23,6 +23,14 @@ configureEcho({
     enabledTransports: ['ws', 'wss'],
 });
 axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+
+axios.interceptors.request.use((config) => {
+    const socketId = echo().socketId();
+    if (socketId) {
+        config.headers['X-Socket-Id'] = socketId;
+    }
+    return config;
+});
 
 declare global {
     const route: typeof routeFn;

@@ -53,6 +53,7 @@ class MessagingController extends Controller
                 'id'   => $user->id,
                 'name' => $user->name,
                 'role' => $user->role,
+                'company_id' => $user->company_id
             ],
         ]);
     }

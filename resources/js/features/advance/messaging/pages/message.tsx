@@ -33,12 +33,12 @@ export default function MessagingIndex({
 
     // ─── Real-time: broadcast company-wide ────────────────────────
     useEchoPublic<Broadcast>(
-        `company.${auth_user.id}.broadcasts`,
+        `company.${auth_user.company_id}.broadcasts`,
         '.broadcast.created',
-        (data) => {
+        (data) => { 
             setBroadcasts((prev) => [data, ...prev]);
         },
-        [auth_user.id],
+        [auth_user.company_id],
     );
 
     // ─── Real-time: pesan di conversation aktif ───────────────────
