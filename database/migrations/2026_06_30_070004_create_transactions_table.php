@@ -29,6 +29,10 @@ return new class extends Migration
             $table->decimal('cogs_amount', 15, 2)->default(0);     // total HPP untuk laba kotor
             $table->decimal('total_amount', 15, 2)->default(0);    // total dibayar (Total Collected)
 
+            // Detail pembayaran tunai (dari desain modul kasir; null untuk non-tunai).
+            $table->decimal('cash_received', 15, 2)->nullable();   // uang diterima dari pelanggan
+            $table->decimal('change_returned', 15, 2)->nullable(); // kembalian
+
             // dateTime (bukan timestamp) supaya tidak kena auto "ON UPDATE CURRENT_TIMESTAMP" MySQL.
             $table->dateTime('transacted_at')->index(); // waktu transaksi (untuk filter tanggal)
             $table->timestamps();

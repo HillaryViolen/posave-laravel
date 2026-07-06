@@ -62,8 +62,16 @@ export function SalesTrendChart({ data, metric }: { data: TrendPoint[]; metric: 
                 <Tooltip content={(props) => <TrendTooltip {...props} metric={metric} />} />
                 {/* Periode sebelumnya (garis abu putus-putus) */}
                 <Line type="monotone" dataKey="previous" stroke={PREV_COLOR} strokeWidth={2} strokeDasharray="5 4" dot={false} />
-                {/* Periode ini */}
-                <Area type="monotone" dataKey="current" stroke={LINE_COLOR} strokeWidth={2.5} fill="url(#salesFill)" />
+                {/* Periode ini — titik per hari (mengecil saat rentang panjang agar tidak padat) */}
+                <Area
+                    type="monotone"
+                    dataKey="current"
+                    stroke={LINE_COLOR}
+                    strokeWidth={2.5}
+                    fill="url(#salesFill)"
+                    dot={{ r: data.length > 35 ? 1.75 : 3, strokeWidth: 0, fill: LINE_COLOR }}
+                    activeDot={{ r: 4.5, strokeWidth: 0 }}
+                />
             </AreaChart>
         </ResponsiveContainer>
     );

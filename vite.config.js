@@ -29,18 +29,10 @@ export default defineConfig({
             clientFiles: ['resources/js/app.tsx'],
         },
     },
-    build: {
-        rollupOptions: {
-            output: {
-                // Pisahkan vendor besar ke chunk sendiri agar caching browser lebih baik
-                // dan chunk per-halaman lebih ramping. (jspdf/write-excel-file sengaja
-                // dibiarkan default supaya tetap dynamic-import terpisah saat export.)
-                manualChunks(id) {
-                    if (!id.includes('node_modules')) return;
-                    if (id.includes('recharts') || id.includes('victory-vendor') || id.includes('/d3-')) return 'charts';
-                    if (id.includes('@radix-ui')) return 'radix';
-                },
-            },
-        },
-    },
+    // Catatan: JANGAN pakai manualChunks untuk memisah vendor di sini. Chunk manual
+    // (mis. 'charts' berisi recharts) ikut menyerap dependency bersama seperti clsx,
+    // sehingga SEMUA halaman (login sekalipun) mengeksekusi chunk besar itu secara
+    // statis. Default chunking Rollup sudah benar: lib yang hanya di-dynamic-import
+    // (recharts via React.lazy, jspdf/write-excel-file saat export) tetap terpisah
+    // dan baru dimuat saat dibutuhkan.
 });

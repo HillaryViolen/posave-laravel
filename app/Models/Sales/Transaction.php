@@ -27,6 +27,8 @@ class Transaction extends Model
         'rounding_amount',
         'cogs_amount',
         'total_amount',
+        'cash_received',
+        'change_returned',
         'transacted_at',
     ];
 
@@ -39,6 +41,8 @@ class Transaction extends Model
         'rounding_amount' => 'decimal:2',
         'cogs_amount' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'cash_received' => 'decimal:2',
+        'change_returned' => 'decimal:2',
         'transacted_at' => 'datetime',
     ];
 
