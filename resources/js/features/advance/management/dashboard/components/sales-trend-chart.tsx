@@ -12,8 +12,8 @@ export interface TrendPoint {
 
 export type TrendMetric = 'omzet' | 'transaksi';
 
-const LINE_COLOR = '#377ba3'; // secondary-700
-const PREV_COLOR = '#cbd5e1'; // slate-300
+const LINE_COLOR = '#377ba3';
+const PREV_COLOR = '#cbd5e1';
 
 function TrendTooltip({ active, payload, label, metric }: any) {
     if (!active || !payload?.length) return null;
@@ -42,7 +42,6 @@ export function SalesTrendChart({ data, metric }: { data: TrendPoint[]; metric: 
 
     return (
         <ResponsiveContainer width="100%" height={260}>
-            {/* right margin cukup agar label tanggal terakhir (hari ini) tidak terpotong */}
             <AreaChart data={chartData} margin={{ top: 10, right: 28, left: 8, bottom: 0 }}>
                 <defs>
                     <linearGradient id="salesFill" x1="0" y1="0" x2="0" y2="1">
@@ -60,10 +59,16 @@ export function SalesTrendChart({ data, metric }: { data: TrendPoint[]; metric: 
                     width={isOmzet ? 70 : 40}
                 />
                 <Tooltip content={(props) => <TrendTooltip {...props} metric={metric} />} />
-                {/* Periode sebelumnya (garis abu putus-putus) */}
                 <Line type="monotone" dataKey="previous" stroke={PREV_COLOR} strokeWidth={2} strokeDasharray="5 4" dot={false} />
-                {/* Periode ini */}
-                <Area type="monotone" dataKey="current" stroke={LINE_COLOR} strokeWidth={2.5} fill="url(#salesFill)" />
+                <Area
+                    type="monotone"
+                    dataKey="current"
+                    stroke={LINE_COLOR}
+                    strokeWidth={2.5}
+                    fill="url(#salesFill)"
+                    dot={{ r: data.length > 35 ? 1.75 : 3, strokeWidth: 0, fill: LINE_COLOR }}
+                    activeDot={{ r: 4.5, strokeWidth: 0 }}
+                />
             </AreaChart>
         </ResponsiveContainer>
     );

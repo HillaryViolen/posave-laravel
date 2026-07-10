@@ -2,7 +2,7 @@
 
 namespace App\Models\Advance\Management\Transaction;
 
-use App\Models\Advance\Transaction\TransactionItem;
+use App\Models\Advance\Management\Transaction\TransactionItem;
 use App\Models\Auth\Branch;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -29,19 +29,23 @@ class Transaction extends Model
         'rounding_amount',
         'cogs_amount',
         'total_amount',
+        'cash_received',
+        'change_returned',
         'transacted_at',
     ];
 
     protected $casts = [
-        'gross_amount'     => 'decimal:2',
-        'discount_amount'  => 'decimal:2',
-        'refund_amount'    => 'decimal:2',
-        'tax_amount'       => 'decimal:2',
-        'gratuity_amount'  => 'decimal:2',
-        'rounding_amount'  => 'decimal:2',
-        'cogs_amount'      => 'decimal:2',
-        'total_amount'     => 'decimal:2',
-        'transacted_at'    => 'datetime',
+        'gross_amount' => 'decimal:2',
+        'discount_amount' => 'decimal:2',
+        'refund_amount' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'gratuity_amount' => 'decimal:2',
+        'rounding_amount' => 'decimal:2',
+        'cogs_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
+        'cash_received' => 'decimal:2',
+        'change_returned' => 'decimal:2',
+        'transacted_at' => 'datetime',
     ];
 
     public function branch(): BelongsTo
