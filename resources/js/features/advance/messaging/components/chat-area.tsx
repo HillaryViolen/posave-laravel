@@ -142,7 +142,7 @@ export function ChatArea({ conversation, messages, authUserId, isLoading, onSend
                         value={body}
                         onChange={(e) => setBody(e.target.value)}
                         onKeyDown={handleKeyDown}
-                        placeholder="Ketik pesan... (Enter untuk kirim, Shift+Enter untuk baris baru)"
+                        placeholder="Ketik pesan..."
                         rows={1}
                         className="flex-1 resize-none rounded-lg border border-[var(--border-strong)] bg-[var(--page-bg)] px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-[var(--border-strong)]"
                         style={{ maxHeight: '120px' }}

@@ -22,7 +22,7 @@ Route::middleware(['auth', 'onboarded'])->group(function () {
   Route::get('/dashboard', DashboardGatewayController::class)->name('dashboard.index');
 });
 
-Route::middleware(['auth', 'onboarded', 'advance'])->group(function () {
+Route::middleware(['auth', 'onboarded', 'advance', 'role:owner,branch_manager'])->group(function () {
   require __DIR__ . '/advance.php';
 });
 

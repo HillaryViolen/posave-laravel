@@ -161,6 +161,45 @@ export const cashierNavItems: NavItem[] = [
     },
 ];
 
+export const liteNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        routeName: 'dashboard.index',
+        icon: LayoutGrid,
+    },
+    {
+        title: 'Penyimpanan',
+        url: '#',
+        icon: Package,
+        routeName: '',
+        children: [
+            { title: 'Daftar Barang', routeName: 'lite.inventory.items.index' },
+            { title: 'Perubahan', routeName: 'lite.inventory.adjustments.index' },
+            { title: 'Kategori', routeName: 'lite.inventory.categories.index' },
+        ],
+    },
+    {
+        title: 'Pesanan',
+        routeName: 'lite.order.index',
+        icon: ShoppingCart,
+    },
+    {
+        title: 'Riwayat Pesanan',
+        routeName: 'lite.history.index',
+        icon: ClipboardList,
+    },
+    {
+        title: 'Pengaturan',
+        url: '#',
+        icon: Building,
+        routeName: '',
+        children: [
+            { title: 'Profil', routeName: 'lite.settings.profile.index' },
+            { title: 'Bukti Bayar', routeName: 'lite.settings.receipt.index' },
+        ],
+    },
+];
+
 export const footerNavItems: NavItem[] = [
     {
         title: 'Repository',

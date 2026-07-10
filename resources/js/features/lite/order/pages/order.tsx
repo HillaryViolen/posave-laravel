@@ -1,0 +1,269 @@
+import { Button, Input } from '@/components/ui';
+import { PaymentModal } from '@/features/lite/order/components';
+import { DashboardSidebarLayout } from '@/layouts';
+import { Head, router } from '@inertiajs/react';
+import { Minus, Plus, Search, ShoppingCart, X } from 'lucide-react';
+import { useMemo, useState } from 'react';
+
+interface ItemOption {
+    id: number;
+    name: string;
+    price: number;
+    category_id: number;
+    category: { id: number; name: string; color: string | null };
+    image: string | null;
+    available_stock: number;
+}
+
+interface CategoryOption {
+    id: number;
+    name: string;
+    color: string | null;
+}
+
+interface Props {
+    items: ItemOption[];
+    categories: CategoryOption[];
+}
+
+type CartItem = { itemId: number; name: string; price: number; qty: number };
+
+export default function OrderPage({ items, categories }: Props) {
+    const [search, setSearch] = useState('');
+    const [activeCategory, setActiveCategory] = useState<number | 'all'>('all');
+    const [cart, setCart] = useState<CartItem[]>([]);
+    const [cartOpen, setCartOpen] = useState(false);
+    const [showPayment, setShowPayment] = useState(false);
+    const [successInfo, setSuccessInfo] = useState<{ invoice: string; total: number } | null>(null);
+
+    const filteredItems = useMemo(() => {
+        return items.filter((i) => {
+            const matchCategory = activeCategory === 'all' || i.category_id === activeCategory;
+            const matchSearch = !search || i.name.toLowerCase().includes(search.toLowerCase());
+            return matchCategory && matchSearch;
+        });
+    }, [items, activeCategory, search]);
+
+    const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
+    const cartCount = cart.reduce((s, i) => s + i.qty, 0);
+
+    const remainingStock = (item: ItemOption) => {
+        const inCart = cart.find((c) => c.itemId === item.id);
+        return item.available_stock - (inCart?.qty ?? 0);
+    };
+
+    const handleAddToCart = (item: ItemOption) => {
+        if (remainingStock(item) <= 0) return;
+        setCart((prev) => {
+            const existing = prev.find((c) => c.itemId === item.id);
+            if (existing) return prev.map((c) => (c.itemId === item.id ? { ...c, qty: c.qty + 1 } : c));
+            return [...prev, { itemId: item.id, name: item.name, price: item.price, qty: 1 }];
+        });
+    };
+
+    const handleDecrease = (itemId: number) => {
+        setCart((prev) => prev.map((c) => (c.itemId === itemId ? { ...c, qty: c.qty - 1 } : c)).filter((c) => c.qty > 0));
+    };
+
+    const handleRemove = (itemId: number) => setCart((prev) => prev.filter((c) => c.itemId !== itemId));
+
+    const handlePaymentSuccess = (invoice: string, total: number) => {
+        setSuccessInfo({ invoice, total });
+        setCart([]);
+        setShowPayment(false);
+        setCartOpen(false);
+        router.reload({ only: ['items'] });
+    };
+
+    const cartPanel = (
+        <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between p-4">
+                <h3 className="text-lg font-bold text-[var(--subheading)]">Keranjang</h3>
+                <button aria-label="Tutup keranjang" onClick={() => setCartOpen(false)} className="lg:hidden">
+                    <X className="h-5 w-5 text-[var(--grey-text)]" />
+                </button>
+            </div>
+            <div className="flex-1 overflow-y-auto px-4">
+                {cart.length === 0 ? (
+                    <p className="py-10 text-center text-sm text-[var(--grey-text)]">Belum ada barang dipilih</p>
+                ) : (
+                    <div className="flex flex-col gap-3">
+                        {cart.map((item) => (
+                            <div
+                                key={item.itemId}
+                                className="flex items-center justify-between gap-2 rounded-xl border border-[var(--border-strong)] p-3"
+                            >
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate text-sm font-semibold text-[var(--subheading)]">{item.name}</p>
+                                    <p className="text-xs text-[var(--grey-text)]">Rp {item.price.toLocaleString('id-ID')}</p>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        aria-label={`Kurangi ${item.name}`}
+                                        onClick={() => handleDecrease(item.itemId)}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-strong)]"
+                                    >
+                                        <Minus className="h-3.5 w-3.5" />
+                                    </button>
+                                    <span className="w-5 text-center text-sm font-bold">{item.qty}</span>
+                                    <button
+                                        aria-label={`Tambah ${item.name}`}
+                                        onClick={() => handleAddToCart({ id: item.itemId, price: item.price, name: item.name } as ItemOption)}
+                                        className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-strong)]"
+                                    >
+                                        <Plus className="h-3.5 w-3.5" />
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+            <div className="border-t border-[var(--border-strong)] p-4">
+                <div className="mb-3 flex justify-between text-base font-bold text-[var(--subheading)]">
+                    <span>Total</span>
+                    <span>Rp {subtotal.toLocaleString('id-ID')}</span>
+                </div>
+                <Button
+                    aria-label="Bayar sekarang"
+                    disabled={cart.length === 0}
+                    onClick={() => setShowPayment(true)}
+                    className="h-12 w-full rounded-xl bg-[var(--surface-header)] text-base font-bold hover:bg-[var(--surface-header-hover)] disabled:opacity-50"
+                >
+                    Bayar Sekarang
+                </Button>
+            </div>
+        </div>
+    );
+
+    return (
+        <DashboardSidebarLayout title="Pesanan" description="Pilih barang, lalu catat pembayaran">
+            <Head title="Pesanan" />
+            <div className="flex min-h-screen bg-[var(--page-bg)]">
+                <div className="flex-1 p-4 sm:p-6">
+                    {successInfo && (
+                        <div className="mb-4 flex items-center justify-between rounded-2xl border-2 border-[var(--success)] bg-[var(--success-background)] px-4 py-3">
+                            <span className="text-sm font-semibold text-[var(--success)]">
+                                Pembayaran berhasil! {successInfo.invoice} · Rp {successInfo.total.toLocaleString('id-ID')}
+                            </span>
+                            <button aria-label="Tutup notifikasi" onClick={() => setSuccessInfo(null)}>
+                                <X className="h-4 w-4 text-[var(--success)]" />
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="relative mb-4">
+                        <Search className="absolute top-1/2 left-4 h-5 w-5 -translate-y-1/2 text-[var(--grey-text)]" />
+                        <Input
+                            aria-label="Cari barang"
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            placeholder="Cari barang..."
+                            className="h-12 rounded-2xl border-[var(--border-strong)] bg-[var(--neutral-white)] pl-12 text-base"
+                        />
+                    </div>
+
+                    <div className="mb-6 flex gap-2 overflow-x-auto pb-1">
+                        <button
+                            aria-label="Lihat semua kategori"
+                            onClick={() => setActiveCategory('all')}
+                            className={`shrink-0 rounded-full border-2 px-4 py-2 text-sm font-semibold transition ${
+                                activeCategory === 'all'
+                                    ? 'border-[var(--surface-header)] bg-[var(--surface-header)] text-white'
+                                    : 'border-[var(--border-strong)] text-[var(--grey-text)]'
+                            }`}
+                        >
+                            Semua
+                        </button>
+                        {categories.map((cat) => (
+                            <button
+                                aria-label={`Filter kategori ${cat.name}`}
+                                key={cat.id}
+                                onClick={() => setActiveCategory(cat.id)}
+                                className={`flex shrink-0 items-center gap-2 rounded-full border-2 px-3 py-1.5 text-sm font-semibold transition ${
+                                    activeCategory === cat.id
+                                        ? 'border-[var(--surface-header)] bg-[var(--surface-header)] text-white'
+                                        : 'border-[var(--border-strong)] text-[var(--grey-text)]'
+                                }`}
+                            >
+                                <span
+                                    className="flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                                    style={{ backgroundColor: cat.color ?? '#94a3b8' }}
+                                >
+                                    {cat.name.charAt(0).toUpperCase()}
+                                </span>
+                                {cat.name}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
+                        {filteredItems.map((item) => {
+                            const stockLeft = remainingStock(item);
+                            const isOut = stockLeft <= 0;
+                            return (
+                                <div
+                                    key={item.id}
+                                    className="flex flex-col rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] p-3 shadow-sm"
+                                >
+                                    <div className="mb-2 flex h-20 w-full items-center justify-center overflow-hidden rounded-xl bg-[var(--second-accent)]">
+                                        {item.image ? (
+                                            <img src={`/storage/${item.image}`} alt={item.name} className="h-full w-full object-cover" />
+                                        ) : (
+                                            <span
+                                                className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-white"
+                                                style={{ backgroundColor: item.category.color ?? '#94a3b8' }}
+                                            >
+                                                {item.name.charAt(0).toUpperCase()}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <p className="truncate text-sm font-bold text-[var(--subheading)]">{item.name}</p>
+                                    <p className="mb-1 text-sm text-[var(--grey-text)]">Rp {item.price.toLocaleString('id-ID')}</p>
+                                    <p className={`mb-2 text-xs ${isOut ? 'text-[var(--danger)]' : 'text-[var(--grey-text)]'}`}>
+                                        {isOut ? 'Stok habis' : `Sisa: ${stockLeft}`}
+                                    </p>
+                                    <Button
+                                        aria-label={`Tambah ${item.name} ke keranjang`}
+                                        disabled={isOut}
+                                        onClick={() => handleAddToCart(item)}
+                                        className="h-9 w-full rounded-xl bg-[var(--surface-header)] text-sm font-bold hover:bg-[var(--surface-header-hover)] disabled:opacity-40"
+                                    >
+                                        + Tambah
+                                    </Button>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Panel keranjang — nempel di kanan (desktop) */}
+                <div className="hidden w-80 shrink-0 border-l border-[var(--border-strong)] bg-[var(--neutral-white)] lg:block">
+                    <div className="sticky top-0">{cartPanel}</div>
+                </div>
+
+                {/* Tombol keranjang melayang (mobile) */}
+                {cartCount > 0 && (
+                    <button
+                        aria-label="Buka keranjang"
+                        onClick={() => setCartOpen(true)}
+                        className="fixed right-5 bottom-5 z-40 flex items-center gap-2 rounded-full bg-[var(--surface-header)] px-5 py-3.5 text-white shadow-2xl lg:hidden"
+                    >
+                        <ShoppingCart className="h-4 w-4" />
+                        <span className="text-sm font-bold">
+                            {cartCount} item · Rp {subtotal.toLocaleString('id-ID')}
+                        </span>
+                    </button>
+                )}
+
+                {cartOpen && (
+                    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 lg:hidden">
+                        <div className="h-full w-[85vw] max-w-sm bg-[var(--neutral-white)]">{cartPanel}</div>
+                    </div>
+                )}
+            </div>
+
+            {showPayment && <PaymentModal cart={cart} subtotal={subtotal} onClose={() => setShowPayment(false)} onSuccess={handlePaymentSuccess} />}
+        </DashboardSidebarLayout>
+    );
+}

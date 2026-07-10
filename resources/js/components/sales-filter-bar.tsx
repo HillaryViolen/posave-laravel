@@ -22,10 +22,8 @@ interface Props {
     routeName: string;
     outlets: OutletOption[];
     filters: SalesFilters;
-    /** Param tambahan yang ingin dipertahankan saat filter berubah (mis. tab aktif). */
     extraParams?: Record<string, string>;
     onPrint?: () => void;
-    /** Tampilkan tombol Cetak. Di halaman Laporan tak diperlukan (export sudah menangani). */
     showPrint?: boolean;
 }
 
@@ -57,30 +55,40 @@ export function SalesFilterBar({ routeName, outlets, filters, extraParams = {}, 
             replace: true,
         });
     };
+    const showOutletSelect = outlets.length > 1;
 
     return (
         <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-                {/* Outlet */}
-                <Select
-                    value={filters.outlet_id ? String(filters.outlet_id) : 'all'}
-                    onValueChange={(v) => visit({ outlet_id: v === 'all' ? null : Number(v) })}
-                >
-                    <SelectTrigger className="h-10 w-full gap-2 rounded-lg border-transparent bg-[var(--second-accent)] font-medium text-[var(--subheading)] shadow-sm sm:w-[200px]">
-                        <span className="!flex min-w-0 items-center gap-2">
+                {showOutletSelect ? (
+                    <Select
+                        value={filters.outlet_id ? String(filters.outlet_id) : 'all'}
+                        onValueChange={(v) => visit({ outlet_id: v === 'all' ? null : Number(v) })}
+                    >
+                        <SelectTrigger className="h-10 w-full gap-2 rounded-lg border-transparent bg-[var(--second-accent)] font-medium text-[var(--subheading)] shadow-sm sm:w-[200px]">
+                            <span className="!flex min-w-0 items-center gap-2">
+                                <Store className="h-4 w-4 shrink-0 text-[var(--grey-text)]" />
+                                <SelectValue placeholder="Semua Outlet" />
+                            </span>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua Outlet</SelectItem>
+                            {outlets.map((o) => (
+                                <SelectItem key={o.id} value={String(o.id)}>
+                                    {o.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                ) : (
+                    outlets.length === 1 && (
+                        // Cuma 1 cabang: tampilin sebagai info statis, bukan dropdown kosong.
+                        <div className="flex h-10 w-full items-center gap-2 rounded-lg bg-[var(--second-accent)] px-3 font-medium text-[var(--subheading)] shadow-sm sm:w-fit">
                             <Store className="h-4 w-4 shrink-0 text-[var(--grey-text)]" />
-                            <SelectValue placeholder="Semua Outlet" />
-                        </span>
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Semua Outlet</SelectItem>
-                        {outlets.map((o) => (
-                            <SelectItem key={o.id} value={String(o.id)}>
-                                {o.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                            {outlets[0].name}
+                        </div>
+                    )
+                )}
 
                 {/* Preset rentang tanggal */}
                 <div className="flex h-10 w-full items-center rounded-md border border-[var(--border)] bg-[var(--neutral-white)] p-1 shadow-sm sm:w-auto">

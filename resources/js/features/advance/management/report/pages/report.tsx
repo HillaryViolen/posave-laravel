@@ -1,8 +1,8 @@
 import { SalesFilterBar, type OutletOption, type SalesFilters } from '@/components';
 import { Input } from '@/components/ui';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { DeltaBadge } from '@/features/advance/owner/dashboard/components';
-import { ExportMenu } from '@/features/advance/owner/report/components';
+import { DeltaBadge } from '@/features/advance/management/dashboard/components';
+import { ExportMenu } from '@/features/advance/management/report/components';
 import {
     cur,
     num,
@@ -13,7 +13,7 @@ import {
     type ExportColumn,
     type ExportFormat,
     type ReportExport,
-} from '@/features/advance/owner/report/lib/export';
+} from '@/features/advance/management/report/lib/export';
 import { DashboardSidebarLayout } from '@/layouts';
 import { formatNumber, formatPct, formatRupiah } from '@/lib/format';
 import { Head } from '@inertiajs/react';

@@ -1,44 +1,32 @@
-import { AppShell, AppSidebar, SidebarTrigger } from '@/components';
-import { Badge, Button, Card, CardContent, Input, Separator, Sheet, SheetContent } from '@/components/ui';
-import { cashierNavItems } from '@/data';
-import { Chatbot, useChatbot } from '@/features/chatbot';
-import { Head } from '@inertiajs/react';
-import { Banknote, ChevronLeft, ChevronRight, MessageSquare, QrCode, Search, ShoppingCart } from 'lucide-react';
-import { useState } from 'react';
+import { Badge, Button, SearchInput } from '@/components';
+import { Card, CardContent, Input, Separator, Sheet, SheetContent } from '@/components/ui';
+import { CartItem, CategoryOption, ItemOption } from '@/features/advance/cashier/order/type';
+import { useChatbot } from '@/features/chatbot';
+import { CashierLayout } from '@/layouts';
+import { Head, router } from '@inertiajs/react';
+import axios from 'axios';
+import { Banknote, ChevronLeft, ChevronRight, MessageSquare, QrCode, ShoppingCart } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
-const CATEGORIES = [
-    { name: 'Snack', icon: '🍟' },
-    { name: 'Susu', icon: '🥛' },
-    { name: 'Coklat', icon: '🍫' },
-    { name: 'Tepung', icon: '🌾' },
-    { name: 'Minuman', icon: '🥤' },
-    { name: 'Mentega', icon: '🧈' },
-];
+interface Props {
+    items: ItemOption[];
+    categories: CategoryOption[];
+}
 
-const PRODUCTS = Array.from({ length: 8 }, (_, i) => ({
-    id: i + 1,
-    name: 'Japota',
-    subtitle: 'Rumput Laut',
-    price: 10000,
-}));
+const QUICK_AMOUNTS = [20000, 50000, 100000, 150000];
 
-const QUICK_AMOUNTS = [20000, 50000, 50000, 100000];
-
-type CartItem = { id: number; name: string; price: number; qty: number; note: string };
-
-export default function OrderPage() {
+export default function OrderPage({ items, categories }: Props) {
     const { open } = useChatbot();
-    const [activeCategory, setActiveCategory] = useState('Snack');
-    const [selectedProductId, setSelectedProductId] = useState<number | null>(1);
-    const [cart, setCart] = useState<CartItem[]>([
-        { id: 1, name: 'Susu Kental Manis', price: 5000, qty: 5, note: '' },
-        { id: 2, name: 'Susu Kental Manis', price: 5000, qty: 5, note: '' },
-    ]);
+    const [search, setSearch] = useState('');
+    const [activeCategory, setActiveCategory] = useState<number | 'all'>('all');
+    const [cart, setCart] = useState<CartItem[]>([]);
     const [showPayment, setShowPayment] = useState(false);
     const [paymentMethod, setPaymentMethod] = useState<'cash' | 'qris'>('cash');
     const [customerMoney, setCustomerMoney] = useState(0);
     const [showQris, setShowQris] = useState(false);
     const [sheetOpen, setSheetOpen] = useState(false);
+    const [processing, setProcessing] = useState(false);
+    const [successInfo, setSuccessInfo] = useState<{ invoice: string; total: number } | null>(null);
 
     const discount = 0;
     const subtotal = cart.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -46,11 +34,36 @@ export default function OrderPage() {
     const kembalian = customerMoney > totalTagihan ? customerMoney - totalTagihan : 0;
     const cartCount = cart.reduce((s, i) => s + i.qty, 0);
 
+    const filteredItems = useMemo(() => {
+        return items.filter((i) => {
+            const matchCategory = activeCategory === 'all' || i.category_id === activeCategory;
+            const matchSearch = !search || i.name.toLowerCase().includes(search.toLowerCase());
+            return matchCategory && matchSearch;
+        });
+    }, [items, activeCategory, search]);
+
+    const remainingStock = (item: ItemOption) => {
+        const inCart = cart.find((c) => c.itemId === item.id);
+        return item.available_stock - (inCart?.qty ?? 0);
+    };
+
+    const handleAddToCart = (item: ItemOption) => {
+        if (remainingStock(item) <= 0) return;
+
+        setCart((prev) => {
+            const existing = prev.find((c) => c.itemId === item.id);
+            if (existing) {
+                return prev.map((c) => (c.itemId === item.id ? { ...c, qty: c.qty + 1 } : c));
+            }
+            return [...prev, { itemId: item.id, name: item.name, price: item.price, qty: 1, note: '', maxStock: item.available_stock }];
+        });
+    };
+
     const updateNote = (index: number, note: string) => setCart((prev) => prev.map((item, i) => (i === index ? { ...item, note } : item)));
 
     const handleLanjutPembayaran = () => {
         setShowPayment(true);
-        if (window.innerWidth < 1024) setSheetOpen(true);
+        if (window.innerWidth < 1280) setSheetOpen(true);
     };
 
     const handleCancel = () => {
@@ -60,7 +73,25 @@ export default function OrderPage() {
         setSheetOpen(false);
     };
 
-    // ── Panel content — shared between desktop sidebar & mobile Sheet ────────
+    const handleConfirmPayment = async () => {
+        setProcessing(true);
+        try {
+            const res = await axios.post(route('cashier.order.store'), {
+                items: cart.map((c) => ({ item_id: c.itemId, qty: c.qty, note: c.note || null })),
+                payment_method: paymentMethod,
+            });
+
+            setSuccessInfo({ invoice: res.data.invoice_no, total: res.data.total });
+            setCart([]);
+            handleCancel();
+
+            router.reload({ only: ['items'] });
+        } catch (err: any) {
+            alert(err?.response?.data?.message ?? 'Gagal memproses pembayaran. Coba lagi.');
+        } finally {
+            setProcessing(false);
+        }
+    };
 
     const orderDetailInner = (
         <>
@@ -68,7 +99,9 @@ export default function OrderPage() {
                 <h2 className="text-base font-bold tracking-widest uppercase">Order Detail</h2>
                 <div className="mt-1 flex items-center justify-between text-[11px]">
                     <span className="font-medium text-slate-300">Kopiakin Resto</span>
-                    <span className="text-slate-400">Tuesday, 2 Feb 2021</span>
+                    <span className="text-slate-400">
+                        {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                    </span>
                 </div>
             </div>
             <Separator className="bg-white/10" />
@@ -82,11 +115,12 @@ export default function OrderPage() {
             </div>
 
             <div className="flex-1 space-y-3 overflow-y-auto px-5 pb-2">
+                {cart.length === 0 && <p className="pt-4 text-center text-xs text-slate-400">Belum ada barang dipilih</p>}
                 {cart.map((item, index) => (
-                    <div key={index} className="space-y-1.5">
+                    <div key={item.itemId} className="space-y-1.5">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/20 text-lg">🥛</div>
+                                <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-blue-500/20 text-lg">🛒</div>
                                 <div>
                                     <p className="text-xs leading-tight font-semibold text-slate-200">{item.name}</p>
                                     <p className="text-[10px] text-slate-400">Rp. {item.price.toLocaleString('id-ID')}</p>
@@ -100,6 +134,7 @@ export default function OrderPage() {
                             </div>
                         </div>
                         <Input
+                            aria-label={`Catatan untuk ${item.name}`}
                             value={item.note}
                             onChange={(e) => updateNote(index, e.target.value)}
                             placeholder="Catatan"
@@ -124,13 +159,19 @@ export default function OrderPage() {
 
             <div className="space-y-2 p-5">
                 <Button
+                    aria-label="Cetak pesanan"
                     variant="outline"
                     className="h-10 w-full border-white/20 bg-transparent text-xs font-semibold text-white hover:bg-white/10 hover:text-white"
                 >
                     Cetak
                 </Button>
                 {!showPayment && (
-                    <Button onClick={handleLanjutPembayaran} className="h-11 w-full bg-white text-xs font-bold text-slate-900 hover:bg-slate-100">
+                    <Button
+                        aria-label="Lanjut ke pembayaran"
+                        onClick={handleLanjutPembayaran}
+                        disabled={cart.length === 0}
+                        className="h-11 w-full bg-white text-xs font-bold text-slate-900 hover:bg-slate-100 disabled:opacity-50"
+                    >
                         Lanjut Pembayaran
                     </Button>
                 )}
@@ -142,7 +183,7 @@ export default function OrderPage() {
         <>
             <div className="p-5">
                 <h2 className="text-base font-bold">Payment</h2>
-                <p className="text-[11px] text-sky-300">3 payment methods</p>
+                <p className="text-[11px] text-sky-300">2 payment methods</p>
             </div>
             <Separator className="bg-sky-800" />
 
@@ -157,6 +198,7 @@ export default function OrderPage() {
                             ] as const
                         ).map((method) => (
                             <button
+                                aria-label={`Pilih metode pembayaran ${method.label}`}
                                 key={method.id}
                                 onClick={() => {
                                     setPaymentMethod(method.id);
@@ -188,6 +230,7 @@ export default function OrderPage() {
                         <div className="grid grid-cols-2 gap-2">
                             {QUICK_AMOUNTS.map((amount, i) => (
                                 <Button
+                                    aria-label={`Nominal cepat Rp ${amount}`}
                                     key={i}
                                     onClick={() => setCustomerMoney(amount)}
                                     className={`h-9 text-xs font-medium ${
@@ -201,6 +244,7 @@ export default function OrderPage() {
                             ))}
                         </div>
                         <Input
+                            aria-label="Nominal uang pelanggan"
                             type="number"
                             value={customerMoney || ''}
                             onChange={(e) => setCustomerMoney(Number(e.target.value))}
@@ -224,7 +268,11 @@ export default function OrderPage() {
                                 <span className="text-[10px] text-slate-500">Scan untuk POSAVE</span>
                             </div>
                         ) : (
-                            <Button onClick={() => setShowQris(true)} className="bg-white px-8 text-xs font-bold text-slate-900 hover:bg-slate-100">
+                            <Button
+                                aria-label="Tampilkan kode QRIS"
+                                onClick={() => setShowQris(true)}
+                                className="bg-white px-8 text-xs font-bold text-slate-900 hover:bg-slate-100"
+                            >
                                 Tampilkan Qris
                             </Button>
                         )}
@@ -235,145 +283,180 @@ export default function OrderPage() {
             <Separator className="bg-sky-800" />
             <div className="space-y-2 p-5">
                 <Button
+                    aria-label="Batalkan pembayaran"
                     onClick={handleCancel}
                     variant="outline"
                     className="h-10 w-full border-sky-700 bg-transparent text-xs text-white hover:bg-sky-800 hover:text-white"
                 >
                     Cancel
                 </Button>
-                <Button className="h-11 w-full bg-white text-xs font-bold text-slate-900 hover:bg-slate-100">Confirm payment</Button>
+                <Button
+                    aria-label="Konfirmasi pembayaran"
+                    onClick={handleConfirmPayment}
+                    disabled={processing || (paymentMethod === 'cash' && customerMoney < totalTagihan)}
+                    className="h-11 w-full bg-white text-xs font-bold text-slate-900 hover:bg-slate-100 disabled:opacity-50"
+                >
+                    {processing ? 'Memproses...' : 'Confirm payment'}
+                </Button>
             </div>
         </>
     );
 
     return (
-        <AppShell variant="sidebar">
+        <CashierLayout>
             <Head title="Kasir - POSAVE" />
-            <AppSidebar items={cashierNavItems} />
-            <main className="flex h-screen flex-1 overflow-hidden">
-                {/* ── LEFT: Menu area ─────────────────────────────────── */}
-                <div className="flex flex-1 flex-col overflow-y-auto bg-white p-6">
-                    {/* Search + AI button */}
-                    <div className="mb-6 flex items-center gap-4">
-                        <SidebarTrigger />
-                        <div className="relative max-w-sm flex-1">
-                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                            <Input placeholder="Search" className="h-10 rounded-full border-slate-200 bg-slate-50 pl-10" />
+
+            <div className="flex flex-1 flex-col overflow-y-auto bg-white p-4 sm:p-6">
+                <div className="mb-6 flex items-center gap-3 sm:gap-4">
+                    <SearchInput
+                        value={search}
+                        onChange={setSearch}
+                        onSubmit={(e) => e.preventDefault()}
+                        placeholder="Cari barang..."
+                        variant="kiosk"
+                    />
+                    <Button
+                        aria-label="Buka asisten chatbot"
+                        onClick={open}
+                        variant="outline"
+                        className="ml-auto h-10 shrink-0 rounded-md border-blue-200 bg-white text-[#003399] shadow-sm hover:bg-blue-50"
+                    >
+                        <MessageSquare className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Tanya Temanmu</span>
+                    </Button>
+                </div>
+
+                {successInfo && (
+                    <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                        Pembayaran berhasil! Invoice <strong>{successInfo.invoice}</strong> · Total Rp. {successInfo.total.toLocaleString('id-ID')}
+                    </div>
+                )}
+
+                <div className="mb-6">
+                    <div className="mb-3 flex items-center justify-between">
+                        <h2 className="text-sm font-bold text-slate-800">Kategori</h2>
+                        <div className="hidden gap-1 sm:flex">
+                            <Button
+                                aria-label="Geser kategori ke kiri"
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7 rounded-full border-slate-200"
+                            >
+                                <ChevronLeft className="h-3 w-3" />
+                            </Button>
+                            <Button
+                                aria-label="Geser kategori ke kanan"
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7 rounded-full border-slate-200"
+                            >
+                                <ChevronRight className="h-3 w-3" />
+                            </Button>
                         </div>
-                        <Button
-                            onClick={open}
-                            variant="outline"
-                            className="ml-auto h-10 rounded-md border-blue-200 bg-white text-[#003399] shadow-sm hover:bg-blue-50"
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto pb-2">
+                        <button
+                            aria-label="Tampilkan semua kategori"
+                            onClick={() => setActiveCategory('all')}
+                            className={`flex min-w-[76px] shrink-0 cursor-pointer flex-col items-center gap-1.5 rounded-2xl border px-3 py-3 transition ${
+                                activeCategory === 'all'
+                                    ? 'border-blue-500 bg-blue-500 text-white'
+                                    : 'border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                            }`}
                         >
-                            <MessageSquare className="mr-2 h-4 w-4" />
-                            Tanya Temanmu
-                        </Button>
-                    </div>
-
-                    {/* Categories */}
-                    <div className="mb-6">
-                        <div className="mb-3 flex items-center justify-between">
-                            <h2 className="text-sm font-bold text-slate-800">Kategori</h2>
-                            <div className="flex gap-1">
-                                <Button variant="outline" size="icon" className="h-7 w-7 rounded-full border-slate-200">
-                                    <ChevronLeft className="h-3 w-3" />
-                                </Button>
-                                <Button variant="outline" size="icon" className="h-7 w-7 rounded-full border-slate-200">
-                                    <ChevronRight className="h-3 w-3" />
-                                </Button>
-                            </div>
-                        </div>
-                        <div className="flex gap-3 overflow-x-auto pb-2">
-                            {CATEGORIES.map((cat) => (
-                                <button
-                                    key={cat.name}
-                                    onClick={() => setActiveCategory(cat.name)}
-                                    className={`flex min-w-[76px] cursor-pointer flex-col items-center gap-1.5 rounded-2xl border px-3 py-3 transition ${
-                                        activeCategory === cat.name
-                                            ? 'border-blue-500 bg-blue-500 text-white'
-                                            : 'border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100'
-                                    }`}
-                                >
-                                    <span className="text-xl leading-none">{cat.icon}</span>
-                                    <span className="text-[11px] font-semibold">{cat.name}</span>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
-                    {/* Product grid */}
-                    <div>
-                        <h2 className="mb-3 text-sm font-bold text-slate-800">Menu</h2>
-                        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-                            {PRODUCTS.map((product) => {
-                                const isSelected = selectedProductId === product.id;
-                                return (
-                                    <Card
-                                        key={product.id}
-                                        onClick={() => setSelectedProductId(product.id)}
-                                        className={`cursor-pointer overflow-hidden transition ${
-                                            isSelected ? 'border-2 border-blue-500 shadow-md' : 'border border-slate-200 hover:shadow-sm'
-                                        }`}
-                                    >
-                                        <CardContent className="flex flex-col items-center p-3">
-                                            <div className="mb-3 flex h-24 w-full items-center justify-center rounded-xl bg-slate-100 text-4xl">
-                                                🍟
-                                            </div>
-                                            <p className="text-center text-xs leading-tight font-bold text-slate-700">{product.name}</p>
-                                            <p className="mb-3 text-center text-xs text-slate-500">{product.subtitle}</p>
-                                            <Button
-                                                size="sm"
-                                                className="w-full rounded-full bg-slate-700 text-xs font-medium text-white hover:bg-slate-800"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                Tambah
-                                            </Button>
-                                        </CardContent>
-                                    </Card>
-                                );
-                            })}
-                        </div>
+                            <span className="text-xl leading-none">🗂️</span>
+                            <span className="text-[11px] font-semibold">Semua</span>
+                        </button>
+                        {categories.map((cat) => (
+                            <button
+                                aria-label={`Filter kategori ${cat.name}`}
+                                key={cat.id}
+                                onClick={() => setActiveCategory(cat.id)}
+                                className={`flex min-w-[76px] shrink-0 cursor-pointer flex-col items-center gap-1.5 rounded-2xl border px-3 py-3 transition ${
+                                    activeCategory === cat.id
+                                        ? 'border-blue-500 bg-blue-500 text-white'
+                                        : 'border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                                }`}
+                            >
+                                <span className="text-xl leading-none">📦</span>
+                                <span className="text-[11px] font-semibold">{cat.name}</span>
+                            </button>
+                        ))}
                     </div>
                 </div>
 
-                {/* ── MIDDLE: Order Detail (desktop only) ─────────────── */}
-                <div className="hidden w-[340px] flex-col border-l border-white/10 bg-[var(--sidebar)] text-white lg:flex">{orderDetailInner}</div>
+                <div>
+                    <h2 className="mb-3 text-sm font-bold text-slate-800">Menu</h2>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-4">
+                        {filteredItems.map((item) => {
+                            const stockLeft = remainingStock(item);
+                            const isOut = stockLeft <= 0;
+                            return (
+                                <Card key={item.id} className="overflow-hidden border border-slate-200 hover:shadow-sm">
+                                    <CardContent className="flex flex-col items-center p-3">
+                                        <div className="mb-3 flex h-24 w-full items-center justify-center overflow-hidden rounded-xl bg-slate-100">
+                                            {item.image ? (
+                                                <img src={`/storage/${item.image}`} alt={item.name} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <span className="text-4xl">📦</span>
+                                            )}
+                                        </div>
+                                        <p className="text-center text-xs leading-tight font-bold text-slate-700">{item.name}</p>
+                                        <p className="mb-1 text-center text-xs text-slate-500">Rp. {item.price.toLocaleString('id-ID')}</p>
+                                        <p className={`mb-3 text-[10px] ${isOut ? 'text-red-500' : 'text-slate-400'}`}>
+                                            {isOut ? 'Stok habis' : `Sisa stok: ${stockLeft}`}
+                                        </p>
+                                        <Button
+                                            aria-label={`Tambah ${item.name} ke pesanan`}
+                                            size="sm"
+                                            disabled={isOut}
+                                            className="w-full rounded-full bg-slate-700 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-40"
+                                            onClick={() => handleAddToCart(item)}
+                                        >
+                                            Tambah
+                                        </Button>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
 
-                {/* ── RIGHT: Payment panel (desktop only) ──────────────── */}
-                {showPayment && <div className="hidden w-[320px] flex-col border-l border-sky-950 bg-sky-900 text-white lg:flex">{paymentInner}</div>}
+            {/* Order Detail — sidebar mulai 1024px (lg) */}
+            <div className="hidden w-[340px] flex-col border-l border-white/10 bg-[var(--sidebar)] text-white lg:flex">{orderDetailInner}</div>
 
-                {/* ── FAB: opens Sheet on mobile/tablet ────────────────── */}
-                {cartCount > 0 && (
-                    <button
-                        onClick={() => setSheetOpen(true)}
-                        className="fixed right-6 bottom-6 z-40 flex items-center gap-2 rounded-full bg-[var(--sidebar)] px-5 py-3.5 text-white shadow-2xl lg:hidden"
-                    >
-                        <ShoppingCart className="h-4 w-4" />
-                        <span className="text-sm font-bold">
-                            {cartCount} item · Rp. {subtotal.toLocaleString('id-ID')}
-                        </span>
-                    </button>
-                )}
+            {/* Payment — sidebar baru mulai 1280px (xl), biar gak gencet konten di laptop kecil */}
+            {showPayment && <div className="hidden w-[320px] flex-col border-l border-sky-950 bg-sky-900 text-white xl:flex">{paymentInner}</div>}
 
-                {/* ── Sheet: Order Detail + Payment on mobile/tablet ───── */}
-                <Sheet
-                    open={sheetOpen}
-                    onOpenChange={(open) => {
-                        if (!open) handleCancel();
-                        else setSheetOpen(true);
-                    }}
+            {cartCount > 0 && !sheetOpen && (
+                <button
+                    aria-label="Buka detail pesanan"
+                    onClick={() => setSheetOpen(true)}
+                    className="fixed right-4 bottom-4 z-40 flex items-center gap-2 rounded-full bg-[var(--sidebar)] px-4 py-3 text-white shadow-2xl sm:right-6 sm:bottom-6 sm:px-5 sm:py-3.5 lg:hidden"
                 >
-                    <SheetContent
-                        side="right"
-                        className="flex w-[85vw] flex-col border-l-0 p-0 text-white sm:max-w-[400px]"
-                        style={{ background: showPayment ? 'rgb(12 74 110)' : 'var(--sidebar)' }}
-                    >
-                        <div className="flex flex-1 flex-col overflow-hidden">{showPayment ? paymentInner : orderDetailInner}</div>
-                    </SheetContent>
-                </Sheet>
-            </main>
+                    <ShoppingCart className="h-4 w-4" />
+                    <span className="text-sm font-bold">
+                        {cartCount} item · Rp. {subtotal.toLocaleString('id-ID')}
+                    </span>
+                </button>
+            )}
 
-            <Chatbot />
-        </AppShell>
+            <Sheet
+                open={sheetOpen}
+                onOpenChange={(open) => {
+                    if (!open) handleCancel();
+                    else setSheetOpen(true);
+                }}
+            >
+                <SheetContent
+                    side="right"
+                    className="flex w-[90vw] flex-col border-l-0 p-0 text-white sm:w-[85vw] sm:max-w-[400px]"
+                    style={{ background: showPayment ? 'rgb(12 74 110)' : 'var(--sidebar)' }}
+                >
+                    <div className="flex flex-1 flex-col overflow-hidden">{showPayment ? paymentInner : orderDetailInner}</div>
+                </SheetContent>
+            </Sheet>
+        </CashierLayout>
     );
 }
