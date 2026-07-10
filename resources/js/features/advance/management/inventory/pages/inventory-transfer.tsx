@@ -1,9 +1,21 @@
-import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import {
+    Button,
+    DateNavigator,
+    FilterDropdown,
+    Pagination,
+    SearchInput,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components';
 import { InventoryTransferCreateModal, TransferRejectModal } from '@/features/advance/management/inventory/components';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
-import { AlertCircle, Check, ChevronDown, ChevronLeft, ChevronRight, Plus, Printer, Search, X as XIcon } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import { AlertCircle, Check, Plus, Printer, X as XIcon } from 'lucide-react';
+import React, { useState } from 'react';
 
 interface BranchOption {
     id: number;
@@ -48,6 +60,12 @@ const statusLabel: Record<string, { text: string; className: string }> = {
     rejected: { text: 'Ditolak', className: 'bg-red-100 text-red-600' },
 };
 
+const STATUS_OPTIONS = [
+    { value: 'waiting', label: 'Menunggu' },
+    { value: 'success', label: 'Diterima' },
+    { value: 'rejected', label: 'Ditolak' },
+];
+
 export default function InventoryTransferList({
     transfers,
     inventoryItems,
@@ -60,7 +78,6 @@ export default function InventoryTransferList({
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [rejectTarget, setRejectTarget] = useState<Transfer | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
-    const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
 
     const currentDate = filters.date ?? new Date().toISOString().slice(0, 10);
 
@@ -74,12 +91,6 @@ export default function InventoryTransferList({
                 replace: true,
             },
         );
-    };
-
-    const shiftDate = (days: number) => {
-        const d = new Date(currentDate);
-        d.setDate(d.getDate() + days);
-        applyFilters({ date: d.toISOString().slice(0, 10) });
     };
 
     const handleSearch = (e: React.FormEvent) => {
@@ -97,33 +108,32 @@ export default function InventoryTransferList({
         router.delete(route('dashboard.inventory.transfers.destroy', transfer.id));
     };
 
-    const formattedDate = new Date(currentDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
     const showingIncomingTab = filters.view === 'incoming';
 
     return (
         <DashboardSidebarLayout title="Kiriman" description="Kelola pengiriman barang antar cabang anda">
             <Head title="Kiriman" />
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--page-bg)] p-6">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--page-bg)] p-4 sm:p-6">
                 {/* Notifikasi: ada kiriman masuk yang perlu keputusan saya */}
                 {incoming_pending_count > 0 && !showingIncomingTab && (
                     <button
                         onClick={() => applyFilters({ view: 'incoming', status: undefined })}
-                        className="mb-4 flex items-center justify-between rounded-xl border-2 border-amber-400 bg-amber-50 px-4 py-3 text-left transition hover:bg-amber-100"
+                        className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border-2 border-amber-400 bg-amber-50 px-4 py-3 text-left transition hover:bg-amber-100"
                     >
                         <span className="flex items-center gap-2 text-sm font-semibold text-amber-800">
-                            <AlertCircle className="h-5 w-5" />
+                            <AlertCircle className="h-5 w-5 shrink-0" />
                             {incoming_pending_count} kiriman menunggu konfirmasi kamu
                         </span>
-                        <span className="text-xs font-medium text-amber-700 underline">Lihat</span>
+                        <span className="text-xs font-medium whitespace-nowrap text-amber-700 underline">Lihat</span>
                     </button>
                 )}
 
                 {showingIncomingTab && (
-                    <div className="mb-4 flex items-center justify-between rounded-xl bg-[var(--second-accent)] px-4 py-2.5">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[var(--second-accent)] px-4 py-2.5">
                         <span className="text-sm font-medium text-[var(--subheading)]">Menampilkan: Perlu Konfirmasi Saya</span>
                         <button
                             onClick={() => applyFilters({ view: undefined })}
-                            className="text-xs font-medium text-[var(--secondary-700)] hover:underline"
+                            className="text-xs font-medium whitespace-nowrap text-[var(--secondary-700)] hover:underline"
                         >
                             Lihat Semua
                         </button>
@@ -131,17 +141,7 @@ export default function InventoryTransferList({
                 )}
 
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 py-2">
-                            <button aria-label="Hari sebelumnya" onClick={() => shiftDate(-1)}>
-                                <ChevronLeft className="h-4 w-4" />
-                            </button>
-                            <span className="text-sm">{formattedDate}</span>
-                            <button aria-label="Hari berikutnya" onClick={() => shiftDate(1)}>
-                                <ChevronRight className="h-4 w-4" />
-                            </button>
-                        </div>
-                    </div>
+                    <DateNavigator date={currentDate} onChange={(date) => applyFilters({ date })} variant="default" size="sm" />
 
                     <div className="flex items-center gap-3">
                         <Button
@@ -158,150 +158,117 @@ export default function InventoryTransferList({
                     </div>
                 </div>
 
-                <div className="mb-4 flex items-center justify-between gap-4">
-                    <form onSubmit={handleSearch} className="flex items-center gap-2">
-                        <div className="relative">
-                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
-                            <input
-                                aria-label="Cari nomor kiriman"
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Cari nomor kiriman..."
-                                className="focus:ring-ring h-10 rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] pr-4 pl-9 text-sm focus:ring-1 focus:outline-none"
-                            />
-                        </div>
-                    </form>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+                    <SearchInput value={search} onChange={setSearch} onSubmit={handleSearch} placeholder="Cari nomor kiriman..." />
 
-                    <div className="relative">
-                        <select
-                            aria-label="Filter status"
-                            value={filters.status ?? ''}
-                            onChange={(e) => applyFilters({ status: e.target.value || undefined })}
-                            className="h-10 appearance-none rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 pr-9 text-sm"
-                        >
-                            <option value="">Semua Status</option>
-                            <option value="waiting">Menunggu</option>
-                            <option value="success">Diterima</option>
-                            <option value="rejected">Ditolak</option>
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
+                    <FilterDropdown
+                        value={filters.status}
+                        options={STATUS_OPTIONS}
+                        allLabel="Semua Status"
+                        onChange={(v) => applyFilters({ status: v })}
+                    />
+                </div>
+
+                <div className="overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
+                    <div className="overflow-x-auto">
+                        <Table className="min-w-[860px]">
+                            <TableHeader className="bg-[var(--surface-header)]">
+                                <TableRow className="border-none hover:bg-[var(--surface-header)]">
+                                    <TableHead className="text-[var(--text-light)]">Tanggal</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Pengirim</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Penerima</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Nomor Kiriman</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Barang</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Status</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Aksi</TableHead>
+                                </TableRow>
+                            </TableHeader>
+
+                            <TableBody>
+                                {transfers.data.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="py-10 text-center text-[var(--grey-text)]">
+                                            Belum ada kiriman
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    transfers.data.map((transfer) => {
+                                        const iAmReceiverWaiting = transfer.receiver_branch.id === my_branch_id && transfer.status === 'waiting';
+                                        const iAmSenderWaiting = transfer.sender_branch.id === my_branch_id && transfer.status === 'waiting';
+
+                                        return (
+                                            <TableRow key={transfer.id} className={iAmReceiverWaiting ? 'bg-amber-50/50' : ''}>
+                                                <TableCell>
+                                                    <div className="text-xs whitespace-nowrap text-[var(--grey-text)]">
+                                                        {new Date(transfer.date).toLocaleDateString('id-ID', {
+                                                            day: 'numeric',
+                                                            month: 'long',
+                                                            year: 'numeric',
+                                                        })}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="whitespace-nowrap">{transfer.sender_branch.name}</TableCell>
+                                                <TableCell className="whitespace-nowrap">{transfer.receiver_branch.name}</TableCell>
+                                                <TableCell className="whitespace-nowrap">#{transfer.transfer_number}</TableCell>
+                                                <TableCell className="whitespace-nowrap">{transfer.items_count} barang</TableCell>
+                                                <TableCell>
+                                                    <span
+                                                        className={`rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${statusLabel[transfer.status].className}`}
+                                                    >
+                                                        {statusLabel[transfer.status].text}
+                                                    </span>
+                                                    {transfer.status === 'rejected' && transfer.rejection_note && (
+                                                        <p
+                                                            className="mt-1 max-w-[180px] truncate text-xs text-[var(--grey-text)]"
+                                                            title={transfer.rejection_note}
+                                                        >
+                                                            "{transfer.rejection_note}"
+                                                        </p>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {iAmReceiverWaiting && (
+                                                        <div className="flex gap-1.5">
+                                                            <button
+                                                                aria-label={`Terima kiriman ${transfer.transfer_number}`}
+                                                                onClick={() => handleAccept(transfer)}
+                                                                className="flex shrink-0 items-center gap-1 rounded-lg bg-green-600 px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap text-white hover:bg-green-700"
+                                                            >
+                                                                <Check className="h-3.5 w-3.5" /> Terima
+                                                            </button>
+                                                            <button
+                                                                aria-label={`Tolak kiriman ${transfer.transfer_number}`}
+                                                                onClick={() => setRejectTarget(transfer)}
+                                                                className="flex shrink-0 items-center gap-1 rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap text-red-600 hover:bg-red-200"
+                                                            >
+                                                                <XIcon className="h-3.5 w-3.5" /> Tolak
+                                                            </button>
+                                                        </div>
+                                                    )}
+                                                    {iAmSenderWaiting && (
+                                                        <button
+                                                            aria-label={`Batalkan kiriman ${transfer.transfer_number}`}
+                                                            onClick={() => handleCancel(transfer)}
+                                                            className="rounded-lg border border-[var(--border-strong)] px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-[var(--grey-text)] hover:bg-[var(--second-accent)]"
+                                                        >
+                                                            Batalkan
+                                                        </button>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
                 </div>
 
-                <div className="max-h-full overflow-y-auto rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
-                    <Table>
-                        <TableHeader className="bg-[var(--surface-header)]">
-                            <TableRow className="border-none hover:bg-[var(--surface-header)]">
-                                <TableHead className="text-[var(--text-light)]">Tanggal</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Pengirim</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Penerima</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Nomor Kiriman</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Barang</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Status</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-
-                        <TableBody>
-                            {transfers.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="py-10 text-center text-[var(--grey-text)]">
-                                        Belum ada kiriman
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                transfers.data.map((transfer) => {
-                                    const iAmReceiverWaiting = transfer.receiver_branch.id === my_branch_id && transfer.status === 'waiting';
-                                    const iAmSenderWaiting = transfer.sender_branch.id === my_branch_id && transfer.status === 'waiting';
-
-                                    return (
-                                        <TableRow key={transfer.id} className={iAmReceiverWaiting ? 'bg-amber-50/50' : ''}>
-                                            <TableCell>
-                                                <div className="text-xs text-[var(--grey-text)]">
-                                                    {new Date(transfer.date).toLocaleDateString('id-ID', {
-                                                        day: 'numeric',
-                                                        month: 'long',
-                                                        year: 'numeric',
-                                                    })}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{transfer.sender_branch.name}</TableCell>
-                                            <TableCell>{transfer.receiver_branch.name}</TableCell>
-                                            <TableCell>#{transfer.transfer_number}</TableCell>
-                                            <TableCell>{transfer.items_count} barang</TableCell>
-                                            <TableCell>
-                                                <span
-                                                    className={`rounded-full px-3 py-1 text-xs font-medium ${statusLabel[transfer.status].className}`}
-                                                >
-                                                    {statusLabel[transfer.status].text}
-                                                </span>
-                                                {transfer.status === 'rejected' && transfer.rejection_note && (
-                                                    <p
-                                                        className="mt-1 max-w-[180px] truncate text-xs text-[var(--grey-text)]"
-                                                        title={transfer.rejection_note}
-                                                    >
-                                                        "{transfer.rejection_note}"
-                                                    </p>
-                                                )}
-                                            </TableCell>
-                                            <TableCell>
-                                                {iAmReceiverWaiting && (
-                                                    <div className="flex gap-1.5">
-                                                        <button
-                                                            aria-label={`Terima kiriman ${transfer.transfer_number}`}
-                                                            onClick={() => handleAccept(transfer)}
-                                                            className="flex items-center gap-1 rounded-lg bg-green-600 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-green-700"
-                                                        >
-                                                            <Check className="h-3.5 w-3.5" /> Terima
-                                                        </button>
-                                                        <button
-                                                            aria-label={`Tolak kiriman ${transfer.transfer_number}`}
-                                                            onClick={() => setRejectTarget(transfer)}
-                                                            className="flex items-center gap-1 rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-200"
-                                                        >
-                                                            <XIcon className="h-3.5 w-3.5" /> Tolak
-                                                        </button>
-                                                    </div>
-                                                )}
-                                                {iAmSenderWaiting && (
-                                                    <button
-                                                        aria-label={`Batalkan kiriman ${transfer.transfer_number}`}
-                                                        onClick={() => handleCancel(transfer)}
-                                                        className="rounded-lg border border-[var(--border-strong)] px-2.5 py-1.5 text-xs font-medium text-[var(--grey-text)] hover:bg-[var(--second-accent)]"
-                                                    >
-                                                        Batalkan
-                                                    </button>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                <div className="mt-auto flex items-center justify-between pt-4">
+                <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
                     <span className="text-sm text-[var(--grey-text)]">
                         Menampilkan {transfers.from ?? 0}-{transfers.to ?? 0} dari {transfers.total} Kiriman
                     </span>
-                    <div className="flex items-center gap-1">
-                        {transfers.links.map((link, i) => (
-                            <button
-                                aria-label="Navigasi halaman"
-                                key={i}
-                                disabled={!link.url}
-                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                className={`rounded-lg px-3 py-1.5 text-sm ${
-                                    link.active
-                                        ? 'bg-[var(--surface-header)] font-medium text-white'
-                                        : 'bg-[var(--neutral-white)] text-[var(--grey-text)] hover:bg-[var(--surface-badge)] disabled:cursor-not-allowed disabled:opacity-40'
-                                }`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
+                    <Pagination links={transfers.links} />
                 </div>
             </div>
 

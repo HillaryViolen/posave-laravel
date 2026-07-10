@@ -1,8 +1,21 @@
-import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import {
+    Button,
+    DateNavigator,
+    FilterDropdown,
+    Pagination,
+    PerPageSelect,
+    SearchInput,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components';
 import { InventoryPurchaseOrderActionsMenu, InventoryPurchaseOrderCreateModal } from '@/features/advance/management/inventory/components';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
-import { ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Plus, Printer, Search } from 'lucide-react';
+import { MoreVertical, Plus, Printer } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
 interface Supplier {
@@ -53,6 +66,12 @@ const statusLabel: Record<string, { text: string; className: string }> = {
     cancelled: { text: 'Dibatalkan', className: 'bg-red-100 text-red-600' },
 };
 
+const STATUS_OPTIONS = [
+    { value: 'waiting_fulfilment', label: 'Menunggu' },
+    { value: 'success', label: 'Selesai' },
+    { value: 'cancelled', label: 'Dibatalkan' },
+];
+
 export default function InventoryPurchaseOrderList({
     purchaseOrders,
     suppliers,
@@ -76,12 +95,6 @@ export default function InventoryPurchaseOrderList({
             { ...filters, ...overrides },
             { preserveState: true, preserveScroll: true, replace: true },
         );
-    };
-
-    const shiftDate = (days: number) => {
-        const d = new Date(currentDate);
-        d.setDate(d.getDate() + days);
-        applyFilters({ date: d.toISOString().slice(0, 10) });
     };
 
     const toggleMenu = (id: number) => {
@@ -117,49 +130,23 @@ export default function InventoryPurchaseOrderList({
     };
 
     const activeMenuPO = purchaseOrders.data.find((po) => po.id === openMenuId);
-    const activeBranchName = branches.find((b) => String(b.id) === filters.branch_id)?.name;
-
-    const formattedDate = new Date(currentDate).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
 
     return (
         <DashboardSidebarLayout title="Pembelian" description="Kelola pembelian barang dari pemasok anda">
             <Head title="Pembelian" />
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--page-bg)] p-6">
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-[var(--page-bg)] p-4 sm:p-6">
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        {/* Filter cabang — cuma buat Owner, branch_manager udah pasti 1 cabang */}
+                    <div className="flex flex-wrap items-center gap-3">
                         {!is_branch_manager && (
-                            <div className="relative">
-                                <select
-                                    aria-label="Filter cabang"
-                                    value={filters.branch_id ?? ''}
-                                    onChange={(e) => applyFilters({ branch_id: e.target.value || undefined })}
-                                    className="h-10 appearance-none rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 pr-9 text-sm"
-                                >
-                                    <option value="">Semua Cabang</option>
-                                    {branches.map((b) => (
-                                        <option key={b.id} value={b.id}>
-                                            {b.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
-                            </div>
+                            <FilterDropdown
+                                value={filters.branch_id}
+                                options={branches.map((b) => ({ value: String(b.id), label: b.name }))}
+                                allLabel="Semua Cabang"
+                                onChange={(v) => applyFilters({ branch_id: v })}
+                            />
                         )}
 
-                        <div className="flex items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 py-2">
-                            <button aria-label="Hari sebelumnya" onClick={() => shiftDate(-1)}>
-                                <ChevronLeft className="h-4 w-4" />
-                            </button>
-                            <span className="text-sm">{formattedDate}</span>
-                            <button aria-label="Hari berikutnya" onClick={() => shiftDate(1)}>
-                                <ChevronRight className="h-4 w-4" />
-                            </button>
-                        </div>
+                        <DateNavigator date={currentDate} onChange={(date) => applyFilters({ date })} variant="default" size="sm" />
                     </div>
 
                     <div className="flex items-center gap-3">
@@ -177,131 +164,93 @@ export default function InventoryPurchaseOrderList({
                     </div>
                 </div>
 
-                <div className="mb-4 flex items-center justify-between gap-4">
-                    <form onSubmit={handleSearch} className="flex items-center gap-2">
-                        <div className="relative">
-                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
-                            <input
-                                aria-label="Cari nomor PO"
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Cari nomor PO..."
-                                className="focus:ring-ring h-10 rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] pr-4 pl-9 text-sm focus:ring-1 focus:outline-none"
-                            />
-                        </div>
-                    </form>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-4">
+                    <SearchInput value={search} onChange={setSearch} onSubmit={handleSearch} placeholder="Cari nomor PO..." />
 
-                    <div className="relative">
-                        <select
-                            aria-label="Filter status"
-                            value={filters.status ?? ''}
-                            onChange={(e) => applyFilters({ status: e.target.value || undefined })}
-                            className="h-10 appearance-none rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 pr-9 text-sm"
-                        >
-                            <option value="">Semua Status</option>
-                            <option value="waiting_fulfilment">Menunggu</option>
-                            <option value="success">Selesai</option>
-                            <option value="cancelled">Dibatalkan</option>
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
+                    <FilterDropdown
+                        value={filters.status}
+                        options={STATUS_OPTIONS}
+                        allLabel="Semua Status"
+                        onChange={(v) => applyFilters({ status: v })}
+                    />
+                </div>
+
+                <div className="overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
+                    <div className="overflow-x-auto">
+                        <Table className="min-w-[760px]">
+                            <TableHeader className="bg-[var(--surface-header)]">
+                                <TableRow className="border-none hover:bg-[var(--surface-header)]">
+                                    <TableHead className="text-[var(--text-light)]">Tanggal PO</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Cabang</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Pemasok</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Nomor PO</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Total Harga</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Status</TableHead>
+                                    <TableHead className="w-[60px] text-[var(--text-light)]">Aksi</TableHead>
+                                </TableRow>
+                            </TableHeader>
+
+                            <TableBody>
+                                {purchaseOrders.data.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="py-10 text-center text-[var(--grey-text)]">
+                                            Belum ada PO, buat PO terlebih dahulu
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    purchaseOrders.data.map((po) => (
+                                        <TableRow key={po.id}>
+                                            <TableCell>
+                                                <div className="font-medium whitespace-nowrap">
+                                                    {new Date(po.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                                                </div>
+                                                <div className="text-xs whitespace-nowrap text-[var(--grey-text)]">
+                                                    {new Date(po.date).toLocaleDateString('id-ID', {
+                                                        day: 'numeric',
+                                                        month: 'long',
+                                                        year: 'numeric',
+                                                    })}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap">{po.branch.name}</TableCell>
+                                            <TableCell className="whitespace-nowrap">{po.supplier.name}</TableCell>
+                                            <TableCell className="whitespace-nowrap">#{po.po_number}</TableCell>
+                                            <TableCell className="whitespace-nowrap">Rp. {Number(po.total_price).toLocaleString('id-ID')}</TableCell>
+                                            <TableCell>
+                                                <span
+                                                    className={`rounded-full px-3 py-1 text-xs font-medium whitespace-nowrap ${statusLabel[po.status].className}`}
+                                                >
+                                                    {statusLabel[po.status].text}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="relative">
+                                                <Button
+                                                    ref={(el) => {
+                                                        buttonRefs.current[po.id] = el;
+                                                    }}
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => toggleMenu(po.id)}
+                                                >
+                                                    <MoreVertical className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
                     </div>
                 </div>
 
-                <div className="max-h-full overflow-y-auto rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
-                    <Table>
-                        <TableHeader className="bg-[var(--surface-header)]">
-                            <TableRow className="border-none hover:bg-[var(--surface-header)]">
-                                <TableHead className="text-[var(--text-light)]">Tanggal PO</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Cabang</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Pemasok</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Nomor PO</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Total Harga</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Status</TableHead>
-                                <TableHead className="w-[60px] text-[var(--text-light)]">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-
-                        <TableBody>
-                            {purchaseOrders.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={7} className="py-10 text-center text-[var(--grey-text)]">
-                                        Belum ada PO, buat PO terlebih dahulu
-                                    </TableCell>
-                                </TableRow>
-                            ) : (
-                                purchaseOrders.data.map((po) => (
-                                    <TableRow key={po.id}>
-                                        <TableCell>
-                                            <div className="font-medium">
-                                                {new Date(po.date).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
-                                            </div>
-                                            <div className="text-xs text-[var(--grey-text)]">
-                                                {new Date(po.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{po.branch.name}</TableCell>
-                                        <TableCell>{po.supplier.name}</TableCell>
-                                        <TableCell>#{po.po_number}</TableCell>
-                                        <TableCell>Rp. {Number(po.total_price).toLocaleString('id-ID')}</TableCell>
-                                        <TableCell>
-                                            <span className={`rounded-full px-3 py-1 text-xs font-medium ${statusLabel[po.status].className}`}>
-                                                {statusLabel[po.status].text}
-                                            </span>
-                                        </TableCell>
-                                        <TableCell className="relative">
-                                            <Button
-                                                ref={(el) => {
-                                                    buttonRefs.current[po.id] = el;
-                                                }}
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => toggleMenu(po.id)}
-                                            >
-                                                <MoreVertical className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
-
-                <div className="mt-auto flex items-center justify-between pt-4">
+                <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
                     <span className="text-sm text-[var(--grey-text)]">
                         Menampilkan {purchaseOrders.from ?? 0}-{purchaseOrders.to ?? 0} dari {purchaseOrders.total} Pembelian
                     </span>
 
-                    <div className="flex items-center gap-1">
-                        {purchaseOrders.links.map((link, i) => (
-                            <button
-                                aria-label="Navigasi halaman"
-                                key={i}
-                                disabled={!link.url}
-                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                className={`rounded-lg px-3 py-1.5 text-sm ${
-                                    link.active
-                                        ? 'bg-[var(--surface-header)] font-medium text-white'
-                                        : 'bg-[var(--neutral-white)] text-[var(--grey-text)] hover:bg-[var(--surface-badge)] disabled:cursor-not-allowed disabled:opacity-40'
-                                }`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="relative">
-                        <select
-                            aria-label="Barang per halaman"
-                            value={filters.per_page ?? '6'}
-                            onChange={(e) => applyFilters({ per_page: e.target.value })}
-                            className="h-9 appearance-none rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 pr-9 text-sm"
-                        >
-                            <option value="6">6 per halaman</option>
-                            <option value="12">12 per halaman</option>
-                            <option value="24">24 per halaman</option>
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
+                    <div className="flex items-center gap-3">
+                        <Pagination links={purchaseOrders.links} />
+                        <PerPageSelect value={filters.per_page ?? '6'} onChange={(v) => applyFilters({ per_page: v })} />
                     </div>
                 </div>
             </div>

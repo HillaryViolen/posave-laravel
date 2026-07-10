@@ -24,9 +24,9 @@ export default function Onboarding() {
     };
 
     return (
-        <div className="flex min-h-screen items-center justify-center p-8" style={{ background: 'var(--page-bg)' }}>
-            <div className="w-full max-w-[560px] rounded-2xl border bg-white p-10" style={{ borderColor: 'var(--border)' }}>
-                {/* Stepper */}
+        <div className="flex min-h-screen items-center justify-center p-4 sm:p-8" style={{ background: 'var(--page-bg)' }}>
+            <div className="w-full max-w-[560px] rounded-2xl border bg-white p-6 sm:p-10" style={{ borderColor: 'var(--border)' }}>
+                {/* Stepper — teks label disembunyiin di HP, cuma lingkaran+garis yang selalu tampil */}
                 <div className="mb-10 flex items-center">
                     <div className="flex items-center gap-2">
                         <div
@@ -41,7 +41,10 @@ export default function Onboarding() {
                                 '1'
                             )}
                         </div>
-                        <span className="text-sm font-medium" style={{ color: step === 1 ? 'var(--primary-900)' : 'var(--primary-600)' }}>
+                        <span
+                            className="hidden text-sm font-medium sm:inline"
+                            style={{ color: step === 1 ? 'var(--primary-900)' : 'var(--primary-600)' }}
+                        >
                             Pilih mode
                         </span>
                     </div>
@@ -61,11 +64,16 @@ export default function Onboarding() {
                         >
                             2
                         </div>
-                        <span className="text-sm font-medium" style={{ color: step === 2 ? 'var(--primary-900)' : '#94a3b8' }}>
+                        <span className="hidden text-sm font-medium sm:inline" style={{ color: step === 2 ? 'var(--primary-900)' : '#94a3b8' }}>
                             Informasi bisnis
                         </span>
                     </div>
                 </div>
+
+                {/* Label langkah saat ini — cuma tampil di HP, gantiin teks stepper yang disembunyiin */}
+                <p className="-mt-8 mb-6 text-center text-xs font-medium sm:hidden" style={{ color: 'var(--primary-600)' }}>
+                    Langkah {step} dari 2: {step === 1 ? 'Pilih mode' : 'Informasi bisnis'}
+                </p>
 
                 {/* Step 1 */}
                 {step === 1 && (
@@ -77,7 +85,8 @@ export default function Onboarding() {
                             Mode menentukan fitur yang tersedia. Bisa disesuaikan dengan kebutuhan bisnismu.
                         </p>
 
-                        <div className="mb-8 grid grid-cols-2 gap-3">
+                        {/* 1 kolom di HP, 2 kolom mulai sm — sebelumnya 2 kolom fixed, berantakan di layar sempit */}
+                        <div className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-2">
                             {/* Lite */}
                             <button
                                 type="button"
@@ -235,7 +244,7 @@ export default function Onboarding() {
                             <button
                                 type="button"
                                 onClick={() => setStep(1)}
-                                className="rounded-lg border px-5 py-2.5 text-sm font-medium transition-all"
+                                className="shrink-0 rounded-lg border px-5 py-2.5 text-sm font-medium transition-all"
                                 style={{
                                     borderColor: '#e2e8f0',
                                     color: 'var(--primary-600)',

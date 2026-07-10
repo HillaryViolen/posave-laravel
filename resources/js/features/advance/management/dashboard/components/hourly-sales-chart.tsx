@@ -20,19 +20,19 @@ function HourTooltip({ active, payload, label }: any) {
 }
 
 export function HourlySalesChart({ data }: { data: HourPoint[] }) {
-    // Tampilkan rentang jam yang ada aktivitasnya saja agar tidak penuh nol.
     const active = data.filter((d) => d.total > 0);
     const minHour = active.length ? Number(active[0].hour) : 7;
     const maxHour = active.length ? Number(active[active.length - 1].hour) : 21;
     const visible = data.filter((d) => Number(d.hour) >= minHour && Number(d.hour) <= maxHour);
 
     const peak = Math.max(...visible.map((d) => d.total), 0);
+    const interval = Math.max(0, Math.ceil(visible.length / 8) - 1);
 
     return (
         <ResponsiveContainer width="100%" height={220}>
             <BarChart data={visible} margin={{ top: 10, right: 8, left: 8, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#eef2f6" vertical={false} />
-                <XAxis dataKey="hour" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dy={6} />
+                <XAxis dataKey="hour" interval={interval} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} dy={6} />
                 <YAxis tickFormatter={formatCompactRupiah} tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: '#94a3b8' }} width={64} />
                 <Tooltip cursor={{ fill: 'rgba(148,163,184,0.08)' }} content={<HourTooltip />} />
                 <Bar dataKey="total" radius={[4, 4, 0, 0]}>

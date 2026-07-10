@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Models\Advance\Management\Transaction;
+namespace App\Models\Advance\Transaction;
 
 use App\Models\Advance\Management\Inventory\Item;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

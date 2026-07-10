@@ -178,21 +178,29 @@ export default function HistoryPage({ transactions, filters }: Props) {
             <Head title="Riwayat Pesanan - POSAVE" />
 
             <div className="flex flex-1 flex-col overflow-hidden bg-white">
-                <div className="flex items-center gap-4 p-6">
+                <div className="flex flex-wrap items-center gap-3 p-4 sm:gap-4 sm:p-6">
                     <SidebarTrigger />
-                    <SearchInput value={search} onChange={setSearch} onSubmit={handleSearchSubmit} placeholder="Cari invoice..." variant="kiosk" />
+                    <div className="min-w-[180px] flex-1 sm:max-w-sm sm:flex-none">
+                        <SearchInput
+                            value={search}
+                            onChange={setSearch}
+                            onSubmit={handleSearchSubmit}
+                            placeholder="Cari invoice..."
+                            variant="kiosk"
+                        />
+                    </div>
                     <Button
                         aria-label="Buka asisten chatbot"
                         onClick={open}
                         variant="outline"
-                        className="ml-auto h-10 rounded-md border-blue-200 bg-white text-[#003399] shadow-sm hover:bg-blue-50"
+                        className="ml-auto h-10 shrink-0 rounded-md border-blue-200 bg-white text-[#003399] shadow-sm hover:bg-blue-50"
                     >
-                        <MessageSquare className="mr-2 h-4 w-4" />
-                        Tanya Temanmu
+                        <MessageSquare className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Tanya Temanmu</span>
                     </Button>
                 </div>
 
-                <div className="flex items-center px-6 pb-2">
+                <div className="flex flex-wrap items-center gap-3 px-4 pb-2 sm:px-6">
                     <DateNavigator date={filters.date} onChange={goToDate} variant="kiosk" size="sm" />
 
                     <div className="ml-auto">
@@ -212,7 +220,7 @@ export default function HistoryPage({ transactions, filters }: Props) {
                 </div>
 
                 <div className="flex-1 overflow-y-auto">
-                    <div className="px-6 pt-4 pb-6">
+                    <div className="px-4 pt-4 pb-6 sm:px-6">
                         <div className="mb-3 hidden grid-cols-[1.2fr_1fr_1fr_1fr_1fr] px-4 sm:grid">
                             {[
                                 { label: 'ORDER', align: 'text-left' },

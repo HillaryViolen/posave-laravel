@@ -1,8 +1,20 @@
-import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import {
+    Button,
+    DateNavigator,
+    FilterDropdown,
+    Pagination,
+    SearchInput,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components';
 import { InventoryAdjustmentActionsMenu, InventoryAdjustmentCreateModal, type Adjustment } from '@/features/advance/management/inventory/components';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
-import { ArrowUpDown, Calendar, ChevronDown, ChevronLeft, ChevronRight, MoreVertical, Package, Plus, Printer, Search, Store } from 'lucide-react';
+import { ArrowUpDown, MoreVertical, Package, Plus, Printer, Store } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 
 interface InventoryAdjustmentProps {
@@ -30,8 +42,6 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
     const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [search, setSearch] = useState(filters.search ?? '');
-    const [openStatusFilter, setOpenStatusFilter] = useState(false);
-    const [openBranchFilter, setOpenBranchFilter] = useState(false);
     const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
 
     const currentDate = filters.date ?? new Date().toISOString().slice(0, 10);
@@ -42,12 +52,6 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
             { ...filters, ...overrides },
             { preserveState: true, preserveScroll: true, replace: true },
         );
-    };
-
-    const shiftDate = (days: number) => {
-        const d = new Date(currentDate);
-        d.setDate(d.getDate() + days);
-        applyFilters({ date: d.toISOString().slice(0, 10) });
     };
 
     const handleSearch = (e: React.FormEvent) => {
@@ -90,23 +94,14 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
     }, {});
 
     const activeMenuAdj = adjustments.data.find((a) => a.id === openMenuId);
-    const formattedDate = new Date(currentDate).toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric',
-    });
 
     const statusOptions = [
-        { value: '', label: 'Semua' },
         { value: 'in', label: 'Masuk' },
         { value: 'out', label: 'Keluar' },
     ];
 
-    const activeStatusLabel = statusOptions.find((s) => s.value === (filters.status ?? ''))?.label ?? 'Semua';
-
     // Cabang buat prefill modal create: kalau branch_manager, langsung kunci ke cabangnya (branches[0]).
     // Kalau Owner lagi filter ke 1 cabang, prefill itu. Kalau "semua cabang", modal minta pilih manual.
-    const activeBranchName = branches.find((b) => String(b.id) === filters.branch_id)?.name;
     const defaultBranchId = is_branch_manager ? (branches[0]?.id ?? null) : filters.branch_id ? Number(filters.branch_id) : null;
 
     return (
@@ -119,48 +114,14 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                     {/* Baris 1: Cabang + Tanggal + Aksi */}
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex flex-wrap items-center gap-3">
-                            {/* Filter Cabang — cuma buat Owner, branch_manager udah pasti 1 cabang */}
                             {!is_branch_manager ? (
-                                <div className="relative shrink-0">
-                                    <Button
-                                        variant="outline"
-                                        className="flex items-center gap-2 bg-[var(--second-accent)] text-[var(--subheading)]"
-                                        onClick={() => setOpenBranchFilter(!openBranchFilter)}
-                                    >
-                                        <Store className="h-4 w-4" />
-                                        {activeBranchName ?? 'Semua Cabang'}
-                                        <ChevronDown className="h-4 w-4" />
-                                    </Button>
-
-                                    {openBranchFilter && (
-                                        <>
-                                            <div className="fixed inset-0 z-40" onClick={() => setOpenBranchFilter(false)} />
-                                            <div className="absolute top-full left-0 z-50 mt-1 w-48 overflow-hidden rounded-xl bg-[var(--neutral-white)] py-1 shadow-lg">
-                                                <button
-                                                    onClick={() => {
-                                                        applyFilters({ branch_id: undefined });
-                                                        setOpenBranchFilter(false);
-                                                    }}
-                                                    className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${!filters.branch_id ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'}`}
-                                                >
-                                                    Semua Cabang
-                                                </button>
-                                                {branches.map((b) => (
-                                                    <button
-                                                        key={b.id}
-                                                        onClick={() => {
-                                                            applyFilters({ branch_id: String(b.id) });
-                                                            setOpenBranchFilter(false);
-                                                        }}
-                                                        className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${filters.branch_id === String(b.id) ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'}`}
-                                                    >
-                                                        {b.name}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
+                                <FilterDropdown
+                                    value={filters.branch_id}
+                                    options={branches.map((b) => ({ value: String(b.id), label: b.name }))}
+                                    allLabel="Semua Cabang"
+                                    onChange={(v) => applyFilters({ branch_id: v })}
+                                    icon={<Store className="h-4 w-4" />}
+                                />
                             ) : (
                                 <div className="flex shrink-0 items-center gap-2 rounded-lg bg-[var(--second-accent)] px-3 py-2 text-sm font-medium text-[var(--subheading)]">
                                     <Store className="h-4 w-4" />
@@ -168,18 +129,7 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                                 </div>
                             )}
 
-                            <div className="flex shrink-0 items-center rounded-lg border border-[var(--border-strong)] bg-white px-2 py-1.5">
-                                <button onClick={() => shiftDate(-1)} className="p-1 text-[var(--grey-text)] hover:text-[var(--subheading)]">
-                                    <ChevronLeft className="h-4 w-4" />
-                                </button>
-                                <div className="flex items-center gap-2 px-3 text-sm font-medium whitespace-nowrap text-[var(--subheading)]">
-                                    <Calendar className="h-4 w-4 shrink-0 text-[var(--grey-text)]" />
-                                    {formattedDate}
-                                </div>
-                                <button onClick={() => shiftDate(1)} className="p-1 text-[var(--grey-text)] hover:text-[var(--subheading)]">
-                                    <ChevronRight className="h-4 w-4" />
-                                </button>
-                            </div>
+                            <DateNavigator date={currentDate} onChange={(date) => applyFilters({ date })} variant="default" size="sm" />
                         </div>
 
                         <div className="flex items-center gap-3">
@@ -200,56 +150,20 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
 
                     {/* Baris 2: Search + Filter Status */}
                     <div className="flex items-center gap-3">
-                        <form onSubmit={handleSearch} className="relative min-w-0 flex-1">
-                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search"
-                                className="focus:ring-ring w-full rounded-lg border border-[var(--border-strong)] bg-white py-2 pr-4 pl-9 text-sm focus:ring-1 focus:outline-none"
-                            />
-                        </form>
+                        <SearchInput value={search} onChange={setSearch} onSubmit={handleSearch} placeholder="Cari barang..." />
 
-                        <div className="relative shrink-0">
-                            <Button
-                                variant="outline"
-                                className="bg-[var(--neutral-white)] text-[var(--subheading)]"
-                                onClick={() => setOpenStatusFilter(!openStatusFilter)}
-                            >
-                                {activeStatusLabel}
-                                <ChevronDown className="ml-2 h-4 w-4" />
-                            </Button>
-
-                            {openStatusFilter && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setOpenStatusFilter(false)} />
-                                    <div className="absolute top-full right-0 z-50 mt-1 w-36 overflow-hidden rounded-xl bg-[var(--neutral-white)] py-1 shadow-lg">
-                                        {statusOptions.map((opt) => (
-                                            <button
-                                                key={opt.value}
-                                                onClick={() => {
-                                                    applyFilters({ status: opt.value || undefined });
-                                                    setOpenStatusFilter(false);
-                                                }}
-                                                className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${
-                                                    (filters.status ?? '') === opt.value
-                                                        ? 'font-semibold text-[var(--subheading)]'
-                                                        : 'text-[var(--grey-text)]'
-                                                }`}
-                                            >
-                                                {opt.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                        <FilterDropdown
+                            value={filters.status}
+                            options={statusOptions}
+                            allLabel="Semua"
+                            onChange={(v) => applyFilters({ status: v })}
+                            className="shrink-0"
+                        />
                     </div>
                 </div>
 
-                {/* Summary Cards — gak berubah */}
-                <div className="grid grid-cols-4 gap-2 sm:gap-4">
+                {/* Summary Cards — 2 kolom di mobile, 4 kolom mulai sm */}
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
                     <div className="flex items-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--neutral-white)] p-3 shadow-sm sm:gap-4 sm:p-5">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 sm:h-12 sm:w-12">
                             <ArrowUpDown className="h-5 w-5 text-slate-600 sm:h-6 sm:w-6" />
@@ -257,7 +171,7 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                         <div className="min-w-0">
                             <p className="text-lg font-bold text-[var(--subheading)] sm:text-2xl">{stats.total_changes}</p>
                             <p className="text-xs leading-tight font-medium text-[var(--subheading)] sm:text-sm">Perubahan</p>
-                            <p className="text-[10px] leading-tight text-[var(--grey-text)] sm:text-xs">Total Transaksi Perubahan</p>
+                            <p className="hidden text-[10px] leading-tight text-[var(--grey-text)] sm:block sm:text-xs">Total Transaksi Perubahan</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--neutral-white)] p-3 shadow-sm sm:gap-4 sm:p-5">
@@ -267,7 +181,9 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                         <div className="min-w-0">
                             <p className="text-lg font-bold text-[var(--subheading)] sm:text-2xl">{stats.items_changed}</p>
                             <p className="text-xs leading-tight font-medium text-[var(--subheading)] sm:text-sm">Item dirubah</p>
-                            <p className="text-[10px] leading-tight text-[var(--grey-text)] sm:text-xs">Jumlah item yang disesuaikan</p>
+                            <p className="hidden text-[10px] leading-tight text-[var(--grey-text)] sm:block sm:text-xs">
+                                Jumlah item yang disesuaikan
+                            </p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--neutral-white)] p-3 shadow-sm sm:gap-4 sm:p-5">
@@ -279,7 +195,7 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                                 {Number(stats.total_income).toLocaleString('id-ID')}
                             </p>
                             <p className="text-xs leading-tight font-medium text-[var(--subheading)] sm:text-sm">Total Pemasukan</p>
-                            <p className="text-[10px] leading-tight text-[var(--grey-text)] sm:text-xs">Dari penyesuaian stok</p>
+                            <p className="hidden text-[10px] leading-tight text-[var(--grey-text)] sm:block sm:text-xs">Dari penyesuaian stok</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--neutral-white)] p-3 shadow-sm sm:gap-4 sm:p-5">
@@ -291,12 +207,12 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                                 {Math.abs(Number(stats.total_expense)).toLocaleString('id-ID')}
                             </p>
                             <p className="text-xs leading-tight font-medium text-[var(--subheading)] sm:text-sm">Total Pengeluaran</p>
-                            <p className="text-[10px] leading-tight text-[var(--grey-text)] sm:text-xs">Dari penyesuaian stok</p>
+                            <p className="hidden text-[10px] leading-tight text-[var(--grey-text)] sm:block sm:text-xs">Dari penyesuaian stok</p>
                         </div>
                     </div>
                 </div>
 
-                {/* Table — gak berubah sama sekali */}
+                {/* Table */}
                 <div className="overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
                     <div className="overflow-x-auto">
                         <Table className="min-w-[820px]">
@@ -328,7 +244,6 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                                             <TableRow className="bg-gray-50 hover:bg-gray-50">
                                                 <TableCell colSpan={5}>
                                                     <div className="flex items-center gap-2 text-sm font-medium whitespace-nowrap text-[var(--subheading)]">
-                                                        <Calendar className="h-4 w-4 shrink-0 text-[var(--grey-text)]" />
                                                         {dateLabel}
                                                     </div>
                                                 </TableCell>
@@ -390,6 +305,8 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                         </Table>
                     </div>
                 </div>
+
+                <Pagination links={adjustments.links} />
             </div>
 
             {activeMenuAdj && (

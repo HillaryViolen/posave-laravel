@@ -15,7 +15,7 @@ export function ConversationMenu({ onDelete, onRename, forceVisible = false }: C
                 <Button
                     size="icon"
                     variant="ghost"
-                    className={`h-7 w-7 shrink-0 group-hover:opacity-100 ${forceVisible ? 'opacity-100' : 'opacity-0'}`}
+                    className={`h-7 w-7 shrink-0 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 ${forceVisible ? 'lg:opacity-100' : ''}`}
                     onClick={(e) => e.stopPropagation()}
                 >
                     <MoreVertical size={14} />

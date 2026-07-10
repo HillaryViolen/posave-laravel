@@ -1,4 +1,4 @@
-import { Paperclip, Send, X } from 'lucide-react';
+import { ArrowLeft, Info, Paperclip, Send, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { Conversation, Message } from '../types';
 import { MessageBubble } from './message-bubble';
@@ -9,9 +9,12 @@ interface ChatAreaProps {
     authUserId: number;
     isLoading: boolean;
     onSendMessage: (body: string, attachments: File[]) => void;
+    onBack?: () => void;
+    onOpenInfo?: () => void;
+    className?: string;
 }
 
-export function ChatArea({ conversation, messages, authUserId, isLoading, onSendMessage }: ChatAreaProps) {
+export function ChatArea({ conversation, messages, authUserId, isLoading, onSendMessage, onBack, onOpenInfo, className = '' }: ChatAreaProps) {
     const [body, setBody] = useState('');
     const [files, setFiles] = useState<File[]>([]);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -47,11 +50,11 @@ export function ChatArea({ conversation, messages, authUserId, isLoading, onSend
 
     if (!conversation) {
         return (
-            <div className="flex flex-1 flex-col items-center justify-center bg-[var(--page-bg)]">
-                <div className="text-center">
+            <div className={`flex-col items-center justify-center bg-[var(--page-bg)] ${className}`}>
+                <div className="flex flex-1 flex-col items-center justify-center">
                     <p className="mb-3 text-4xl">💬</p>
                     <p className="text-sm font-medium text-[var(--subheading)]">Pilih percakapan</p>
-                    <p className="mt-1 text-xs text-[var(--grey-text-muted)]">
+                    <p className="mt-1 px-6 text-center text-xs text-[var(--grey-text-muted)]">
                         Pilih percakapan di sebelah kiri atau mulai chat baru dari tab Kontak
                     </p>
                 </div>
@@ -70,18 +73,41 @@ export function ChatArea({ conversation, messages, authUserId, isLoading, onSend
         .toUpperCase();
 
     return (
-        <div className="flex flex-1 flex-col overflow-hidden">
+        <div className={`flex-col overflow-hidden ${className}`}>
             {/* Header */}
-            <div className="flex items-center gap-3 border-b border-[var(--border-strong)] bg-[var(--neutral-white)] px-5 py-3.5">
+            <div className="flex items-center gap-3 border-b border-[var(--border-strong)] bg-[var(--neutral-white)] px-4 py-3.5 sm:px-5">
+                {onBack && (
+                    <button
+                        type="button"
+                        aria-label="Kembali ke daftar percakapan"
+                        onClick={onBack}
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-[var(--grey-text)] hover:bg-[var(--second-accent)] lg:hidden"
+                    >
+                        <ArrowLeft className="h-4 w-4" />
+                    </button>
+                )}
+
                 <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-[var(--surface-header)] text-xs font-medium text-[var(--text-light)]">
                     {conversation.type === 'group' ? '👥' : initials}
                 </div>
-                <div>
-                    <p className="text-sm font-medium text-[var(--subheading)]">{conversationName}</p>
-                    <p className="text-xs text-[var(--grey-text-muted)]">
+
+                <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-[var(--subheading)]">{conversationName}</p>
+                    <p className="truncate text-xs text-[var(--grey-text-muted)]">
                         {conversation.type === 'group' ? `${conversation.members.length} anggota` : 'Pesan pribadi'}
                     </p>
                 </div>
+
+                {onOpenInfo && (
+                    <button
+                        type="button"
+                        aria-label="Buka info percakapan"
+                        onClick={onOpenInfo}
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-[var(--grey-text)] hover:bg-[var(--second-accent)] lg:hidden"
+                    >
+                        <Info className="h-4 w-4" />
+                    </button>
+                )}
             </div>
 
             {/* Messages */}
@@ -126,7 +152,7 @@ export function ChatArea({ conversation, messages, authUserId, isLoading, onSend
             )}
 
             {/* Input */}
-            <div className="border-t border-[var(--border-strong)] bg-[var(--neutral-white)] px-4 py-3">
+            <div className="border-t border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 py-3 sm:px-4">
                 <div className="flex items-end gap-2">
                     <button
                         aria-label="Lampirkan file"

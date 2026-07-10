@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Lite\Inventory;
 
 use App\Http\Controllers\Controller;
-use App\Models\Advance\Owner\Inventory\Adjustment;
-use App\Models\Advance\Owner\Inventory\BranchStock;
-use App\Models\Advance\Owner\Inventory\Item;
+use App\Models\Advance\Management\Inventory\Adjustment;
+use App\Models\Advance\Management\Inventory\BranchStock;
+use App\Models\Advance\Management\Inventory\Item;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

@@ -23,8 +23,8 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
     };
 
     return (
-        <div className="border-t p-5">
-            <div className="flex gap-3">
+        <div className="border-t p-3 sm:p-5">
+            <div className="flex gap-2 sm:gap-3">
                 <Input
                     placeholder="Ketik pertanyaan..."
                     className="h-12"
@@ -34,7 +34,7 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
                     disabled={isLoading}
                 />
 
-                <Button size="icon" className="h-12 w-12" onClick={handleSend} disabled={isLoading}>
+                <Button size="icon" className="h-12 w-12 shrink-0" onClick={handleSend} disabled={isLoading}>
                     <Send size={18} />
                 </Button>
             </div>

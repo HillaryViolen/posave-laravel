@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Lite\Inventory;
 
 use App\Http\Controllers\Controller;
-use App\Models\Advance\Owner\Inventory\BranchStock;
-use App\Models\Advance\Owner\Inventory\Category;
-use App\Models\Advance\Owner\Inventory\Item;
+use App\Models\Advance\Management\Inventory\BranchStock;
+use App\Models\Advance\Management\Inventory\Category;
+use App\Models\Advance\Management\Inventory\Item;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,19 +18,34 @@ class ItemController extends Controller
     {
         /** @var User $owner */
         $owner = Auth::user();
-        $branchId = $owner->branch_id;   // Lite: selalu cabang miliknya sendiri, gak ada pilihan
+        $branchId = $owner->branch_id;
 
         $perPage = (int) ($request->per_page ?? 6);
 
-        $items = Item::with(['category', 'branchStocks' => fn($q) => $q->where('branch_id', $branchId)])
+        $itemsQuery = Item::with(['category', 'branchStocks' => fn($q) => $q->where('branch_id', $branchId)])
             ->where('company_id', $owner->company_id)
             ->when($request->search, fn($q) => $q->where(function ($qq) use ($request) {
                 $qq->where('name', 'like', '%' . $request->search . '%')
                     ->orWhere('sku', 'like', '%' . $request->search . '%');
             }))
-            ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id))
-            ->paginate($perPage)
-            ->withQueryString();
+            ->when($request->category_id, fn($q) => $q->where('category_id', $request->category_id));
+
+        if ($request->stock_status && $request->stock_status !== 'all') {
+            match ($request->stock_status) {
+                'out' => $itemsQuery->where(function ($q) use ($branchId) {
+                    $q->whereDoesntHave('branchStocks', fn($qq) => $qq->where('branch_id', $branchId))
+                        ->orWhereHas('branchStocks', fn($qq) => $qq->where('branch_id', $branchId)->where('current_stock', 0));
+                }),
+                'low' => $itemsQuery->whereHas('branchStocks', fn($qq) => $qq->where('branch_id', $branchId)
+                    ->where('current_stock', '>', 0)
+                    ->whereColumn('current_stock', '<=', 'min_stock')),
+                'safe' => $itemsQuery->whereHas('branchStocks', fn($qq) => $qq->where('branch_id', $branchId)
+                    ->whereColumn('current_stock', '>', 'min_stock')),
+                default => null,
+            };
+        }
+
+        $items = $itemsQuery->paginate($perPage)->withQueryString();
 
         $items->getCollection()->transform(function (Item $item) {
             $stock = $item->branchStocks->first();
@@ -39,27 +54,28 @@ class ItemController extends Controller
             return $item;
         });
 
-        // Filter status stok dilakukan di PHP (bukan SQL), karena current_stock
-        // sekarang hasil dari relasi branch_stocks, bukan kolom langsung di Item.
-        if ($request->stock_status && $request->stock_status !== 'all') {
-            $items->setCollection(
-                $items->getCollection()->filter(fn($item) => match ($request->stock_status) {
-                    'out' => $item->current_stock === 0,
-                    'low' => $item->current_stock > 0 && $item->current_stock <= $item->min_stock,
-                    'safe' => $item->current_stock > $item->min_stock,
-                    default => true,
-                })->values()
-            );
+        $allItems = Item::where('company_id', $owner->company_id)
+            ->with(['branchStocks' => fn($q) => $q->where('branch_id', $branchId)])
+            ->get();
+
+        $outOfStockCount = 0;
+        $lowStockCount = 0;
+
+        foreach ($allItems as $item) {
+            $stock = $item->branchStocks->first();
+            $current = $stock->current_stock ?? 0;
+            $min = $stock->min_stock ?? 0;
+
+            if ($current === 0) {
+                $outOfStockCount++;
+            } elseif ($current <= $min) {
+                $lowStockCount++;
+            }
         }
 
-        // Ringkasan dihitung dari SELURUH barang di cabang ini, bukan cuma
-        // yang lagi tampil di 1 halaman pagination.
-        $allItemIds = Item::where('company_id', $owner->company_id)->pluck('id');
-        $allStocks = BranchStock::where('branch_id', $branchId)->whereIn('inventory_item_id', $allItemIds)->get();
-
         $summary = [
-            'out_of_stock' => $allStocks->where('current_stock', 0)->count(),
-            'low_stock' => $allStocks->filter(fn($s) => $s->current_stock > 0 && $s->current_stock <= $s->min_stock)->count(),
+            'out_of_stock' => $outOfStockCount,
+            'low_stock' => $lowStockCount,
         ];
 
         $categories = Category::where('company_id', $owner->company_id)->orderBy('name')->get(['id', 'name', 'color']);

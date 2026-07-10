@@ -36,17 +36,17 @@ export default function EmployeeCreate({ roles, branches }: EmployeeCreateProps)
         <DashboardSidebarLayout title="Tambah Karyawan" description="Masukkan data karyawan baru ke dalam sistem">
             <Head title="Tambah Karyawan" />
 
-            <div className="min-h-screen bg-[var(--page-bg)] p-6">
+            <div className="min-h-screen bg-[var(--page-bg)] p-4 sm:p-6">
                 <div className="mb-5 flex items-center gap-4">
                     <Link href={route('dashboard.employees.index')}>
-                        <Button variant="outline" size="icon" className="h-10 w-10 bg-[var(--neutral-white)]">
+                        <Button variant="outline" size="icon" className="h-10 w-10 shrink-0 bg-[var(--neutral-white)]">
                             <ChevronLeft className="h-5 w-5" />
                         </Button>
                     </Link>
                     <h2 className="text-xl font-bold text-[var(--subheading)]">Form Karyawan Baru</h2>
                 </div>
 
-                <div className="max-w-2xl rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] p-6 shadow-sm">
+                <div className="max-w-2xl rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] p-4 shadow-sm sm:p-6">
                     <form onSubmit={submit} className="flex flex-col gap-5">
                         <div>
                             <label htmlFor="emp-name" className="mb-1.5 block text-sm font-medium text-[var(--subheading)]">
@@ -156,7 +156,7 @@ export default function EmployeeCreate({ roles, branches }: EmployeeCreateProps)
                         </div>
 
                         <div className="mt-4 flex justify-end">
-                            <Button type="submit" aria-label="Simpan karyawan" disabled={processing}>
+                            <Button type="submit" aria-label="Simpan karyawan" disabled={processing} className="w-full sm:w-auto">
                                 {processing ? 'Menyimpan...' : 'Simpan Karyawan'}
                             </Button>
                         </div>

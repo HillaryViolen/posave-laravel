@@ -129,31 +129,25 @@ export default function ItemList({ items: initialItems, categories, summary, fil
         <DashboardSidebarLayout title="Barang Kamu" description="Kelola stok warung dengan mudah">
             <Head title="Daftar Barang" />
             <div className="min-h-screen bg-[var(--page-bg)] p-4 sm:p-6">
-                {/* Ringkasan — sekaligus jadi shortcut filter */}
-                {(summary.out_of_stock > 0 || summary.low_stock > 0) && (
-                    <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                        {summary.out_of_stock > 0 && (
-                            <button
-                                aria-label="Lihat barang yang habis"
-                                onClick={() => handleStatusClick('out')}
-                                className="flex items-center justify-between rounded-2xl border-2 border-[var(--danger)] bg-[var(--danger-background)] px-5 py-4 text-left transition hover:opacity-90"
-                            >
-                                <span className="text-base font-bold text-[var(--danger)]">Barang Habis</span>
-                                <span className="text-2xl font-extrabold text-[var(--danger)]">{summary.out_of_stock}</span>
-                            </button>
-                        )}
-                        {summary.low_stock > 0 && (
-                            <button
-                                aria-label="Lihat barang yang mau habis"
-                                onClick={() => handleStatusClick('low')}
-                                className="flex items-center justify-between rounded-2xl border-2 border-[var(--warning)] bg-[var(--warning-background)] px-5 py-4 text-left transition hover:opacity-90"
-                            >
-                                <span className="text-base font-bold text-[var(--warning)]">Stok Mau Habis</span>
-                                <span className="text-2xl font-extrabold text-[var(--warning)]">{summary.low_stock}</span>
-                            </button>
-                        )}
-                    </div>
-                )}
+                {/* Ringkasan — SELALU tampil dua-duanya, angkanya boleh 0 */}
+                <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <button
+                        aria-label="Lihat barang yang habis"
+                        onClick={() => handleStatusClick('out')}
+                        className="flex items-center justify-between rounded-2xl border-2 border-[var(--danger)] bg-[var(--danger-background)] px-5 py-4 text-left transition hover:opacity-90"
+                    >
+                        <span className="text-base font-bold text-[var(--danger)]">Barang Habis</span>
+                        <span className="text-2xl font-extrabold text-[var(--danger)]">{summary.out_of_stock}</span>
+                    </button>
+                    <button
+                        aria-label="Lihat barang yang mau habis"
+                        onClick={() => handleStatusClick('low')}
+                        className="flex items-center justify-between rounded-2xl border-2 border-[var(--warning)] bg-[var(--warning-background)] px-5 py-4 text-left transition hover:opacity-90"
+                    >
+                        <span className="text-base font-bold text-[var(--warning)]">Stok Mau Habis</span>
+                        <span className="text-2xl font-extrabold text-[var(--warning)]">{summary.low_stock}</span>
+                    </button>
+                </div>
 
                 {/* Search + tombol tambah */}
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -269,7 +263,6 @@ export default function ItemList({ items: initialItems, categories, summary, fil
                                     </div>
 
                                     <div className="flex items-center justify-between gap-4 sm:justify-end">
-                                        {/* Stepper stok */}
                                         <div className="flex items-center gap-3">
                                             <button
                                                 aria-label={`Kurangi stok ${item.name}`}

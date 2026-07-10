@@ -1,4 +1,4 @@
-import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import { Button, FilterDropdown, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
 import {
     InventoryItemActionsMenu,
     InventoryItemCreateModal,
@@ -10,7 +10,7 @@ import {
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
-import { ChevronDown, Minus, MoreVertical, Plus, Printer, Search } from 'lucide-react';
+import { Minus, MoreVertical, Plus, Printer } from 'lucide-react';
 import React, { useEffect, useRef, useState } from 'react';
 
 interface InventoryItemListProps {
@@ -34,8 +34,6 @@ export default function InventoryItemList({ items, categories, branches, filters
     const [detailItem, setDetailItem] = useState<InventoryItem | null>(null);
     const [editItem, setEditItem] = useState<InventoryItem | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [openCategoryFilter, setOpenCategoryFilter] = useState(false);
-    const [openBranchFilter, setOpenBranchFilter] = useState(false);
     const [search, setSearch] = useState(filters.search ?? '');
     const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
 
@@ -74,15 +72,12 @@ export default function InventoryItemList({ items, categories, branches, filters
         closeMenu();
     };
 
-    const handleFilterBranch = (branchId: string) => {
+    const applyFilters = (overrides: Record<string, string | undefined>) => {
         router.get(
             route('dashboard.inventory.items.index'),
-            branchId === 'all'
-                ? { search: filters.search, category_id: filters.category_id }
-                : { search: filters.search, category_id: filters.category_id, branch_id: branchId },
+            { ...filters, ...overrides },
             { preserveState: true, preserveScroll: true, replace: true },
         );
-        setOpenBranchFilter(false);
     };
 
     const handleDelete = (id: number) => {
@@ -94,24 +89,10 @@ export default function InventoryItemList({ items, categories, branches, filters
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
-        router.get(
-            route('dashboard.inventory.items.index'),
-            { ...filters, search: search || undefined },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
-    };
-
-    const handleFilterCategory = (categoryId: string) => {
-        router.get(
-            route('dashboard.inventory.items.index'),
-            categoryId === 'all' ? { search: filters.search } : { search: filters.search, category_id: categoryId },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
-        setOpenCategoryFilter(false);
+        applyFilters({ search: search || undefined });
     };
 
     const activeMenuitem = itemRows.find((i) => i.id === openMenuId);
-    const activeCategoryName = categories.find((c) => String(c.id) === filters.category_id)?.name;
     const activeBranchName = branches.find((b) => String(b.id) === filters.branch_id)?.name;
     const selectedBranchId = filters.branch_id ? Number(filters.branch_id) : is_branch_manager ? (branches[0]?.id ?? null) : null;
 
@@ -142,97 +123,30 @@ export default function InventoryItemList({ items, categories, branches, filters
     return (
         <DashboardSidebarLayout title="Daftar Barang" description="kelola semua barang dan stok inventori anda">
             <Head title="Daftar Barang" />
-            <div className="min-h-screen bg-[var(--page-bg)] p-6">
+            <div className="min-h-screen bg-[var(--page-bg)] p-4 sm:p-6">
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex flex-wrap items-center gap-3">
-                        <form onSubmit={handleSearch}>
-                            <div className="relative">
-                                <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
-                                <input
-                                    type="text"
-                                    value={search}
-                                    onChange={(e) => setSearch(e.target.value)}
-                                    placeholder="Search"
-                                    className="focus:ring-ring h-10 rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] pr-4 pl-9 text-sm focus:ring-1 focus:outline-none"
-                                />
-                            </div>
-                        </form>
+                        <SearchInput value={search} onChange={setSearch} onSubmit={handleSearch} placeholder="Cari nama barang..." />
 
-                        {/* Filter Kategori — tetap ada buat kedua role */}
-                        <div className="relative">
-                            <Button
-                                variant="outline"
-                                className="bg-[var(--second-accent)] text-[var(--subheading)]"
-                                onClick={() => setOpenCategoryFilter(!openCategoryFilter)}
-                            >
-                                {activeCategoryName ?? 'Semua Kategori'}
-                                <ChevronDown className="ml-2 h-4 w-4" />
-                            </Button>
-
-                            {openCategoryFilter && (
-                                <>
-                                    <div className="fixed inset-0 z-40" onClick={() => setOpenCategoryFilter(false)} />
-                                    <div className="absolute top-full left-0 z-50 mt-1 w-48 overflow-hidden rounded-xl bg-[var(--neutral-white)] py-1 shadow-lg">
-                                        <button
-                                            onClick={() => handleFilterCategory('all')}
-                                            className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${!filters.category_id ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'}`}
-                                        >
-                                            Semua Kategori
-                                        </button>
-                                        {categories.map((cat) => (
-                                            <button
-                                                key={cat.id}
-                                                onClick={() => handleFilterCategory(String(cat.id))}
-                                                className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${filters.category_id === String(cat.id) ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'}`}
-                                            >
-                                                {cat.name}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                        <FilterDropdown
+                            value={filters.category_id}
+                            options={categories.map((c) => ({ value: String(c.id), label: c.name }))}
+                            allLabel="Semua Kategori"
+                            onChange={(v) => applyFilters({ category_id: v })}
+                        />
 
                         {/* Filter Cabang — cuma buat Owner, branch_manager udah pasti 1 cabang */}
                         {!is_branch_manager && (
-                            <div className="relative">
-                                <Button
-                                    variant="outline"
-                                    className="bg-[var(--second-accent)] text-[var(--subheading)]"
-                                    onClick={() => setOpenBranchFilter(!openBranchFilter)}
-                                >
-                                    {activeBranchName ?? 'Semua Cabang'}
-                                    <ChevronDown className="ml-2 h-4 w-4" />
-                                </Button>
-
-                                {openBranchFilter && (
-                                    <>
-                                        <div className="fixed inset-0 z-40" onClick={() => setOpenBranchFilter(false)} />
-                                        <div className="absolute top-full left-0 z-50 mt-1 w-48 overflow-hidden rounded-xl bg-[var(--neutral-white)] py-1 shadow-lg">
-                                            <button
-                                                onClick={() => handleFilterBranch('all')}
-                                                className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${!filters.branch_id ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'}`}
-                                            >
-                                                Semua Cabang
-                                            </button>
-                                            {branches.map((b) => (
-                                                <button
-                                                    key={b.id}
-                                                    onClick={() => handleFilterBranch(String(b.id))}
-                                                    className={`flex w-full items-center px-4 py-2.5 text-left text-sm hover:bg-[var(--surface-badge)] ${filters.branch_id === String(b.id) ? 'font-semibold text-[var(--subheading)]' : 'text-[var(--grey-text)]'}`}
-                                                >
-                                                    {b.name}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </>
-                                )}
-                            </div>
+                            <FilterDropdown
+                                value={filters.branch_id}
+                                options={branches.map((b) => ({ value: String(b.id), label: b.name }))}
+                                allLabel="Semua Cabang"
+                                onChange={(v) => applyFilters({ branch_id: v })}
+                            />
                         )}
                     </div>
 
                     <div className="flex items-center gap-3">
-                        {/* Buat Barang — cuma Owner, katalog itu keputusan level company */}
                         {can_manage_catalog && (
                             <Button
                                 onClick={() => setShowCreateModal(true)}
@@ -250,144 +164,132 @@ export default function InventoryItemList({ items, categories, branches, filters
                 </div>
 
                 <div className="overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
-                    <Table>
-                        <TableHeader className="bg-[var(--surface-header)]">
-                            <TableRow className="border-none hover:bg-[var(--surface-header)]">
-                                <TableHead className="text-[var(--text-light)]">Nama Barang</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Kategori</TableHead>
-                                <TableHead className="text-[var(--text-light)]">
-                                    Stok {activeBranchName ? `(${activeBranchName})` : is_branch_manager ? '' : '(Semua Cabang)'}
-                                </TableHead>
-                                <TableHead className="text-[var(--text-light)]">Harga</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Status</TableHead>
-                                <TableHead className="w-[60px] text-[var(--text-light)]">Aksi</TableHead>
-                            </TableRow>
-                        </TableHeader>
-
-                        <TableBody>
-                            {itemRows.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="py-10 text-center text-[var(--grey-text)]">
-                                        {filters.search || filters.category_id
-                                            ? 'Barang tidak ditemukan'
-                                            : 'Belum ada barang, tambah barang terlebih dahulu'}
-                                    </TableCell>
+                    <div className="overflow-x-auto">
+                        <Table className="min-w-[840px]">
+                            <TableHeader className="bg-[var(--surface-header)]">
+                                <TableRow className="border-none hover:bg-[var(--surface-header)]">
+                                    <TableHead className="text-[var(--text-light)]">Nama Barang</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Kategori</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">
+                                        Stok {activeBranchName ? `(${activeBranchName})` : is_branch_manager ? '' : '(Semua Cabang)'}
+                                    </TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Harga</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Status</TableHead>
+                                    <TableHead className="w-[60px] text-[var(--text-light)]">Aksi</TableHead>
                                 </TableRow>
-                            ) : (
-                                itemRows.map((item) => {
-                                    const status = getStockStatus(item);
-                                    const canAdjustStock = !!selectedBranchId;
-                                    const isPending = pendingStockId === item.id;
+                            </TableHeader>
 
-                                    return (
-                                        <TableRow key={item.id}>
-                                            <TableCell>
-                                                <div className="flex items-center gap-3">
-                                                    {item.image ? (
-                                                        <img
-                                                            src={`/storage/${item.image}`}
-                                                            alt={item.name}
-                                                            className="h-10 w-10 rounded-lg object-cover"
-                                                        />
-                                                    ) : (
-                                                        <div className="h-10 w-10 rounded-lg bg-gray-100" />
-                                                    )}
-                                                    <div>
-                                                        <div className="font-medium text-[var(--subheading)]">{item.name}</div>
-                                                        <div className="text-xs text-[var(--grey-text)]">SKU: {item.sku}</div>
+                            <TableBody>
+                                {itemRows.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="py-10 text-center text-[var(--grey-text)]">
+                                            {filters.search || filters.category_id
+                                                ? 'Barang tidak ditemukan'
+                                                : 'Belum ada barang, tambah barang terlebih dahulu'}
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    itemRows.map((item) => {
+                                        const status = getStockStatus(item);
+                                        const canAdjustStock = !!selectedBranchId;
+                                        const isPending = pendingStockId === item.id;
+
+                                        return (
+                                            <TableRow key={item.id}>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-3">
+                                                        {item.image ? (
+                                                            <img
+                                                                src={`/storage/${item.image}`}
+                                                                alt={item.name}
+                                                                className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-10 w-10 shrink-0 rounded-lg bg-gray-100" />
+                                                        )}
+                                                        <div className="min-w-0">
+                                                            <div className="truncate font-medium text-[var(--subheading)]">{item.name}</div>
+                                                            <div className="text-xs text-[var(--grey-text)]">SKU: {item.sku}</div>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>
-                                                <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-600">
-                                                    {item.category.name}
-                                                </span>
-                                            </TableCell>
-                                            <TableCell className="text-[var(--grey-text)]">
-                                                {canAdjustStock ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            aria-label={`Kurangi stok ${item.name}`}
-                                                            disabled={isPending || item.current_stock === 0}
-                                                            onClick={() => handleStockAdjust(item, -1)}
-                                                            className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border-strong)] hover:bg-[var(--second-accent)] disabled:opacity-30"
-                                                        >
-                                                            <Minus className="h-3 w-3" />
-                                                        </button>
-                                                        <span className="w-6 text-center font-semibold text-[var(--subheading)]">
-                                                            {item.current_stock}
-                                                        </span>
-                                                        <button
-                                                            aria-label={`Tambah stok ${item.name}`}
-                                                            disabled={isPending}
-                                                            onClick={() => handleStockAdjust(item, 1)}
-                                                            className="flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border-strong)] hover:bg-[var(--second-accent)] disabled:opacity-30"
-                                                        >
-                                                            <Plus className="h-3 w-3" />
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <span title="Pilih cabang dulu untuk atur stok">{item.current_stock}</span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-[var(--grey-text)]">Rp {Number(item.price).toLocaleString('id-ID')}</TableCell>
-                                            <TableCell>
-                                                <div>
-                                                    <div className="text-xs text-[var(--grey-text)]">Min. {item.min_stock}</div>
-                                                    <span
-                                                        className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${status.color}`}
-                                                    >
-                                                        {status.label}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium whitespace-nowrap text-orange-600">
+                                                        {item.category.name}
                                                     </span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="relative">
-                                                {can_manage_catalog ? (
-                                                    <Button
-                                                        ref={(el) => {
-                                                            buttonRefs.current[item.id] = el;
-                                                        }}
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => toggleMenu(item.id)}
-                                                    >
-                                                        <MoreVertical className="h-4 w-4" />
-                                                    </Button>
-                                                ) : (
-                                                    <button
-                                                        aria-label={`Lihat detail ${item.name}`}
-                                                        onClick={() => handleShowDetail(item)}
-                                                        className="text-xs font-medium text-[var(--secondary-700)] hover:underline"
-                                                    >
-                                                        Lihat
-                                                    </button>
-                                                )}
-                                            </TableCell>
-                                        </TableRow>
-                                    );
-                                })
-                            )}
-                        </TableBody>
-                    </Table>
+                                                </TableCell>
+                                                <TableCell className="text-[var(--grey-text)]">
+                                                    {canAdjustStock ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                aria-label={`Kurangi stok ${item.name}`}
+                                                                disabled={isPending || item.current_stock === 0}
+                                                                onClick={() => handleStockAdjust(item, -1)}
+                                                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--border-strong)] hover:bg-[var(--second-accent)] disabled:opacity-30"
+                                                            >
+                                                                <Minus className="h-3 w-3" />
+                                                            </button>
+                                                            <span className="w-6 shrink-0 text-center font-semibold text-[var(--subheading)]">
+                                                                {item.current_stock}
+                                                            </span>
+                                                            <button
+                                                                aria-label={`Tambah stok ${item.name}`}
+                                                                disabled={isPending}
+                                                                onClick={() => handleStockAdjust(item, 1)}
+                                                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[var(--border-strong)] hover:bg-[var(--second-accent)] disabled:opacity-30"
+                                                            >
+                                                                <Plus className="h-3 w-3" />
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <span title="Pilih cabang dulu untuk atur stok">{item.current_stock}</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="whitespace-nowrap text-[var(--grey-text)]">
+                                                    Rp {Number(item.price).toLocaleString('id-ID')}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div>
+                                                        <div className="text-xs text-[var(--grey-text)]">Min. {item.min_stock}</div>
+                                                        <span
+                                                            className={`mt-1 inline-block rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${status.color}`}
+                                                        >
+                                                            {status.label}
+                                                        </span>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="relative">
+                                                    {can_manage_catalog ? (
+                                                        <Button
+                                                            ref={(el) => {
+                                                                buttonRefs.current[item.id] = el;
+                                                            }}
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            onClick={() => toggleMenu(item.id)}
+                                                        >
+                                                            <MoreVertical className="h-4 w-4" />
+                                                        </Button>
+                                                    ) : (
+                                                        <button
+                                                            aria-label={`Lihat detail ${item.name}`}
+                                                            onClick={() => handleShowDetail(item)}
+                                                            className="text-xs font-medium whitespace-nowrap text-[var(--secondary-700)] hover:underline"
+                                                        >
+                                                            Lihat
+                                                        </button>
+                                                    )}
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
 
-                {items.links.length > 3 && (
-                    <div className="mt-4 flex items-center justify-center gap-1">
-                        {items.links.map((link, i) => (
-                            <button
-                                key={i}
-                                disabled={!link.url}
-                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                className={`rounded-lg px-3 py-1.5 text-sm ${
-                                    link.active
-                                        ? 'bg-[var(--surface-header)] font-medium text-white'
-                                        : 'bg-[var(--neutral-white)] text-[var(--grey-text)] hover:bg-[var(--surface-badge)] disabled:cursor-not-allowed disabled:opacity-40'
-                                }`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-                )}
+                <Pagination links={items.links} />
             </div>
 
             {can_manage_catalog && activeMenuitem && (

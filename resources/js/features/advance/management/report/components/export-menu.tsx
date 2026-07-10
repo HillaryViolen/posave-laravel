@@ -1,7 +1,7 @@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import type { ExportFormat } from '@/features/advance/management/report/lib';
 import { ChevronDown, Download, FileSpreadsheet, FileText, Loader2 } from 'lucide-react';
 import { useState } from 'react';
-import type { ExportFormat } from '../lib/export';
 
 const ITEMS: { format: ExportFormat; label: string; icon: typeof Download }[] = [
     { format: 'excel', label: 'Excel (.xlsx)', icon: FileSpreadsheet },

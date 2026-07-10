@@ -1,3 +1,4 @@
+import { Sheet, SheetContent } from '@/components/ui';
 import { ChatArea, ConversationList, InfoPanel } from '@/features/advance/messaging/components';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
@@ -31,17 +32,18 @@ export default function MessagingIndex({
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
-    // ─── Real-time: broadcast company-wide ────────────────────────
+    const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
+    const [infoSheetOpen, setInfoSheetOpen] = useState(false);
+
     useEchoPublic<Broadcast>(
         `company.${auth_user.company_id}.broadcasts`,
         '.broadcast.created',
-        (data) => { 
+        (data) => {
             setBroadcasts((prev) => [data, ...prev]);
         },
         [auth_user.company_id],
     );
 
-    // ─── Real-time: pesan di conversation aktif ───────────────────
     useEchoPresence<Message>(
         activeConversationId ? `conversation.${activeConversationId}` : 'conversation.0',
         '.message.sent',
@@ -68,10 +70,10 @@ export default function MessagingIndex({
         [activeConversationId],
     );
 
-    // ─── Pilih conversation ────────────────────────────────────────
     const selectConversation = useCallback(
         async (id: number) => {
             setActiveConversationId(id);
+            setMobileView('chat');
             setIsLoadingMessages(true);
             setMessages([]);
 
@@ -91,7 +93,6 @@ export default function MessagingIndex({
         [conversations],
     );
 
-    // ─── Kirim pesan ──────────────────────────────────────────────
     const handleSendMessage = useCallback(
         async (body: string, files: File[]) => {
             if (!activeConversationId) return;
@@ -100,7 +101,6 @@ export default function MessagingIndex({
             if (body) formData.append('body', body);
             files.forEach((f) => formData.append('attachments[]', f));
 
-            // Optimistic update
             const optimisticMsg: Message = {
                 id: Date.now(),
                 body,
@@ -132,14 +132,12 @@ export default function MessagingIndex({
                 });
             } catch (err) {
                 console.error('Gagal mengirim pesan:', err);
-                // Rollback optimistic update
                 setMessages((prev) => prev.filter((m) => m.id !== optimisticMsg.id));
             }
         },
         [activeConversationId, auth_user],
     );
 
-    // ─── Mulai private chat ────────────────────────────────────────
     const handleStartPrivateChat = useCallback(
         async (userId: number) => {
             try {
@@ -156,7 +154,6 @@ export default function MessagingIndex({
         [selectConversation],
     );
 
-    // ─── Broadcast ─────────────────────────────────────────────────
     const handleCreateBroadcast = useCallback(async (content: string) => {
         try {
             await axios.post(route('messaging.broadcast.store'), { content });
@@ -165,7 +162,6 @@ export default function MessagingIndex({
         }
     }, []);
 
-    // ─── Note ──────────────────────────────────────────────────────
     const handleCreateNote = useCallback(async (content: string) => {
         try {
             const res = await axios.post(route('messaging.note.store'), { content });
@@ -190,8 +186,10 @@ export default function MessagingIndex({
             <Head title="Pesan" />
 
             <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[var(--page-bg)]">
-                {/* Kolom kiri */}
-                <div className="w-72 flex-shrink-0">
+                {/* Kolom kiri — daftar percakapan/kontak.
+                    Mobile: full width, cuma tampil pas mobileView === 'list'.
+                    Desktop (lg+): selalu tampil, lebar tetap 288px. */}
+                <div className={`h-full w-full flex-col lg:flex lg:w-72 lg:flex-shrink-0 ${mobileView === 'list' ? 'flex' : 'hidden'}`}>
                     <ConversationList
                         conversations={conversations}
                         contacts={contacts}
@@ -206,16 +204,22 @@ export default function MessagingIndex({
                     />
                 </div>
 
-                {/* Kolom tengah */}
+                {/* Kolom tengah — chat aktif.
+                    Mobile: full width, cuma tampil pas mobileView === 'chat', ada tombol back+info.
+                    Desktop: selalu tampil, ambil sisa ruang. */}
                 <ChatArea
                     conversation={activeConversation}
                     messages={messages}
                     authUserId={auth_user.id}
                     isLoading={isLoadingMessages}
                     onSendMessage={handleSendMessage}
+                    onBack={() => setMobileView('list')}
+                    onOpenInfo={() => setInfoSheetOpen(true)}
+                    className={mobileView === 'chat' ? 'flex flex-1' : 'hidden flex-1 lg:flex'}
                 />
 
-                {/* Kolom kanan */}
+                {/* Kolom kanan — cuma tampil sebagai kolom permanen di desktop.
+                    Di mobile, InfoPanel gak pernah jadi kolom, muncul lewat ikon info -> Sheet di bawah. */}
                 <InfoPanel
                     broadcasts={broadcasts}
                     notes={notes}
@@ -223,8 +227,24 @@ export default function MessagingIndex({
                     onCreateBroadcast={handleCreateBroadcast}
                     onCreateNote={handleCreateNote}
                     onDeleteNote={handleDeleteNote}
+                    variant="sidebar"
                 />
             </div>
+
+            {/* Sheet InfoPanel — khusus mobile, dibuka lewat ikon info di header ChatArea */}
+            <Sheet open={infoSheetOpen} onOpenChange={setInfoSheetOpen}>
+                <SheetContent side="right" className="w-[85vw] p-0 sm:max-w-[360px]">
+                    <InfoPanel
+                        broadcasts={broadcasts}
+                        notes={notes}
+                        authUser={auth_user}
+                        onCreateBroadcast={handleCreateBroadcast}
+                        onCreateNote={handleCreateNote}
+                        onDeleteNote={handleDeleteNote}
+                        variant="sheet"
+                    />
+                </SheetContent>
+            </Sheet>
         </DashboardSidebarLayout>
     );
 }

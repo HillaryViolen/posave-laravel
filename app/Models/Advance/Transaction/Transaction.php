@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Models\Advance\Management\Transaction;
+namespace App\Models\Advance\Transaction;
 
-use App\Models\Advance\Management\Transaction\TransactionItem;
+use App\Models\Advance\Transaction\TransactionItem;
 use App\Models\Auth\Branch;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;

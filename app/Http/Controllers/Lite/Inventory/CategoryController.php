@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Lite\Inventory;
 
 use App\Http\Controllers\Controller;
-use App\Models\Advance\Owner\Inventory\Category;
+use App\Models\Advance\Management\Inventory\Category;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

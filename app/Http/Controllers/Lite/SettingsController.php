@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\lite;
 
 use App\Http\Controllers\Controller;
-use App\Models\Advance\Owner\Settings\ReceiptSetting;
+use App\Models\Advance\Management\Settings\ReceiptSetting;
 use App\Models\Auth\CompanyProfile;
 use App\Models\User;
 use Illuminate\Http\Request;

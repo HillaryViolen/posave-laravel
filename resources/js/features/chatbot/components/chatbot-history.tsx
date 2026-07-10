@@ -11,9 +11,11 @@ interface ChatHistoryProps {
     onSelect: (id: number) => void;
     onNewChat: () => void;
     onListChanged: () => void;
+    /** 'sidebar' = kolom permanen (desktop), 'sheet' = isi drawer mobile/tablet. */
+    variant?: 'sidebar' | 'sheet';
 }
 
-export function ChatHistory({ conversations, activeConversationId, onSelect, onNewChat, onListChanged }: ChatHistoryProps) {
+export function ChatHistory({ conversations, activeConversationId, onSelect, onNewChat, onListChanged, variant = 'sidebar' }: ChatHistoryProps) {
     const [deletingId, setDeletingId] = useState<number | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
     const [editingValue, setEditingValue] = useState('');
@@ -59,8 +61,10 @@ export function ChatHistory({ conversations, activeConversationId, onSelect, onN
         }
     };
 
+    const rootClass = variant === 'sheet' ? 'flex h-full w-full flex-col bg-slate-50' : 'flex h-full w-72 flex-col border-r bg-slate-50';
+
     return (
-        <aside className="flex w-72 flex-col border-r bg-slate-50">
+        <aside className={rootClass}>
             <div className="flex h-16 items-center border-b px-4">
                 <Button className="w-full" onClick={onNewChat}>
                     <Plus className="mr-2 h-4 w-4" />

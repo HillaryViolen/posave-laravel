@@ -9,6 +9,8 @@ interface InfoPanelProps {
     onCreateBroadcast: (content: string) => void;
     onCreateNote: (content: string) => void;
     onDeleteNote: (id: number) => void;
+    /** 'sidebar' = kolom ke-3 permanen (desktop), 'sheet' = konten di dalam Sheet mobile. */
+    variant?: 'sidebar' | 'sheet';
 }
 
 function formatTime(isoString: string): string {
@@ -18,7 +20,7 @@ function formatTime(isoString: string): string {
     });
 }
 
-export function InfoPanel({ broadcasts, notes, authUser, onCreateBroadcast, onCreateNote, onDeleteNote }: InfoPanelProps) {
+export function InfoPanel({ broadcasts, notes, authUser, onCreateBroadcast, onCreateNote, onDeleteNote, variant = 'sidebar' }: InfoPanelProps) {
     const [broadcastOpen, setBroadcastOpen] = useState(true);
     const [noteOpen, setNoteOpen] = useState(true);
     const [newBroadcast, setNewBroadcast] = useState('');
@@ -49,8 +51,15 @@ export function InfoPanel({ broadcasts, notes, authUser, onCreateBroadcast, onCr
     const btnGhostClass =
         'rounded-lg border border-[var(--border-strong)] px-3 py-1.5 text-xs font-medium text-[var(--grey-text)] hover:bg-[var(--second-accent)]';
 
+    // Sidebar: kolom permanen 288px, disembunyiin di mobile (muncul via Sheet, bukan di sini).
+    // Sheet: isi penuh area Sheet, gak perlu border/lebar sendiri (Sheet-nya yang ngatur itu).
+    const rootClass =
+        variant === 'sheet'
+            ? 'flex h-full w-full flex-col overflow-y-auto bg-[var(--neutral-white)]'
+            : 'hidden h-full w-72 flex-shrink-0 flex-col overflow-y-auto border-l border-[var(--border-strong)] bg-[var(--neutral-white)] lg:flex';
+
     return (
-        <div className="flex h-full w-72 flex-shrink-0 flex-col overflow-y-auto border-l border-[var(--border-strong)] bg-[var(--neutral-white)]">
+        <div className={rootClass}>
             {/* Broadcast / General Info */}
             <div className="border-b border-[var(--border-strong)]">
                 <button
@@ -192,7 +201,7 @@ export function InfoPanel({ broadcasts, notes, authUser, onCreateBroadcast, onCr
                                     >
                                         <p className="text-xs leading-relaxed text-[var(--grey-text)]">{note.content}</p>
                                         <button
-                                            aria-label={`Hapus catatan`}
+                                            aria-label="Hapus catatan"
                                             onClick={() => onDeleteNote(note.id)}
                                             className="absolute top-2 right-2 hidden text-[var(--grey-text-muted)] group-hover:block hover:text-red-500"
                                         >

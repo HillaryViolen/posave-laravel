@@ -1,8 +1,8 @@
-import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import { Button, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
 import { InventorySupplierCreateModal, InventorySupplierEditModal } from '@/features/advance/management/inventory/components';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
-import { Building2, Plus, Search } from 'lucide-react';
+import { Building2, Plus } from 'lucide-react';
 import React, { useState } from 'react';
 
 interface Supplier {
@@ -39,7 +39,6 @@ export default function InventorySupplierList({ suppliers, categories, is_branch
     const [editSupplier, setEditSupplier] = useState<Supplier | null>(null);
     const [search, setSearch] = useState(filters.search ?? '');
 
-    // Katalog pemasok itu keputusan level company, sama kayak Item/Category — cuma Owner.
     const canManageCatalog = !is_branch_manager;
 
     const handleSearch = (e: React.FormEvent) => {
@@ -60,21 +59,9 @@ export default function InventorySupplierList({ suppliers, categories, is_branch
     return (
         <DashboardSidebarLayout title="Pemasok" description="Kelola daftar pemasok barang anda">
             <Head title="Pemasok" />
-            <div className="min-h-screen bg-[var(--page-bg)] p-6">
+            <div className="min-h-screen bg-[var(--page-bg)] p-4 sm:p-6">
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-                    <form onSubmit={handleSearch}>
-                        <div className="relative">
-                            <Search className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[var(--grey-text)]" />
-                            <input
-                                aria-label="Cari pemasok"
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Cari nama pemasok..."
-                                className="focus:ring-ring h-10 rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] pr-4 pl-9 text-sm focus:ring-1 focus:outline-none"
-                            />
-                        </div>
-                    </form>
+                    <SearchInput value={search} onChange={setSearch} onSubmit={handleSearch} placeholder="Cari nama pemasok..." />
 
                     {canManageCatalog && (
                         <Button
@@ -88,102 +75,87 @@ export default function InventorySupplierList({ suppliers, categories, is_branch
                 </div>
 
                 <div className="overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
-                    <Table>
-                        <TableHeader className="bg-[var(--surface-header)]">
-                            <TableRow className="border-none hover:bg-[var(--surface-header)]">
-                                <TableHead className="text-[var(--text-light)]">Nama Pemasok</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Kategori</TableHead>
-                                <TableHead className="text-[var(--text-light)]">Kontak</TableHead>
-                                {canManageCatalog && <TableHead className="w-[80px] text-[var(--text-light)]">Aksi</TableHead>}
-                            </TableRow>
-                        </TableHeader>
-
-                        <TableBody>
-                            {suppliers.data.length === 0 ? (
-                                <TableRow>
-                                    <TableCell colSpan={canManageCatalog ? 4 : 3} className="py-10 text-center text-[var(--grey-text)]">
-                                        {filters.search
-                                            ? `Pemasok "${filters.search}" tidak ditemukan`
-                                            : 'Belum ada pemasok, tambah pemasok terlebih dahulu'}
-                                    </TableCell>
+                    <div className="overflow-x-auto">
+                        <Table className="min-w-[560px]">
+                            <TableHeader className="bg-[var(--surface-header)]">
+                                <TableRow className="border-none hover:bg-[var(--surface-header)]">
+                                    <TableHead className="text-[var(--text-light)]">Nama Pemasok</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Kategori</TableHead>
+                                    <TableHead className="text-[var(--text-light)]">Kontak</TableHead>
+                                    {canManageCatalog && <TableHead className="w-[80px] text-[var(--text-light)]">Aksi</TableHead>}
                                 </TableRow>
-                            ) : (
-                                suppliers.data.map((supplier) => (
-                                    <TableRow key={supplier.id}>
-                                        <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                {supplier.logo ? (
-                                                    <img
-                                                        src={`/storage/${supplier.logo}`}
-                                                        alt={supplier.name}
-                                                        className="h-10 w-10 rounded-full object-cover"
-                                                    />
-                                                ) : (
-                                                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-100">
-                                                        <Building2 className="h-5 w-5 text-gray-400" />
-                                                    </div>
-                                                )}
-                                                <span className="font-medium text-[var(--subheading)]">{supplier.name}</span>
-                                            </div>
+                            </TableHeader>
+
+                            <TableBody>
+                                {suppliers.data.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={canManageCatalog ? 4 : 3} className="py-10 text-center text-[var(--grey-text)]">
+                                            {filters.search
+                                                ? `Pemasok "${filters.search}" tidak ditemukan`
+                                                : 'Belum ada pemasok, tambah pemasok terlebih dahulu'}
                                         </TableCell>
-                                        <TableCell>
-                                            {supplier.category ? (
-                                                <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium text-orange-600">
-                                                    {supplier.category.name}
-                                                </span>
-                                            ) : (
-                                                <span className="text-xs text-[var(--grey-text)]">-</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-[var(--grey-text)]">
-                                            <div className="text-sm">{supplier.phone ?? '-'}</div>
-                                            <div className="text-xs">{supplier.email ?? '-'}</div>
-                                        </TableCell>
-                                        {canManageCatalog && (
+                                    </TableRow>
+                                ) : (
+                                    suppliers.data.map((supplier) => (
+                                        <TableRow key={supplier.id}>
                                             <TableCell>
-                                                <div className="flex gap-2">
-                                                    <button
-                                                        aria-label={`Ubah pemasok ${supplier.name}`}
-                                                        onClick={() => setEditSupplier(supplier)}
-                                                        className="text-xs font-medium text-[var(--secondary-700)] hover:underline"
-                                                    >
-                                                        Ubah
-                                                    </button>
-                                                    <button
-                                                        aria-label={`Hapus pemasok ${supplier.name}`}
-                                                        onClick={() => handleDelete(supplier)}
-                                                        className="text-xs font-medium text-red-500 hover:underline"
-                                                    >
-                                                        Hapus
-                                                    </button>
+                                                <div className="flex items-center gap-3">
+                                                    {supplier.logo ? (
+                                                        <img
+                                                            src={`/storage/${supplier.logo}`}
+                                                            alt={supplier.name}
+                                                            className="h-10 w-10 shrink-0 rounded-full object-cover"
+                                                        />
+                                                    ) : (
+                                                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100">
+                                                            <Building2 className="h-5 w-5 text-gray-400" />
+                                                        </div>
+                                                    )}
+                                                    <span className="truncate font-medium text-[var(--subheading)]">{supplier.name}</span>
                                                 </div>
                                             </TableCell>
-                                        )}
-                                    </TableRow>
-                                ))
-                            )}
-                        </TableBody>
-                    </Table>
+                                            <TableCell>
+                                                {supplier.category ? (
+                                                    <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-medium whitespace-nowrap text-orange-600">
+                                                        {supplier.category.name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-xs text-[var(--grey-text)]">-</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-[var(--grey-text)]">
+                                                <div className="text-sm whitespace-nowrap">{supplier.phone ?? '-'}</div>
+                                                <div className="text-xs whitespace-nowrap">{supplier.email ?? '-'}</div>
+                                            </TableCell>
+                                            {canManageCatalog && (
+                                                <TableCell>
+                                                    <div className="flex gap-2 whitespace-nowrap">
+                                                        <button
+                                                            aria-label={`Ubah pemasok ${supplier.name}`}
+                                                            onClick={() => setEditSupplier(supplier)}
+                                                            className="text-xs font-medium text-[var(--secondary-700)] hover:underline"
+                                                        >
+                                                            Ubah
+                                                        </button>
+                                                        <button
+                                                            aria-label={`Hapus pemasok ${supplier.name}`}
+                                                            onClick={() => handleDelete(supplier)}
+                                                            className="text-xs font-medium text-red-500 hover:underline"
+                                                        >
+                                                            Hapus
+                                                        </button>
+                                                    </div>
+                                                </TableCell>
+                                            )}
+                                        </TableRow>
+                                    ))
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
                 </div>
 
-                {suppliers.links.length > 3 && (
-                    <div className="mt-4 flex items-center justify-center gap-1">
-                        {suppliers.links.map((link, i) => (
-                            <button
-                                aria-label="Navigasi halaman"
-                                key={i}
-                                disabled={!link.url}
-                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                className={`rounded-lg px-3 py-1.5 text-sm ${
-                                    link.active
-                                        ? 'bg-[var(--surface-header)] font-medium text-white'
-                                        : 'bg-[var(--neutral-white)] text-[var(--grey-text)] hover:bg-[var(--surface-badge)] disabled:cursor-not-allowed disabled:opacity-40'
-                                }`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-                )}
+                <Pagination links={suppliers.links} />
             </div>
 
             {canManageCatalog && showCreateModal && (

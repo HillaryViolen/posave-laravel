@@ -61,7 +61,6 @@ export default function Dashboard({
 }: Props) {
     const [metric, setMetric] = useState<TrendMetric>('omzet');
 
-    // Tombol "Cetak" di dashboard mengarahkan ke halaman Laporan (bawa filter aktif).
     const goToReports = () => {
         const params: Record<string, string> = { range: filters.range };
         if (filters.outlet_id) params.outlet_id = String(filters.outlet_id);
@@ -84,8 +83,7 @@ export default function Dashboard({
                     sebelumnya.
                 </p>
 
-                {/* KPI */}
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
                     <KpiCard
                         icon={Wallet}
                         label="Total Penjualan"
@@ -137,7 +135,6 @@ export default function Dashboard({
                     />
                 </div>
 
-                {/* Tren + kategori */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                     <div className="rounded-2xl border border-[var(--border)] bg-[var(--neutral-white)] p-4 shadow-sm sm:p-6 lg:col-span-8">
                         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
@@ -184,7 +181,6 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                {/* Jam ramai + metode pembayaran */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                     <div className="rounded-2xl border border-[var(--border)] bg-[var(--neutral-white)] p-4 shadow-sm sm:p-6 lg:col-span-8">
                         <div className="mb-4 flex items-center gap-2">
@@ -206,7 +202,6 @@ export default function Dashboard({
                     </div>
                 </div>
 
-                {/* Produk terlaris + transaksi terbaru + aksi cepat */}
                 <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
                     <TopProductsCard products={topProducts} className="lg:col-span-4" />
                     <RecentTransactionsCard transactions={recentTransactions} className="lg:col-span-4" />

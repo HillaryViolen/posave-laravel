@@ -1,0 +1,85 @@
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import { useFilteredRows, type SortKey } from '@/features/advance/management/report/hooks';
+import { cur, num, pct, runExport, type Cell, type CompanyInfo, type ReportExport } from '@/features/advance/management/report/lib';
+import { formatNumber, formatPct, formatRupiah } from '@/lib/format';
+import { useState } from 'react';
+import { TableToolbar } from './table-toolbar';
+
+export interface CategoryRow {
+    name: string;
+    qty: number;
+    omzet: number;
+    hpp: number;
+    margin: number;
+    marginPct: number;
+}
+
+interface CategoryTableProps {
+    rows: CategoryRow[];
+    subtitle: string;
+    periodSuffix: string;
+    company: CompanyInfo;
+}
+
+export function CategoryTable({ rows, subtitle, periodSuffix, company }: CategoryTableProps) {
+    const [query, setQuery] = useState('');
+    const [sort, setSort] = useState<SortKey>('omzet_desc');
+    const data = useFilteredRows(rows, query, sort);
+
+    const report: ReportExport = {
+        title: 'Kategori Penjualan',
+        subtitle,
+        company,
+        columns: [
+            { header: 'Nama Kategori', align: 'left', width: 28 },
+            { header: 'Terjual', align: 'right' },
+            { header: 'Penjualan', align: 'right' },
+            { header: 'HPP', align: 'right' },
+            { header: 'Margin', align: 'right' },
+            { header: 'Margin %', align: 'right' },
+        ],
+        filenameBase: `kategori-penjualan-${periodSuffix}`,
+        rows: data.map((r): Cell[] => [r.name, num(r.qty), cur(r.omzet), cur(r.hpp), cur(r.margin), pct(r.marginPct)]),
+    };
+
+    return (
+        <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--neutral-white)] shadow-sm">
+            <TableToolbar query={query} setQuery={setQuery} sort={sort} setSort={setSort} onExport={(f) => runExport(f, report)} />
+            <div className="overflow-x-auto">
+                <Table className="min-w-[560px]">
+                    <TableHeader className="bg-[var(--surface-header)]">
+                        <TableRow className="border-none hover:bg-[var(--surface-header)]">
+                            <TableHead className="text-[var(--text-light)]">Nama Kategori</TableHead>
+                            <TableHead className="text-right text-[var(--text-light)]">Terjual</TableHead>
+                            <TableHead className="text-right text-[var(--text-light)]">Penjualan</TableHead>
+                            <TableHead className="text-right text-[var(--text-light)]">HPP</TableHead>
+                            <TableHead className="text-right text-[var(--text-light)]">Margin</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {data.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="py-12 text-center text-[var(--grey-text)]">
+                                    Belum ada kategori terjual
+                                </TableCell>
+                            </TableRow>
+                        ) : (
+                            data.map((row) => (
+                                <TableRow key={row.name}>
+                                    <TableCell className="font-medium text-[var(--subheading)]">{row.name}</TableCell>
+                                    <TableCell className="text-right text-[var(--grey-text)]">{formatNumber(row.qty)}</TableCell>
+                                    <TableCell className="text-right font-semibold text-[var(--subheading)]">{formatRupiah(row.omzet)}</TableCell>
+                                    <TableCell className="text-right text-[var(--grey-text)]">{formatRupiah(row.hpp)}</TableCell>
+                                    <TableCell className="text-right">
+                                        <span className="font-semibold text-[var(--success)]">{formatRupiah(row.margin)}</span>
+                                        <span className="ml-1 text-xs text-[var(--grey-text)]">({formatPct(row.marginPct)})</span>
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
+        </div>
+    );
+}
