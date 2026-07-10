@@ -13,10 +13,12 @@ return new class extends Migration
     {
         Schema::create('transfers', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->string('transfer_number')->unique();
-            $table->string('sender_branch');
-            $table->string('receiver_branch');
-            $table->enum('status', ['waiting', 'success', 'cancelled'])->default('waiting');
+            $table->foreignId('sender_branch_id')->constrained('branches')->cascadeOnDelete();
+            $table->foreignId('receiver_branch_id')->constrained('branches')->cascadeOnDelete();
+            $table->enum('status', ['waiting', 'success', 'rejected'])->default('waiting');
+            $table->text('rejection_note')->nullable();
             $table->date('date');
             $table->timestamps();
         });

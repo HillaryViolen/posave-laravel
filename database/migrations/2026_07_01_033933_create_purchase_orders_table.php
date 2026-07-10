@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('purchase_orders', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('company_id')->constrained()->cascadeOnDelete();
             $table->string('po_number')->unique();
-            $table->string('branch');
+            $table->foreignId('branch_id')->constrained('branches')->cascadeOnDelete();
             $table->foreignId('supplier_id')->constrained('suppliers')->cascadeOnDelete();
             $table->decimal('total_price', 15, 2)->default(0);
             $table->enum('status', ['waiting_fulfilment', 'success', 'cancelled'])->default('waiting_fulfilment');

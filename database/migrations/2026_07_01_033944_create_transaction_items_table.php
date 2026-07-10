@@ -11,18 +11,15 @@ return new class extends Migration
         Schema::create('transaction_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('transaction_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('product_id')
-                ->nullable()
-                ->constrained()
-                ->nullOnDelete();
-
-            $table->string('product_name');          
+            $table->foreignId('item_id')->nullable()->constrained('inventory_items')->nullOnDelete();
+            $table->string('product_name');
             $table->string('category_name')->nullable();
             $table->unsignedInteger('qty');
-            $table->decimal('unit_price', 15, 2);       
-            $table->decimal('unit_cost', 15, 2)->default(0); 
+            $table->decimal('unit_price', 15, 2);
+            $table->decimal('unit_cost', 15, 2)->default(0);
             $table->decimal('discount_amount', 15, 2)->default(0);
-            $table->decimal('subtotal', 15, 2);         
+            $table->decimal('subtotal', 15, 2);
+            $table->text('note')->nullable(); 
             $table->timestamps();
         });
     }

@@ -14,6 +14,9 @@ return new class extends Migration
         Schema::create('inventory_categories', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->foreignId('company_id')->constrained()->cascadeOnDelete();
+            $table->string('color')->nullable();
+            $table->unique(['company_id', 'name']);
             $table->timestamps();
         });
     }

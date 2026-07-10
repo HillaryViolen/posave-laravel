@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('password');
             $table->enum('role', ['owner', 'branch_manager', 'cashier'])->default('owner');
             $table->rememberToken();
+            $table->softDeletes();
             $table->timestamps();
         });
 

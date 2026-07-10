@@ -11,16 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('inventory_items', function (Blueprint $table) {
+        Schema::create('branch_stocks', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('sku')->unique();
-            $table->foreignId('category_id')->constrained('inventory_categories')->cascadeOnDelete();
-            $table->string('image')->nullable();
-            $table->integer('min_stock')->default(0);
+            $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('inventory_item_id')->constrained('inventory_items')->cascadeOnDelete();
             $table->integer('current_stock')->default(0);
-            $table->decimal('price', 15, 2)->default(0);
+            $table->integer('min_stock')->default(0);
             $table->timestamps();
+
+            $table->unique(['branch_id', 'inventory_item_id']);   // 1 baris per kombinasi cabang+barang
         });
     }
 
@@ -29,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('inventory_items');
+        Schema::dropIfExists('branch_stocks');
     }
 };

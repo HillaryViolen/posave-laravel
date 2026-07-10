@@ -15,7 +15,6 @@ return new class extends Migration
                 ->after('status');
         });
 
-        // Backfill data dummy yang sudah ada (distribusi ~50/30/10/10) secara deterministik.
         DB::statement("
             UPDATE transactions
             SET payment_method = ELT(

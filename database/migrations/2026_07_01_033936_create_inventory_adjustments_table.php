@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('inventory_adjustments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('inventory_item_id')->constrained('inventory_items')->cascadeOnDelete();
-            $table->string('branch');
+            $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
             $table->text('note')->nullable();
             $table->integer('qty_change');
             $table->decimal('financial_change', 15, 2)->default(0);
