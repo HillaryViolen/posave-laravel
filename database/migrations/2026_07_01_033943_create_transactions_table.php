@@ -11,9 +11,14 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('branch_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('user_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
             $table->string('invoice_no')->unique();
             $table->enum('status', ['completed', 'refunded', 'void'])->default('completed');
+            $table->string('payment_method')->nullable();
+
             $table->decimal('gross_amount', 15, 2)->default(0);
             $table->decimal('discount_amount', 15, 2)->default(0);
             $table->decimal('refund_amount', 15, 2)->default(0);
@@ -22,6 +27,10 @@ return new class extends Migration
             $table->decimal('rounding_amount', 15, 2)->default(0);
             $table->decimal('cogs_amount', 15, 2)->default(0);
             $table->decimal('total_amount', 15, 2)->default(0);
+
+            $table->decimal('cash_received', 15, 2)->nullable();
+            $table->decimal('change_returned', 15, 2)->nullable();
+
             $table->dateTime('transacted_at')->index();
             $table->timestamps();
         });

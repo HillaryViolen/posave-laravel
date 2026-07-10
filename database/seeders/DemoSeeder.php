@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\Advance\Management\Messaging\Conversation;
+use App\Models\Advance\Messaging\Conversation;
 use App\Models\Advance\Management\Employee\Employee;
 use App\Models\Advance\Management\Inventory\Adjustment;
 use App\Models\Advance\Management\Inventory\BranchStock;
