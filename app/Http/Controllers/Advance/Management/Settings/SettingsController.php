@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Http\Controllers\Advance\Owner\Settings;
+namespace App\Http\Controllers\Advance\Management\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Models\Advance\Messaging\Conversation;
+use App\Models\Advance\Management\Messaging\Conversation;
 use App\Models\Auth\Branch;
 use App\Models\Auth\CompanyProfile;
-use App\Models\Advance\Owner\Settings\ReceiptSetting;
+use App\Models\Advance\Management\Settings\ReceiptSetting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +19,7 @@ class SettingsController extends Controller
     {
         /** @var User $user */
         $user = Auth::user();
+        abort_if(!$user->isOwner(), 403);
         return $user;
     }
 
@@ -29,7 +30,7 @@ class SettingsController extends Controller
         $user    = $this->getOwner();
         $company = $user->company->load('profile');
 
-        return Inertia::render('advance/owner/company-settings/company-profile', [
+        return Inertia::render('advance/management/company-settings/company-profile', [
             'company' => [
                 'id'      => $company->id,
                 'type'    => $company->type,
@@ -96,7 +97,7 @@ class SettingsController extends Controller
         $user    = $this->getOwner();
         $company = $user->company->load(['profile', 'receiptSetting']);
 
-        return Inertia::render('advance/owner/company-settings/receipt', [
+        return Inertia::render('advance/management/company-settings/receipt', [
             'receipt'      => $company->receiptSetting,
             'company_name' => $company->profile?->name ?? '',
         ]);
@@ -150,7 +151,7 @@ class SettingsController extends Controller
             ->paginate($perPage)
             ->withQueryString();
 
-        return Inertia::render('advance/owner/company-settings/branches', [
+        return Inertia::render('advance/management/company-settings/branches', [
             'branches' => $branches,
             'filters'  => [
                 'search'   => $search,

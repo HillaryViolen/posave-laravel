@@ -1,37 +1,46 @@
 <?php
 
-namespace App\Http\Controllers\Advance\Owner;
+namespace App\Http\Controllers\Advance\Management;
 
 use App\Http\Controllers\Controller;
-use App\Models\Sales\Category;
-use App\Models\Sales\Outlet;
-use App\Models\Sales\Transaction;
-use App\Models\Sales\TransactionItem;
+use App\Models\Advance\Management\Inventory\Category;
+use App\Models\Advance\Management\Transaction\Transaction;
+use App\Models\Advance\Management\Transaction\TransactionItem;
+use App\Models\Auth\Branch;
+use App\Models\User;
 use App\Support\SalesFilter;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Collection;
 use Inertia\Inertia;
 
 class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        /** @var User $owner */
+        $owner = Auth::user();
+
+        $companyBranchIds = Branch::where('company_id', $owner->company_id)->pluck('id');
+
         $filter = SalesFilter::fromRequest($request);
+        if ($owner->isBranchManager()) {
+            $filter = new SalesFilter($owner->branch_id, $filter->start, $filter->end, $filter->preset);
+        }
         [$prevStart, $prevEnd] = $filter->previousPeriod();
 
-        $current = $this->metricsFor($filter->outletId, $filter->start, $filter->end);
-        $previous = $this->metricsFor($filter->outletId, $prevStart, $prevEnd);
+        $current = $this->metricsFor($companyBranchIds, $filter->outletId, $filter->start, $filter->end);
+        $previous = $this->metricsFor($companyBranchIds, $filter->outletId, $prevStart, $prevEnd);
 
-        $base = Transaction::query()
-            ->revenue()
-            ->forOutlet($filter->outletId)
-            ->withinPeriod($filter->start, $filter->end);
+        $base = $this->baseQuery($companyBranchIds, $filter->outletId, $filter->start, $filter->end);
+        $itemBase = $this->itemBase($companyBranchIds, $filter->outletId, $filter->start, $filter->end);
 
-        $itemBase = $this->itemBase($filter->outletId, $filter->start, $filter->end);
-
-        return Inertia::render('advance/owner/dashboard/dashboard', [
+        return Inertia::render('advance/management/dashboard/dashboard', [
             'filters' => $filter->toArray(),
-            'outlets' => Outlet::orderBy('name')->get(['id', 'name']),
+            'outlets' => $owner->isBranchManager()
+                ? Branch::where('id', $owner->branch_id)->get(['id', 'name'])
+                : Branch::where('company_id', $owner->company_id)->orderBy('name')->get(['id', 'name']),
             'kpis' => [
                 'totalSales' => $this->kpi($current['totalSales'], $previous['totalSales']),
                 'totalTransactions' => $this->kpi($current['totalTransactions'], $previous['totalTransactions']),
@@ -40,32 +49,39 @@ class DashboardController extends Controller
                 'grossProfit' => $this->kpi($current['grossProfit'], $previous['grossProfit']),
                 'margin' => $this->kpi($current['margin'], $previous['margin']),
             ],
-            'salesTrend' => $this->salesTrend($filter, $prevStart, $prevEnd),
+            'salesTrend' => $this->salesTrend($companyBranchIds, $filter, $prevStart, $prevEnd),
             'hourlySales' => $this->hourlySales($base),
             'paymentBreakdown' => $this->paymentBreakdown($base),
-            'categorySummary' => $this->categorySummary($itemBase),
+            'categorySummary' => $this->categorySummary($itemBase, $owner->company_id),
             'topProducts' => $this->topProducts($itemBase),
             'recentTransactions' => $this->recentTransactions($base),
         ]);
     }
 
-    /** Query item yang sudah di-join + difilter ke periode/outlet. */
-    private function itemBase(?int $outletId, $start, $end)
+    /** Query dasar transaksi: selalu dibatasi ke branch-branch company ini. */
+    private function baseQuery(Collection $companyBranchIds, ?int $branchId, $start, $end)
+    {
+        return Transaction::query()
+            ->revenue()
+            ->whereIn('branch_id', $companyBranchIds)
+            ->forBranch($branchId)
+            ->withinPeriod($start, $end);
+    }
+
+    /** Query item yang sudah di-join + dibatasi ke branch-branch company ini. */
+    private function itemBase(Collection $companyBranchIds, ?int $branchId, $start, $end)
     {
         return TransactionItem::query()
             ->join('transactions', 'transactions.id', '=', 'transaction_items.transaction_id')
             ->where('transactions.status', '!=', 'void')
-            ->when($outletId, fn ($q) => $q->where('transactions.outlet_id', $outletId))
+            ->whereIn('transactions.branch_id', $companyBranchIds)
+            ->when($branchId, fn($q) => $q->where('transactions.branch_id', $branchId))
             ->whereBetween('transactions.transacted_at', [$start, $end]);
     }
 
-    /** Metrik agregat satu periode. */
-    private function metricsFor(?int $outletId, $start, $end): array
+    private function metricsFor(Collection $companyBranchIds, ?int $branchId, $start, $end): array
     {
-        $t = Transaction::query()
-            ->revenue()
-            ->forOutlet($outletId)
-            ->withinPeriod($start, $end)
+        $t = $this->baseQuery($companyBranchIds, $branchId, $start, $end)
             ->selectRaw(implode(', ', [
                 'COUNT(*) as trx',
                 'COALESCE(SUM(total_amount), 0) as total',
@@ -74,7 +90,7 @@ class DashboardController extends Controller
             ]))
             ->first();
 
-        $qty = (int) $this->itemBase($outletId, $start, $end)->sum('transaction_items.qty');
+        $qty = (int) $this->itemBase($companyBranchIds, $branchId, $start, $end)->sum('transaction_items.qty');
 
         $total = (float) $t->total;
         $trx = (int) $t->trx;
@@ -91,7 +107,6 @@ class DashboardController extends Controller
         ];
     }
 
-    /** Bungkus nilai + persentase perubahan vs periode sebelumnya. */
     private function kpi(float|int $value, float|int $previous): array
     {
         if ($previous == 0) {
@@ -107,16 +122,13 @@ class DashboardController extends Controller
         ];
     }
 
-    /** Tren harian: periode ini + periode sebelumnya (sejajar per indeks hari). */
-    private function salesTrend(SalesFilter $filter, $prevStart, $prevEnd): array
+    private function salesTrend(Collection $companyBranchIds, SalesFilter $filter, $prevStart, $prevEnd): array
     {
-        $cur = Transaction::query()->revenue()->forOutlet($filter->outletId)
-            ->withinPeriod($filter->start, $filter->end)
+        $cur = $this->baseQuery($companyBranchIds, $filter->outletId, $filter->start, $filter->end)
             ->selectRaw('DATE(transacted_at) as d, SUM(total_amount) as total, COUNT(*) as cnt')
             ->groupBy('d')->get()->keyBy('d');
 
-        $prev = Transaction::query()->revenue()->forOutlet($filter->outletId)
-            ->withinPeriod($prevStart, $prevEnd)
+        $prev = $this->baseQuery($companyBranchIds, $filter->outletId, $prevStart, $prevEnd)
             ->selectRaw('DATE(transacted_at) as d, SUM(total_amount) as total, COUNT(*) as cnt')
             ->groupBy('d')->get()->keyBy('d');
 
@@ -139,7 +151,6 @@ class DashboardController extends Controller
         return $series;
     }
 
-    /** Penjualan per jam (0–23) untuk melihat jam ramai. */
     private function hourlySales($base): array
     {
         $byHour = (clone $base)
@@ -158,7 +169,6 @@ class DashboardController extends Controller
         return $hours;
     }
 
-    /** Komposisi metode pembayaran. */
     private function paymentBreakdown($base): array
     {
         $meta = [
@@ -172,7 +182,7 @@ class DashboardController extends Controller
             ->selectRaw('payment_method, SUM(total_amount) as total, COUNT(*) as cnt')
             ->groupBy('payment_method')->get()->keyBy('payment_method');
 
-        return collect($meta)->map(fn ($m, $key) => [
+        return collect($meta)->map(fn($m, $key) => [
             'method' => $key,
             'label' => $m['label'],
             'color' => $m['color'],
@@ -181,16 +191,16 @@ class DashboardController extends Controller
         ])->values()->all();
     }
 
-    private function categorySummary($itemBase): array
+    private function categorySummary($itemBase, int $companyId): array
     {
-        $colors = Category::pluck('color', 'name');
+        $colors = Category::where('company_id', $companyId)->pluck('color', 'name');
 
         return (clone $itemBase)
             ->selectRaw('transaction_items.category_name as name, SUM(transaction_items.subtotal) as omzet')
             ->groupBy('transaction_items.category_name')
             ->orderByDesc('omzet')
             ->get()
-            ->map(fn ($row) => [
+            ->map(fn($row) => [
                 'name' => $row->name ?? 'Lainnya',
                 'omzet' => (float) $row->omzet,
                 'color' => $colors[$row->name] ?? '#94a3b8',
@@ -206,7 +216,7 @@ class DashboardController extends Controller
             ->orderByDesc('qty')
             ->limit(5)
             ->get()
-            ->map(fn ($row) => [
+            ->map(fn($row) => [
                 'name' => $row->name,
                 'qty' => (int) $row->qty,
                 'omzet' => (float) $row->omzet,
@@ -220,7 +230,7 @@ class DashboardController extends Controller
             ->latest('transacted_at')
             ->limit(6)
             ->get(['invoice_no', 'total_amount', 'status', 'payment_method', 'transacted_at'])
-            ->map(fn (Transaction $t) => [
+            ->map(fn(Transaction $t) => [
                 'invoice' => $t->invoice_no,
                 'total' => (float) $t->total_amount,
                 'status' => $t->status,
@@ -230,7 +240,6 @@ class DashboardController extends Controller
             ->all();
     }
 
-    /** @return string[] daftar tanggal (Y-m-d) dari start..end inklusif. */
     private function dateKeys(Carbon $start, Carbon $end): array
     {
         $keys = [];

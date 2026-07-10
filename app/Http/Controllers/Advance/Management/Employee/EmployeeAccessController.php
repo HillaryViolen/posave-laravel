@@ -1,28 +1,30 @@
 <?php
 
-namespace App\Http\Controllers\Advance\Owner\Inventory;
+namespace App\Http\Controllers\Advance\Management\Employee;
 
 use App\Http\Controllers\Controller;
-use App\Models\Advance\Owner\Inventory\Category;
+use App\Models\Advance\Management\Employee\Employee;
+use App\Models\Advance\Management\Employee\EmployeeAccess;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
-class CategoryController extends Controller
+class EmployeeAccessController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $categories = Category::withCount('items')
+        //
+        $accesses = EmployeeAccess::withCount('employees')
             ->when($request->search, function ($query) use ($request) {
                 $query->where('name', 'like', '%' . $request->search . '%');
             })
             ->paginate(5)
             ->withQueryString();
 
-        return Inertia::render('advance/owner/inventory/inventory-category', [
-            'categories' => $categories,
+        return Inertia::render('advance/management/employee/employee-access-list', [
+            'accesses' => $accesses,
             'filters' => $request->only('search'),
         ]);
     }
@@ -42,12 +44,12 @@ class CategoryController extends Controller
     {
         //
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:inventory_categories,name'
+            'name' => 'required|string|max:255|unique:employee_accesses,name',
         ]);
 
-        Category::create($validated);
+        EmployeeAccess::create($validated);
 
-        return redirect()->route('dashboard.inventory.categories.index')->with('success', 'Kategori berhasil ditambahkan!');
+        return redirect()->route('dashboard.employees-access.index')->with('success', 'Kategori berhasil ditambahkan!');
     }
 
     /**
@@ -73,12 +75,17 @@ class CategoryController extends Controller
     {
         //
         $validated = $request->validate([
-            'name' => 'required|string|max:255|unique:inventory_categories,name,' . $id
+            'name' => 'required|string|max:255|unique:employee_accesses,name,' . $id,
         ]);
 
-        Category::findOrFail($id)->update($validated);
+        $access = EmployeeAccess::findOrFail($id);
+        $oldName = $access->name;
+        $access->update($validated);
 
-        return redirect()->route('dashboard.inventory.categories.index')->with('success', 'Kategori berhasil diperbarui!');
+        // sync nama role di tabel employees biar konsisten
+        Employee::where('role', $oldName)->update(['role' => $validated['name']]);
+
+        return redirect()->route('dashboard.employees-access.index')->with('success', 'Kategori berhasil diperbarui!');
     }
 
     /**
@@ -87,9 +94,9 @@ class CategoryController extends Controller
     public function destroy(string $id)
     {
         //
-        Category::findOrFail($id)->delete();
+        $access = EmployeeAccess::findOrFail($id);
+        $access->delete();
 
-        return redirect()->route('dashboard.inventory.categories.index')
-            ->with('success', 'Kategori berhasil dihapus!');
+        return redirect()->route('dashboard.employees-access.index')->with('success', 'Kategori berhasil dihapus!');
     }
 }

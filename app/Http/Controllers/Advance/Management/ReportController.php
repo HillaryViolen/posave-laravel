@@ -1,34 +1,49 @@
 <?php
 
-namespace App\Http\Controllers\Advance\Owner;
+namespace App\Http\Controllers\Advance\Management;
 
 use App\Http\Controllers\Controller;
-use App\Models\Sales\Outlet;
-use App\Models\Sales\Transaction;
-use App\Models\Sales\TransactionItem;
+use App\Models\Advance\Management\Transaction\Transaction;
+use App\Models\Advance\Management\Transaction\TransactionItem;
+use App\Models\Auth\Branch;
+use App\Models\User;
 use App\Support\SalesFilter;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class ReportController extends Controller
 {
     public function index(Request $request)
     {
+        /** @var User $owner */
+        $owner = Auth::user();
+
+        // Semua branch milik company ini — jadi batas wajib biar data company lain
+        // gak ikut kebaca walau user gak pilih outlet/cabang spesifik.
+        $companyBranchIds = Branch::where('company_id', $owner->company_id)->pluck('id');
+
         $filter = SalesFilter::fromRequest($request);
+        if ($owner->isBranchManager()) {
+            $filter = new SalesFilter($owner->branch_id, $filter->start, $filter->end, $filter->preset);
+        }
         [$prevStart, $prevEnd] = $filter->previousPeriod();
 
-        $current = $this->statement($filter->outletId, $filter->start, $filter->end);
-        $previous = $this->statement($filter->outletId, $prevStart, $prevEnd);
+        $current = $this->statement($companyBranchIds, $filter->outletId, $filter->start, $filter->end);
+        $previous = $this->statement($companyBranchIds, $filter->outletId, $prevStart, $prevEnd);
 
         $itemBase = TransactionItem::query()
             ->join('transactions', 'transactions.id', '=', 'transaction_items.transaction_id')
             ->where('transactions.status', '!=', 'void')
-            ->when($filter->outletId, fn ($q) => $q->where('transactions.outlet_id', $filter->outletId))
+            ->whereIn('transactions.branch_id', $companyBranchIds)
+            ->when($filter->outletId, fn($q) => $q->where('transactions.branch_id', $filter->outletId))
             ->whereBetween('transactions.transacted_at', [$filter->start, $filter->end]);
 
-        return Inertia::render('advance/owner/report/report', [
+        return Inertia::render('advance/management/report/report', [
             'filters' => $filter->toArray(),
-            'outlets' => Outlet::orderBy('name')->get(['id', 'name']),
+            'outlets' => $owner->isBranchManager()
+                ? Branch::where('id', $owner->branch_id)->get(['id', 'name'])
+                : Branch::where('company_id', $owner->company_id)->orderBy('name')->get(['id', 'name']),
             'statement' => [
                 'current' => $current,
                 'previous' => $previous,
@@ -38,12 +53,12 @@ class ReportController extends Controller
         ]);
     }
 
-    /** Ringkasan nominal satu periode (dipakai untuk Laporan Penjualan & Laba Kotor). */
-    private function statement(?int $outletId, $start, $end): array
+    private function statement($companyBranchIds, ?int $branchId, $start, $end): array
     {
         $s = Transaction::query()
             ->revenue()
-            ->forOutlet($outletId)
+            ->whereIn('branch_id', $companyBranchIds)
+            ->forBranch($branchId)
             ->withinPeriod($start, $end)
             ->selectRaw(implode(', ', [
                 'COALESCE(SUM(gross_amount), 0) as gross',
@@ -78,7 +93,6 @@ class ReportController extends Controller
         ];
     }
 
-    /** Penjualan per produk + HPP & margin. */
     private function productSales($itemBase): array
     {
         return (clone $itemBase)
@@ -109,7 +123,6 @@ class ReportController extends Controller
             ->all();
     }
 
-    /** Penjualan per kategori + HPP & margin. */
     private function categorySales($itemBase): array
     {
         return (clone $itemBase)
