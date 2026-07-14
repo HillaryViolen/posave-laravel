@@ -22,8 +22,6 @@ interface InventoryTransferCreateModalProps {
 }
 
 export function InventoryTransferCreateModal({ inventoryItems, branches, myBranchId, isBranchManager, onClose }: InventoryTransferCreateModalProps) {
-    // Branch manager: default arahnya "kirim dari cabang saya", tinggal pilih tujuan.
-    // Owner: dua dropdown bebas, bisa orkestrasi transfer antar cabang manapun.
     const [direction, setDirection] = React.useState<'send' | 'receive'>('send');
 
     const { data, setData, post, processing, errors, reset } = useForm({

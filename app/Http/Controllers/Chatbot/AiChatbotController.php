@@ -4,21 +4,17 @@ namespace App\Http\Controllers\Chatbot;
 
 use App\Http\Controllers\Controller;
 use App\Models\Chatbot\Chatbot;
-use App\Models\Chatbot\ChatbotMessage;
+use App\Models\Chatbot\ChatbotAction;
+use App\Models\User;
+use App\Services\Chatbot\ChatbotService;
+use App\Services\Chatbot\ToolRegistry;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AiChatbotController extends Controller
 {
-    private const INTERACTIONS_URL = 'https://generativelanguage.googleapis.com/v1beta/interactions';
-    private const MODEL = 'gemini-3.5-flash';
+    public function __construct(private ChatbotService $chatbotService) {}
 
-    /**
-     * GET /chatbot/conversations
-     * Daftar semua room chat milik user, buat sidebar.
-     */
     public function listConversations(Request $request)
     {
         $conversations = Chatbot::where('user_id', $request->user()->id)
@@ -28,165 +24,138 @@ class AiChatbotController extends Controller
         return response()->json($conversations);
     }
 
-    /**
-     * GET /chatbot/conversations/{chatbot}/messages
-     * Semua pesan dalam satu room, buat ditampilin pas room diklik.
-     */
     public function getMessages(Request $request, Chatbot $chatbot)
     {
         abort_if($chatbot->user_id !== $request->user()->id, 403);
 
-        return response()->json(
-            $chatbot->messages()->orderBy('created_at')->get(['role', 'content'])
-        );
+        $messages = $chatbot->messages()
+            ->with('action:id,chatbot_message_id,tool_name,summary,status')
+            ->orderBy('created_at')
+            ->get(['id', 'role', 'content']);
+
+        return response()->json($messages->map(fn($m) => [
+            'role' => $m->role,
+            'content' => $m->content,
+            'action' => $m->action,
+        ]));
     }
 
-    /**
-     * POST /ai/chat
-     * Endpoint utama: kirim pesan, dapat balasan AI.
-     */
     public function handle(Request $request)
     {
-        $message = $request->input('message');
-        $chatbotId = $request->input('conversation_id');
+        $validated = $request->validate([
+            'message' => 'required|string|max:2000',
+            'conversation_id' => 'nullable|integer|exists:chatbots,id',
+        ]);
 
-        if (!$chatbotId) {
+        /** @var User $user */
+        $user = $request->user();
+
+        if (!$validated['conversation_id']) {
             $chatbot = Chatbot::create([
-                'user_id' => $request->user()->id,
-                'title' => Str::limit($message, 40),
+                'user_id' => $user->id,
+                'title' => Str::limit($validated['message'], 40),
             ]);
         } else {
-            $chatbot = Chatbot::findOrFail($chatbotId);
-            abort_if($chatbot->user_id !== $request->user()->id, 403);
+            $chatbot = Chatbot::findOrFail($validated['conversation_id']);
+            abort_if($chatbot->user_id !== $user->id, 403);
         }
 
-        ChatbotMessage::create([
-            'chatbot_id' => $chatbot->id,
-            'role' => 'user',
-            'content' => $message,
-        ]);
-
-        $result = null;
-
-        if ($chatbot->last_interaction_id) {
-            $result = $this->tryContinueInteraction($message, $chatbot->last_interaction_id);
-        }
-
-        if (!$result) {
-            $result = $this->fallbackWithFullHistory($chatbot, $message);
-        }
-
-        ChatbotMessage::create([
-            'chatbot_id' => $chatbot->id,
-            'role' => 'assistant',
-            'content' => $result['reply'],
-        ]);
-
-        $chatbot->update(['last_interaction_id' => $result['interaction_id']]);
-        $chatbot->touch();
-
-        return response()->json([
-            'reply' => $result['reply'],
-            'conversation_id' => $chatbot->id,
-        ]);
+        return response()->json($this->chatbotService->reply($user, $chatbot, $validated['message']));
     }
 
-    private function tryContinueInteraction(string $message, string $previousInteractionId): ?array
+    public function confirmAction(Request $request, ChatbotAction $action)
     {
-        $response = Http::withHeaders([
-            'x-goog-api-key' => env('GEMINI_API_KEY'),
-        ])->post(self::INTERACTIONS_URL, [
-            'model' => self::MODEL,
-            'input' => $message,
-            'previous_interaction_id' => $previousInteractionId,
-        ]);
+        /** @var User $user */
+        $user = $request->user();
 
-        if (!$response->successful()) {
-            Log::warning('Interaction lanjutan gagal, kemungkinan expired', [
-                'status' => $response->status(),
-                'body' => $response->json(),
-            ]);
-            return null;
+        abort_if($action->chatbot->user_id !== $user->id, 403);
+        abort_if($action->status !== 'pending', 422, 'Aksi ini sudah diputuskan sebelumnya.');
+
+        $tool = ToolRegistry::find($action->tool_name, $user);
+        abort_if(!$tool, 403);
+
+        try {
+            $result = $tool->execute($user, $action->payload);
+            $action->update(['status' => 'confirmed', 'result' => $result]);
+        } catch (\Throwable $e) {
+            return response()->json(['error' => 'Gagal menjalankan aksi: ' . $e->getMessage()], 422);
         }
 
-        return $this->extractReply($response->json());
+        return response()->json(['status' => 'confirmed', 'result' => $result]);
     }
 
-    private function fallbackWithFullHistory(Chatbot $chatbot, string $latestMessage): array
+    public function cancelAction(Request $request, ChatbotAction $action)
     {
-        $history = $chatbot->messages()->orderBy('created_at')->get();
+        /** @var User $user */
+        $user = $request->user();
 
-        $input = $history->map(function ($msg) {
-            return [
-                'type' => $msg->role === 'assistant' ? 'model_output' : 'user_input',
-                'content' => [
-                    ['type' => 'text', 'text' => $msg->content],
-                ],
-            ];
-        })->toArray();
+        abort_if($action->chatbot->user_id !== $user->id, 403);
+        abort_if($action->status !== 'pending', 422);
 
-        $response = Http::withHeaders([
-            'x-goog-api-key' => env('GEMINI_API_KEY'),
-        ])->post(self::INTERACTIONS_URL, [
-            'model' => self::MODEL,
-            'input' => $input,
-        ]);
+        $action->update(['status' => 'cancelled']);
 
-        if (!$response->successful()) {
-            Log::error('Fallback ke Gemini API juga gagal', [
-                'status' => $response->status(),
-                'body' => $response->json(),
-            ]);
-
-            return [
-                'reply' => 'Maaf, terjadi kesalahan saat menghubungi AI.',
-                'interaction_id' => null,
-            ];
-        }
-
-        return $this->extractReply($response->json());
-    }
-
-    private function extractReply(array $data): array
-    {
-        $reply = 'Maaf, terjadi kesalahan.';
-
-        foreach ($data['steps'] ?? [] as $step) {
-            if ($step['type'] === 'model_output') {
-                foreach ($step['content'] ?? [] as $block) {
-                    if ($block['type'] === 'text') {
-                        $reply = $block['text'];
-                        break 2;
-                    }
-                }
-            }
-        }
-
-        return [
-            'reply' => $reply,
-            'interaction_id' => $data['id'] ?? null,
-        ];
+        return response()->json(['status' => 'cancelled']);
     }
 
     public function deleteConversation(Request $request, Chatbot $chatbot)
     {
         abort_if($chatbot->user_id !== $request->user()->id, 403);
-
         $chatbot->delete();
-
         return response()->json(['success' => true]);
     }
 
     public function renameConversation(Request $request, Chatbot $chatbot)
     {
         abort_if($chatbot->user_id !== $request->user()->id, 403);
-
-        $request->validate([
-            'title' => 'required|string|max:255',
-        ]);
-
+        $request->validate(['title' => 'required|string|max:255']);
         $chatbot->update(['title' => $request->input('title')]);
 
         return response()->json(['success' => true, 'title' => $chatbot->title]);
+    }
+    public function submitForm(Request $request)
+    {
+        $validated = $request->validate([
+            'conversation_id' => 'required|integer|exists:chatbots,id',
+            'tool_name' => 'required|string',
+            'args' => 'required|array',
+        ]);
+
+        /** @var User $user */
+        $user = $request->user();
+
+        $chatbot = Chatbot::where('id', $validated['conversation_id'])->where('user_id', $user->id)->firstOrFail();
+
+        $tool = ToolRegistry::find($validated['tool_name'], $user);
+        abort_if(!$tool, 403);
+
+        $summary = $tool->summarize($user, $validated['args']);
+
+        $action = \App\Models\Chatbot\ChatbotAction::create([
+            'chatbot_id' => $chatbot->id,
+            'tool_name' => $tool->name(),
+            'payload' => $validated['args'],
+            'summary' => $summary,
+            'status' => 'pending',
+        ]);
+
+        $assistantMessage = \App\Models\Chatbot\ChatbotMessage::create([
+            'chatbot_id' => $chatbot->id,
+            'role' => 'assistant',
+            'content' => 'Berikut ringkasan yang akan disimpan:',
+        ]);
+        $action->update(['chatbot_message_id' => $assistantMessage->id]);
+        $chatbot->touch();
+
+        return response()->json([
+            'reply' => $assistantMessage->content,
+            'conversation_id' => $chatbot->id,
+            'action' => [
+                'id' => $action->id,
+                'tool_name' => $action->tool_name,
+                'summary' => $action->summary,
+                'status' => $action->status,
+            ],
+            'form' => null,
+        ]);
     }
 }

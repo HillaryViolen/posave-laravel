@@ -1,3 +1,4 @@
+import { DropdownActionMenu } from '@/components';
 import { CheckCircle2, Trash2, XCircle } from 'lucide-react';
 
 export interface PurchaseOrder {
@@ -26,36 +27,20 @@ export function InventoryPurchaseOrderActionsMenu({
     onUpdateStatus,
     onDelete,
 }: InventoryPurchaseOrderActionsMenuProps) {
-    return (
-        <>
-            <div className="fixed inset-0 z-40" onClick={onClose} />
-            <div className="fixed z-50 w-44 overflow-hidden rounded-xl shadow-lg" style={{ top: position.top, left: position.left }}>
-                {purchaseOrder.status === 'waiting_fulfilment' && (
-                    <>
-                        <button
-                            onClick={() => onUpdateStatus(purchaseOrder.id, 'success')}
-                            className="flex w-full items-center gap-2 bg-green-50 px-4 py-3 text-sm font-medium text-green-600 hover:bg-green-100"
-                        >
-                            <CheckCircle2 className="h-4 w-4" />
-                            Tandai Sukses
-                        </button>
-                        <button
-                            onClick={() => onUpdateStatus(purchaseOrder.id, 'cancelled')}
-                            className="flex w-full items-center gap-2 bg-yellow-50 px-4 py-3 text-sm font-medium text-yellow-600 hover:bg-yellow-100"
-                        >
-                            <XCircle className="h-4 w-4" />
-                            Batalkan
-                        </button>
-                    </>
-                )}
-                <button
-                    onClick={() => onDelete(purchaseOrder.id)}
-                    className="flex w-full items-center gap-2 bg-red-50 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-100"
-                >
-                    <Trash2 className="h-4 w-4" />
-                    Hapus
-                </button>
-            </div>
-        </>
-    );
+    const items = [
+        ...(purchaseOrder.status === 'waiting_fulfilment'
+            ? [
+                  {
+                      label: 'Tandai Sukses',
+                      icon: CheckCircle2,
+                      onClick: () => onUpdateStatus(purchaseOrder.id, 'success'),
+                      variant: 'success' as const,
+                  },
+                  { label: 'Batalkan', icon: XCircle, onClick: () => onUpdateStatus(purchaseOrder.id, 'cancelled'), variant: 'warning' as const },
+              ]
+            : []),
+        { label: 'Hapus', icon: Trash2, onClick: () => onDelete(purchaseOrder.id), variant: 'danger' as const },
+    ];
+
+    return <DropdownActionMenu position={position} onClose={onClose} items={items} width="w-44" />;
 }

@@ -1,4 +1,5 @@
 import {
+    AskChatbotButton,
     Badge,
     Button,
     DateNavigator,
@@ -16,7 +17,7 @@ import { STATUS_BADGE_STYLES, STATUS_LABEL, STATUS_STYLES, type Transaction } fr
 import { useChatbot } from '@/features/chatbot';
 import { CashierLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
-import { Mail, MessageSquare, Printer } from 'lucide-react';
+import { Mail, Printer } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -189,15 +190,7 @@ export default function HistoryPage({ transactions, filters }: Props) {
                             variant="kiosk"
                         />
                     </div>
-                    <Button
-                        aria-label="Buka asisten chatbot"
-                        onClick={open}
-                        variant="outline"
-                        className="ml-auto h-10 shrink-0 rounded-md border-blue-200 bg-white text-[#003399] shadow-sm hover:bg-blue-50"
-                    >
-                        <MessageSquare className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Tanya Temanmu</span>
-                    </Button>
+                    <AskChatbotButton className="ml-auto" />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 px-4 pb-2 sm:px-6">

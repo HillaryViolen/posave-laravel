@@ -1,4 +1,4 @@
-import { AppContent, AppShell, AppSidebar, AppSidebarHeader } from '@/components';
+import { AppContent, AppShell, AppSidebar, AppSidebarHeader, ScrollToTopButton } from '@/components';
 import { branchManagerNavItems, cashierNavItems, liteNavItems, mainNavItems } from '@/data';
 import { Chatbot } from '@/features/chatbot';
 import type { NavItem } from '@/types';
@@ -50,6 +50,7 @@ export function DashboardSidebarLayout({ children, title, description }: Dashboa
                 {children}
 
                 <Chatbot />
+                <ScrollToTopButton />
             </AppContent>
         </AppShell>
     );

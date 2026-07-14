@@ -1,5 +1,6 @@
 import { Button, Input } from '@/components/ui';
 import { InventoryItemFormModal } from '@/features/lite/inventory/components';
+import { useConfirmAction } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
@@ -65,6 +66,7 @@ export default function ItemList({ items: initialItems, categories, summary, fil
     const [activeStatus, setActiveStatus] = useState<StockStatus>((filters.stock_status as StockStatus) ?? 'all');
     const [pendingStockId, setPendingStockId] = useState<number | null>(null);
     const [formItem, setFormItem] = useState<InventoryItem | 'new' | null>(null);
+    const { confirmAndDelete } = useConfirmAction();
 
     const applyFilters = (next: { search?: string; category_id?: number | 'all'; stock_status?: StockStatus }) => {
         router.get(
@@ -119,8 +121,7 @@ export default function ItemList({ items: initialItems, categories, summary, fil
     };
 
     const handleDelete = (item: InventoryItem) => {
-        if (!confirm(`Hapus "${item.name}" dari daftar barang?`)) return;
-        router.delete(route('lite.inventory.items.destroy', item.id), {
+        confirmAndDelete(`Hapus "${item.name}" dari daftar barang?`, route('lite.inventory.items.destroy', item.id), {
             onSuccess: () => setItems((prev) => prev.filter((i) => i.id !== item.id)),
         });
     };

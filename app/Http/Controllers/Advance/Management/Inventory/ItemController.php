@@ -43,7 +43,7 @@ class ItemController extends Controller
                 ->withSum('branchStocks as min_stock_sum', 'min_stock');
         }
 
-        $items = $itemsQuery->paginate(5)->withQueryString();
+        $items = $itemsQuery->paginate($request->integer('per_page') ?: 6)->withQueryString();
 
         $items->getCollection()->transform(function ($item) use ($branchId) {
             if ($branchId) {
@@ -59,7 +59,6 @@ class ItemController extends Controller
 
         $categories = Category::where('company_id', $user->company_id)->select('id', 'name')->get();
 
-        // Branch manager gak perlu dropdown — cabangnya udah pasti 1.
         $branches = $user->isBranchManager()
             ? Branch::where('id', $user->branch_id)->select('id', 'name')->get()
             : Branch::where('company_id', $user->company_id)->select('id', 'name')->get();
@@ -68,9 +67,9 @@ class ItemController extends Controller
             'items' => $items,
             'categories' => $categories,
             'branches' => $branches,
-            'filters' => $request->only('search', 'category_id', 'branch_id'),
+            'filters' => $request->only('search', 'category_id', 'branch_id', 'per_page'),
             'is_branch_manager' => $user->isBranchManager(),
-            'can_manage_catalog' => $user->isOwner(),   // frontend pakai ini buat sembunyiin tombol Buat/Ubah katalog
+            'can_manage_catalog' => $user->isOwner(),
         ]);
     }
 

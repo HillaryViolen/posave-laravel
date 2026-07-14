@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('transfer_number')->unique();
             $table->foreignId('sender_branch_id')->constrained('branches')->cascadeOnDelete();
             $table->foreignId('receiver_branch_id')->constrained('branches')->cascadeOnDelete();
+            $table->foreignId('requested_by_branch_id')->nullable()->constrained('branches')->nullOnDelete();
             $table->enum('status', ['waiting', 'success', 'rejected'])->default('waiting');
             $table->text('rejection_note')->nullable();
             $table->date('date');

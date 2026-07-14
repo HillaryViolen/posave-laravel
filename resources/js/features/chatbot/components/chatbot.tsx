@@ -14,6 +14,7 @@ export function Chatbot() {
         sendMessage,
         loadConversations,
         selectConversation,
+        appendAssistantMessage,
         startNewConversation,
     } = useChatMessages();
 
@@ -60,7 +61,13 @@ export function Chatbot() {
 
                 <div className="flex flex-1 flex-col overflow-hidden">
                     <ChatHeader onOpenHistory={() => setHistoryOpen(true)} />
-                    <ChatBody messages={messages} isLoadingHistory={isLoadingHistory} isWaitingReply={isWaitingReply} />
+                    <ChatBody
+                        messages={messages}
+                        isLoadingHistory={isLoadingHistory}
+                        isWaitingReply={isWaitingReply}
+                        conversationId={activeConversationId}
+                        onFormSubmitted={appendAssistantMessage}
+                    />
                     <ChatInput onSend={sendMessage} isLoading={isWaitingReply} />
                 </div>
             </div>

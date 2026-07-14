@@ -1,4 +1,4 @@
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import { Table, TableBody, TableCell, TableEmptyState, TableHead, TableHeader, TableRow } from '@/components';
 import { useFilteredRows, type SortKey } from '@/features/advance/management/report/hooks';
 import { cur, num, pct, runExport, type Cell, type CompanyInfo, type ReportExport } from '@/features/advance/management/report/lib';
 import { formatNumber, formatPct, formatRupiah } from '@/lib/format';
@@ -61,11 +61,7 @@ export function ProductTable({ rows, subtitle, periodSuffix, company }: ProductT
                     </TableHeader>
                     <TableBody>
                         {data.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={6} className="py-12 text-center text-[var(--grey-text)]">
-                                    Belum ada produk terjual
-                                </TableCell>
-                            </TableRow>
+                            <TableEmptyState colSpan={6} message="Belum ada produk terjual" />
                         ) : (
                             data.map((row) => (
                                 <TableRow key={row.name}>

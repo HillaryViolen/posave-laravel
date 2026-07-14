@@ -1,5 +1,6 @@
 import { Sheet, SheetContent } from '@/components/ui';
 import { ChatArea, ConversationList, InfoPanel } from '@/features/advance/messaging/components';
+import { useConfirmAction } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
 import { useEchoPresence, useEchoPublic } from '@laravel/echo-react';
@@ -31,7 +32,7 @@ export default function MessagingIndex({
     const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
-
+    const { confirmAndRun } = useConfirmAction();
     const [mobileView, setMobileView] = useState<'list' | 'chat'>('list');
     const [infoSheetOpen, setInfoSheetOpen] = useState(false);
 
@@ -171,14 +172,15 @@ export default function MessagingIndex({
         }
     }, []);
 
-    const handleDeleteNote = useCallback(async (id: number) => {
-        if (!confirm('Hapus catatan ini?')) return;
-        try {
-            await axios.delete(route('messaging.note.destroy', id));
-            setNotes((prev) => prev.filter((n) => n.id !== id));
-        } catch (err) {
-            console.error('Gagal menghapus catatan:', err);
-        }
+    const handleDeleteNote = useCallback((id: number) => {
+        confirmAndRun('Hapus catatan ini?', async () => {
+            try {
+                await axios.delete(route('messaging.note.destroy', id));
+                setNotes((prev) => prev.filter((n) => n.id !== id));
+            } catch (err) {
+                console.error('Gagal menghapus catatan:', err);
+            }
+        });
     }, []);
 
     return (
@@ -186,9 +188,6 @@ export default function MessagingIndex({
             <Head title="Pesan" />
 
             <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[var(--page-bg)]">
-                {/* Kolom kiri — daftar percakapan/kontak.
-                    Mobile: full width, cuma tampil pas mobileView === 'list'.
-                    Desktop (lg+): selalu tampil, lebar tetap 288px. */}
                 <div className={`h-full w-full flex-col lg:flex lg:w-72 lg:flex-shrink-0 ${mobileView === 'list' ? 'flex' : 'hidden'}`}>
                     <ConversationList
                         conversations={conversations}
@@ -204,9 +203,6 @@ export default function MessagingIndex({
                     />
                 </div>
 
-                {/* Kolom tengah — chat aktif.
-                    Mobile: full width, cuma tampil pas mobileView === 'chat', ada tombol back+info.
-                    Desktop: selalu tampil, ambil sisa ruang. */}
                 <ChatArea
                     conversation={activeConversation}
                     messages={messages}
@@ -218,8 +214,6 @@ export default function MessagingIndex({
                     className={mobileView === 'chat' ? 'flex flex-1' : 'hidden flex-1 lg:flex'}
                 />
 
-                {/* Kolom kanan — cuma tampil sebagai kolom permanen di desktop.
-                    Di mobile, InfoPanel gak pernah jadi kolom, muncul lewat ikon info -> Sheet di bawah. */}
                 <InfoPanel
                     broadcasts={broadcasts}
                     notes={notes}
@@ -231,7 +225,6 @@ export default function MessagingIndex({
                 />
             </div>
 
-            {/* Sheet InfoPanel — khusus mobile, dibuka lewat ikon info di header ChatArea */}
             <Sheet open={infoSheetOpen} onOpenChange={setInfoSheetOpen}>
                 <SheetContent side="right" className="w-[85vw] p-0 sm:max-w-[360px]">
                     <InfoPanel

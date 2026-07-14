@@ -1,6 +1,16 @@
-import React from 'react';
+import { DropdownActionMenu } from '@/components';
 import { Eye, Pencil, Trash2 } from 'lucide-react';
-import type { Employee } from '../pages/employee-list';
+
+export interface Employee {
+    id: number;
+    name: string;
+    role: string;
+    branch_id: number | null;
+    branch: { id: number; name: string } | null;
+    active_date: string;
+    slot_status: string;
+    user?: { id: number; email: string };
+}
 
 interface EmployeeActionsMenuProps {
     employee: Employee;
@@ -13,37 +23,14 @@ interface EmployeeActionsMenuProps {
 
 export function EmployeeActionsMenu({ employee, position, onClose, onView, onEdit, onDelete }: EmployeeActionsMenuProps) {
     return (
-        <>
-            <div className="fixed inset-0 z-40" onClick={onClose} />
-
-            <div
-                className="fixed z-50 w-36 overflow-hidden rounded-xl shadow-lg"
-                style={{ top: position.top, left: position.left }}
-            >
-                <button
-                    onClick={() => onView(employee)}
-                    className="flex w-full items-center gap-2 bg-sky-50 px-4 py-3 text-sm font-medium text-sky-600 hover:bg-sky-100"
-                >
-                    <Eye className="h-4 w-4" />
-                    Lihat
-                </button>
-
-                <button
-                    onClick={() => onEdit(employee)}
-                    className="flex w-full items-center gap-2 bg-orange-50 px-4 py-3 text-sm font-medium text-orange-500 hover:bg-orange-100"
-                >
-                    <Pencil className="h-4 w-4" />
-                    Ubah
-                </button>
-
-                <button
-                    onClick={() => onDelete(employee.id)}
-                    className="flex w-full items-center gap-2 bg-red-50 px-4 py-3 text-sm font-medium text-red-500 hover:bg-red-100"
-                >
-                    <Trash2 className="h-4 w-4" />
-                    Hapus
-                </button>
-            </div>
-        </>
+        <DropdownActionMenu
+            position={position}
+            onClose={onClose}
+            items={[
+                { label: 'Lihat', icon: Eye, onClick: () => onView(employee) },
+                { label: 'Ubah', icon: Pencil, onClick: () => onEdit(employee) },
+                { label: 'Hapus', icon: Trash2, onClick: () => onDelete(employee.id), variant: 'danger' },
+            ]}
+        />
     );
 }

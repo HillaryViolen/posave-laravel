@@ -4,9 +4,10 @@ namespace App\Http\Controllers\Advance\Management;
 
 use App\Http\Controllers\Controller;
 use App\Models\Advance\Management\Inventory\Category;
-use App\Models\Advance\Management\Transaction\Transaction;
-use App\Models\Advance\Management\Transaction\TransactionItem;
+use App\Models\Advance\Transaction\Transaction;
+use App\Models\Advance\Transaction\TransactionItem;
 use App\Models\Auth\Branch;
+use App\Models\Advance\Management\Inventory\Transfer;
 use App\Models\User;
 use App\Support\SalesFilter;
 use Carbon\Carbon;
@@ -36,11 +37,26 @@ class DashboardController extends Controller
         $base = $this->baseQuery($companyBranchIds, $filter->outletId, $filter->start, $filter->end);
         $itemBase = $this->itemBase($companyBranchIds, $filter->outletId, $filter->start, $filter->end);
 
+        $pendingTransfersCollection = Transfer::pendingApprovalFor($owner);
+
+        $pendingTransfers = $pendingTransfersCollection->take(5)->map(fn(Transfer $t) => [
+            'id' => $t->id,
+            'transfer_number' => $t->transfer_number,
+            'date' => $t->date,
+            'items_count' => $t->items_count,
+            'sender_branch_name' => $t->senderBranch->name,
+            'receiver_branch_name' => $t->receiverBranch->name,
+        ])->values();
+
+        $pendingTransfersCount = $pendingTransfersCollection->count();
+
         return Inertia::render('advance/management/dashboard/dashboard', [
             'filters' => $filter->toArray(),
             'outlets' => $owner->isBranchManager()
                 ? Branch::where('id', $owner->branch_id)->get(['id', 'name'])
                 : Branch::where('company_id', $owner->company_id)->orderBy('name')->get(['id', 'name']),
+            'pendingTransfers' => $pendingTransfers,
+            'pendingTransfersCount' => $pendingTransfersCount,
             'kpis' => [
                 'totalSales' => $this->kpi($current['totalSales'], $previous['totalSales']),
                 'totalTransactions' => $this->kpi($current['totalTransactions'], $previous['totalTransactions']),
