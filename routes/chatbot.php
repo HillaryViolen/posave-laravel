@@ -10,3 +10,8 @@ Route::get('/chatbot/conversations', [AiChatbotController::class, 'listConversat
 Route::get('/chatbot/conversations/{chatbot}/messages', [AiChatbotController::class, 'getMessages']);
 Route::delete('/chatbot/conversations/{chatbot}', [AiChatbotController::class, 'deleteConversation']);
 Route::patch('/chatbot/conversations/{chatbot}', [AiChatbotController::class, 'renameConversation']);
+
+Route::post('/ai/actions/{action}/confirm', [AiChatbotController::class, 'confirmAction']);
+Route::post('/ai/actions/{action}/cancel', [AiChatbotController::class, 'cancelAction']);
+
+Route::post('/ai/tools/submit', [AiChatbotController::class, 'submitForm']);

@@ -1,14 +1,15 @@
-import { Button, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import { Button, PaginationBar, SearchInput, Table, TableBody, TableCell, TableEmptyState, TableHead, TableHeader, TableRow } from '@/components';
 import {
     EmployeeAccessActionsMenu,
     EmployeeAccessCreateModal,
     EmployeeAccessEditModal,
     type EmployeeAccess,
 } from '@/features/advance/management/employee/components';
+import { useConfirmAction, useDropdownMenu, useFilters } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
-import { Head, router } from '@inertiajs/react';
-import { MoreVertical, Plus, Printer } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import { Head } from '@inertiajs/react';
+import { MoreVertical, Plus } from 'lucide-react';
+import { useState } from 'react';
 
 interface EmployeeAccessListProps {
     accesses: {
@@ -20,31 +21,16 @@ interface EmployeeAccessListProps {
     };
     filters: {
         search?: string;
+        per_page?: string;
     };
 }
 
 export default function EmployeeAccessList({ accesses, filters }: EmployeeAccessListProps) {
-    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editAccess, setEditAccess] = useState<EmployeeAccess | null>(null);
-    const [search, setSearch] = useState(filters.search ?? '');
-    const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
-
-    const toggleMenu = (id: number) => {
-        if (openMenuId === id) {
-            setOpenMenuId(null);
-            return;
-        }
-        const btn = buttonRefs.current[id];
-        if (btn) {
-            const rect = btn.getBoundingClientRect();
-            setMenuPosition({ top: rect.bottom + window.scrollY + 4, left: rect.right + window.scrollX - 144 });
-        }
-        setOpenMenuId(id);
-    };
-
-    const closeMenu = () => setOpenMenuId(null);
+    const { search, setSearch, applyFilters, handleSearch } = useFilters('dashboard.employees-access.index', filters);
+    const { openId: openMenuId, position: menuPosition, buttonRefs, toggleMenu, closeMenu } = useDropdownMenu();
+    const { confirmAndDelete } = useConfirmAction();
 
     const handleEdit = (access: EmployeeAccess) => {
         setEditAccess(access);
@@ -52,15 +38,11 @@ export default function EmployeeAccessList({ accesses, filters }: EmployeeAccess
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Yakin ingin menghapus kategori ini? Role karyawan yang terhubung tidak akan terhapus.')) {
-            router.delete(route('dashboard.employees.access.destroy', id));
-        }
+        confirmAndDelete(
+            'Yakin ingin menghapus kategori ini? Role karyawan yang terhubung tidak akan terhapus.',
+            route('dashboard.employees.access.destroy', id),
+        );
         closeMenu();
-    };
-
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.get(route('dashboard.employees.access.index'), search ? { search } : {}, { preserveState: true, preserveScroll: true, replace: true });
     };
 
     const activeMenuAccess = accesses.data.find((a) => a.id === openMenuId);
@@ -80,10 +62,6 @@ export default function EmployeeAccessList({ accesses, filters }: EmployeeAccess
                             <Plus className="mr-2 h-4 w-4" />
                             Buat Kategori
                         </Button>
-                        <Button variant="outline" className="bg-[var(--neutral-white)]">
-                            <Printer className="mr-2 h-4 w-4" />
-                            Cetak
-                        </Button>
                     </div>
                 </div>
 
@@ -100,13 +78,14 @@ export default function EmployeeAccessList({ accesses, filters }: EmployeeAccess
 
                             <TableBody>
                                 {accesses.data.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={3} className="py-10 text-center text-[var(--grey-text)]">
-                                            {filters.search
+                                    <TableEmptyState
+                                        colSpan={3}
+                                        message={
+                                            filters.search
                                                 ? `Kategori "${filters.search}" tidak ditemukan`
-                                                : 'Belum ada kategori, buat kategori terlebih dahulu'}
-                                        </TableCell>
-                                    </TableRow>
+                                                : 'Belum ada kategori, buat kategori terlebih dahulu'
+                                        }
+                                    />
                                 ) : (
                                     accesses.data.map((access) => (
                                         <TableRow key={access.id}>
@@ -136,7 +115,15 @@ export default function EmployeeAccessList({ accesses, filters }: EmployeeAccess
                     </div>
                 </div>
 
-                <Pagination links={accesses.links} />
+                <PaginationBar
+                    from={accesses.from ?? 0}
+                    to={accesses.to ?? 0}
+                    total={accesses.total}
+                    itemLabel="Kategori"
+                    links={accesses.links}
+                    perPage={filters.per_page ?? '5'}
+                    onPerPageChange={(v) => applyFilters({ per_page: v })}
+                />
             </div>
 
             {activeMenuAccess && (

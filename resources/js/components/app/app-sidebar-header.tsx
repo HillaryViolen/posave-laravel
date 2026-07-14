@@ -1,7 +1,5 @@
-import { SidebarTrigger } from '@/components';
-import { Button } from '@/components/ui';
+import { AskChatbotButton, SidebarTrigger } from '@/components';
 import { useChatbot } from '@/features/chatbot';
-import { MessageSquare } from 'lucide-react';
 
 interface AppSidebarHeaderProps {
     title?: string;
@@ -23,14 +21,7 @@ export function AppSidebarHeader({ title, description }: AppSidebarHeaderProps) 
                     </div>
                 </div>
 
-                <Button
-                    onClick={open}
-                    variant="outline"
-                    className="h-10 rounded-md border-blue-200 bg-white text-[#003399] shadow-sm hover:bg-blue-50"
-                >
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Tanya Temanmu
-                </Button>
+                <AskChatbotButton className="ml-auto" />
             </div>
         </header>
     );

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Advance\Management;
 
 use App\Http\Controllers\Controller;
-use App\Models\Advance\Management\Transaction\Transaction;
-use App\Models\Advance\Management\Transaction\TransactionItem;
+use App\Models\Advance\Transaction\Transaction;
+use App\Models\Advance\Transaction\TransactionItem;
 use App\Models\Auth\Branch;
 use App\Models\User;
 use App\Support\SalesFilter;

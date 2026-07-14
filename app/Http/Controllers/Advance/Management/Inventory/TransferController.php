@@ -32,7 +32,6 @@ class TransferController extends Controller
             });
         }
 
-        // Tab khusus: transfer masuk yang nunggu keputusan SAYA sebagai penerima.
         if ($request->view === 'incoming') {
             $transfersQuery->where('receiver_branch_id', $user->branch_id)->where('status', 'waiting');
         }
@@ -44,11 +43,7 @@ class TransferController extends Controller
 
         $transfers = $transfersQuery->orderByDesc('date')->orderByDesc('id')->paginate($request->per_page ?? 6)->withQueryString();
 
-        // Badge jumlah transfer masuk yang nunggu keputusan saya — buat sidebar/notif.
-        $incomingPendingCount = Transfer::where('company_id', $user->company_id)
-            ->where('receiver_branch_id', $user->branch_id)
-            ->where('status', 'waiting')
-            ->count();
+        $incomingPendingCount = Transfer::pendingApprovalFor($user)->count();
 
         $branches = $user->isBranchManager()
             ? Branch::where('id', $user->branch_id)->get(['id', 'name'])
@@ -83,13 +78,11 @@ class TransferController extends Controller
             'items.*.quantity' => 'required|integer|min:1',
         ]);
 
-        // Kedua cabang wajib milik company ini.
         $validCompanyBranchIds = Branch::where('company_id', $user->company_id)->pluck('id');
         abort_if(!$validCompanyBranchIds->contains($validated['sender_branch_id']), 403);
         abort_if(!$validCompanyBranchIds->contains($validated['receiver_branch_id']), 403);
 
         if ($user->isBranchManager()) {
-            // Minimal salah satu ujungnya harus cabang dia sendiri.
             $involved = in_array($user->branch_id, [$validated['sender_branch_id'], $validated['receiver_branch_id']]);
             abort_if(!$involved, 403);
         }
@@ -100,6 +93,7 @@ class TransferController extends Controller
                 'transfer_number' => 'PENDING-' . uniqid(),
                 'sender_branch_id' => $validated['sender_branch_id'],
                 'receiver_branch_id' => $validated['receiver_branch_id'],
+                'requested_by_branch_id' => $user->isBranchManager() ? $user->branch_id : null,
                 'status' => 'waiting',
                 'date' => $validated['date'],
             ]);
@@ -133,7 +127,7 @@ class TransferController extends Controller
         $user = Auth::user();
         $transfer = Transfer::with('items')->where('company_id', $user->company_id)->findOrFail($id);
 
-        abort_if($transfer->receiver_branch_id !== $user->branch_id, 403, 'Cuma cabang penerima yang bisa menerima kiriman ini.');
+        abort_if($transfer->approver_branch_id !== $user->branch_id, 403, 'Cuma cabang yang berwenang yang bisa menerima kiriman ini.');
         abort_if($transfer->status !== 'waiting', 422, 'Kiriman ini sudah diputuskan sebelumnya.');
 
         try {
@@ -174,7 +168,7 @@ class TransferController extends Controller
         $user = Auth::user();
         $transfer = Transfer::where('company_id', $user->company_id)->findOrFail($id);
 
-        abort_if($transfer->receiver_branch_id !== $user->branch_id, 403, 'Cuma cabang penerima yang bisa menolak kiriman ini.');
+        abort_if($transfer->approver_branch_id !== $user->branch_id, 403, 'Cuma cabang yang berwenang yang bisa menolak kiriman ini.');
         abort_if($transfer->status !== 'waiting', 422, 'Kiriman ini sudah diputuskan sebelumnya.');
 
         $validated = $request->validate(['note' => 'required|string|max:500']);
@@ -194,7 +188,8 @@ class TransferController extends Controller
         abort_if($transfer->status !== 'waiting', 422, 'Kiriman yang sudah diputuskan tidak bisa dihapus.');
 
         if ($user->isBranchManager()) {
-            abort_if($transfer->sender_branch_id !== $user->branch_id, 403);
+            $isInvolved = in_array($user->branch_id, [$transfer->sender_branch_id, $transfer->receiver_branch_id]);
+            abort_if(!$isInvolved, 403);
         }
 
         $transfer->delete();

@@ -2,20 +2,22 @@ import {
     Button,
     DateNavigator,
     FilterDropdown,
-    Pagination,
+    PaginationBar,
     SearchInput,
     Table,
     TableBody,
     TableCell,
+    TableEmptyState,
     TableHead,
     TableHeader,
     TableRow,
 } from '@/components';
 import { InventoryTransferCreateModal, TransferRejectModal } from '@/features/advance/management/inventory/components';
+import { useConfirmAction, useFilters } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
 import { AlertCircle, Check, Plus, Printer, X as XIcon } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface BranchOption {
     id: number;
@@ -36,6 +38,8 @@ interface Transfer {
     items_count: number;
     sender_branch: BranchOption;
     receiver_branch: BranchOption;
+    approver_branch_id: number;
+    requested_by_branch_id: number | null;
 }
 
 interface InventoryTransferListProps {
@@ -77,38 +81,34 @@ export default function InventoryTransferList({
 }: InventoryTransferListProps) {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [rejectTarget, setRejectTarget] = useState<Transfer | null>(null);
-    const [search, setSearch] = useState(filters.search ?? '');
+
+    const { search, setSearch, applyFilters, handleSearch } = useFilters('dashboard.inventory.transfers.index', filters);
+    const { confirmAndDelete, confirmAndRun, confirmDialog } = useConfirmAction();
 
     const currentDate = filters.date ?? new Date().toISOString().slice(0, 10);
+    const showingIncomingTab = filters.view === 'incoming';
 
-    const applyFilters = (overrides: Record<string, string | undefined>) => {
-        router.get(
-            route('dashboard.inventory.transfers.index'),
-            { ...filters, ...overrides },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            },
+    const handleAccept = (transfer: Transfer) => {
+        confirmAndRun(
+            `Terima kiriman ${transfer.transfer_number}? Stok akan langsung dipindahkan.`,
+            () => router.patch(route('dashboard.inventory.transfers.accept', transfer.id)),
+            'default',
         );
     };
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        applyFilters({ search: search || undefined });
-    };
-
-    const handleAccept = (transfer: Transfer) => {
-        if (!confirm(`Terima kiriman ${transfer.transfer_number}? Stok akan langsung dipindahkan.`)) return;
-        router.patch(route('dashboard.inventory.transfers.accept', transfer.id));
-    };
-
     const handleCancel = (transfer: Transfer) => {
-        if (!confirm(`Batalkan permintaan kiriman ${transfer.transfer_number}?`)) return;
-        router.delete(route('dashboard.inventory.transfers.destroy', transfer.id));
+        confirmAndDelete(`Batalkan permintaan kiriman ${transfer.transfer_number}?`, route('dashboard.inventory.transfers.destroy', transfer.id));
     };
 
-    const showingIncomingTab = filters.view === 'incoming';
+    const paginationProps = {
+        from: transfers.from ?? 0,
+        to: transfers.to ?? 0,
+        total: transfers.total,
+        itemLabel: 'Kiriman',
+        links: transfers.links,
+        perPage: filters.per_page ?? '6',
+        onPerPageChange: (v: string) => applyFilters({ per_page: v }),
+    };
 
     return (
         <DashboardSidebarLayout title="Kiriman" description="Kelola pengiriman barang antar cabang anda">
@@ -186,18 +186,16 @@ export default function InventoryTransferList({
 
                             <TableBody>
                                 {transfers.data.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="py-10 text-center text-[var(--grey-text)]">
-                                            Belum ada kiriman
-                                        </TableCell>
-                                    </TableRow>
+                                    <TableEmptyState colSpan={7} message="Belum ada kiriman" />
                                 ) : (
                                     transfers.data.map((transfer) => {
-                                        const iAmReceiverWaiting = transfer.receiver_branch.id === my_branch_id && transfer.status === 'waiting';
-                                        const iAmSenderWaiting = transfer.sender_branch.id === my_branch_id && transfer.status === 'waiting';
+                                        const iAmApproverWaiting = transfer.approver_branch_id === my_branch_id && transfer.status === 'waiting';
+                                        const iAmInvolvedWaiting =
+                                            (transfer.sender_branch.id === my_branch_id || transfer.receiver_branch.id === my_branch_id) &&
+                                            transfer.status === 'waiting';
 
                                         return (
-                                            <TableRow key={transfer.id} className={iAmReceiverWaiting ? 'bg-amber-50/50' : ''}>
+                                            <TableRow key={transfer.id} className={iAmApproverWaiting ? 'bg-amber-50/50' : ''}>
                                                 <TableCell>
                                                     <div className="text-xs whitespace-nowrap text-[var(--grey-text)]">
                                                         {new Date(transfer.date).toLocaleDateString('id-ID', {
@@ -227,33 +225,35 @@ export default function InventoryTransferList({
                                                     )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {iAmReceiverWaiting && (
-                                                        <div className="flex gap-1.5">
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {iAmApproverWaiting && (
+                                                            <>
+                                                                <button
+                                                                    aria-label={`Terima kiriman ${transfer.transfer_number}`}
+                                                                    onClick={() => handleAccept(transfer)}
+                                                                    className="flex shrink-0 items-center gap-1 rounded-lg bg-green-600 px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap text-white hover:bg-green-700"
+                                                                >
+                                                                    <Check className="h-3.5 w-3.5" /> Terima
+                                                                </button>
+                                                                <button
+                                                                    aria-label={`Tolak kiriman ${transfer.transfer_number}`}
+                                                                    onClick={() => setRejectTarget(transfer)}
+                                                                    className="flex shrink-0 items-center gap-1 rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap text-red-600 hover:bg-red-200"
+                                                                >
+                                                                    <XIcon className="h-3.5 w-3.5" /> Tolak
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                        {iAmInvolvedWaiting && (
                                                             <button
-                                                                aria-label={`Terima kiriman ${transfer.transfer_number}`}
-                                                                onClick={() => handleAccept(transfer)}
-                                                                className="flex shrink-0 items-center gap-1 rounded-lg bg-green-600 px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap text-white hover:bg-green-700"
+                                                                aria-label={`Batalkan kiriman ${transfer.transfer_number}`}
+                                                                onClick={() => handleCancel(transfer)}
+                                                                className="rounded-lg border border-[var(--border-strong)] px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-[var(--grey-text)] hover:bg-[var(--second-accent)]"
                                                             >
-                                                                <Check className="h-3.5 w-3.5" /> Terima
+                                                                Batalkan
                                                             </button>
-                                                            <button
-                                                                aria-label={`Tolak kiriman ${transfer.transfer_number}`}
-                                                                onClick={() => setRejectTarget(transfer)}
-                                                                className="flex shrink-0 items-center gap-1 rounded-lg bg-red-100 px-2.5 py-1.5 text-xs font-semibold whitespace-nowrap text-red-600 hover:bg-red-200"
-                                                            >
-                                                                <XIcon className="h-3.5 w-3.5" /> Tolak
-                                                            </button>
-                                                        </div>
-                                                    )}
-                                                    {iAmSenderWaiting && (
-                                                        <button
-                                                            aria-label={`Batalkan kiriman ${transfer.transfer_number}`}
-                                                            onClick={() => handleCancel(transfer)}
-                                                            className="rounded-lg border border-[var(--border-strong)] px-2.5 py-1.5 text-xs font-medium whitespace-nowrap text-[var(--grey-text)] hover:bg-[var(--second-accent)]"
-                                                        >
-                                                            Batalkan
-                                                        </button>
-                                                    )}
+                                                        )}
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         );
@@ -264,12 +264,7 @@ export default function InventoryTransferList({
                     </div>
                 </div>
 
-                <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
-                    <span className="text-sm text-[var(--grey-text)]">
-                        Menampilkan {transfers.from ?? 0}-{transfers.to ?? 0} dari {transfers.total} Kiriman
-                    </span>
-                    <Pagination links={transfers.links} />
-                </div>
+                <PaginationBar {...paginationProps} />
             </div>
 
             {showCreateModal && (
@@ -289,6 +284,8 @@ export default function InventoryTransferList({
                     onClose={() => setRejectTarget(null)}
                 />
             )}
+
+            {confirmDialog}
         </DashboardSidebarLayout>
     );
 }

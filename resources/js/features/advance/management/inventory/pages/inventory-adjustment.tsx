@@ -2,20 +2,23 @@ import {
     Button,
     DateNavigator,
     FilterDropdown,
-    Pagination,
+    PaginationBar,
     SearchInput,
     Table,
     TableBody,
     TableCell,
+    TableEmptyState,
     TableHead,
     TableHeader,
     TableRow,
 } from '@/components';
 import { InventoryAdjustmentActionsMenu, InventoryAdjustmentCreateModal, type Adjustment } from '@/features/advance/management/inventory/components';
+import { useConfirmAction, useDropdownMenu, useFilters } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { ArrowUpDown, MoreVertical, Package, Plus, Printer, Store } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
+import { resolveBranchId } from '../lib';
 
 interface InventoryAdjustmentProps {
     adjustments: {
@@ -34,50 +37,18 @@ interface InventoryAdjustmentProps {
     inventoryItems: { id: number; name: string; sku: string; price: number }[];
     branches: { id: number; name: string }[];
     is_branch_manager: boolean;
-    filters: { date?: string; search?: string; branch_id?: string; status?: string };
+    filters: { date?: string; search?: string; branch_id?: string; status?: string; per_page?: string };
 }
 
 export default function InventoryAdjustment({ adjustments, stats, inventoryItems, branches, is_branch_manager, filters }: InventoryAdjustmentProps) {
-    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+    const { openId: openMenuId, position: menuPosition, buttonRefs, toggleMenu, closeMenu } = useDropdownMenu();
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [search, setSearch] = useState(filters.search ?? '');
-    const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
-
+    const { search, setSearch, applyFilters, handleSearch } = useFilters('dashboard.inventory.adjustments.index', filters);
     const currentDate = filters.date ?? new Date().toISOString().slice(0, 10);
-
-    const applyFilters = (overrides: Record<string, string | undefined>) => {
-        router.get(
-            route('dashboard.inventory.adjustments.index'),
-            { ...filters, ...overrides },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
-    };
-
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        applyFilters({ search: search || undefined });
-    };
-
-    const toggleMenu = (id: number) => {
-        if (openMenuId === id) {
-            setOpenMenuId(null);
-            return;
-        }
-        const btn = buttonRefs.current[id];
-        if (btn) {
-            const rect = btn.getBoundingClientRect();
-            setMenuPosition({ top: rect.bottom + window.scrollY + 4, left: rect.right + window.scrollX - 144 });
-        }
-        setOpenMenuId(id);
-    };
-
-    const closeMenu = () => setOpenMenuId(null);
+    const { confirmAndDelete, confirmDialog } = useConfirmAction();
 
     const handleDelete = (id: number) => {
-        if (confirm('Yakin ingin menghapus riwayat ini? Stok barang akan dikembalikan.')) {
-            router.delete(route('dashboard.inventory.adjustments.destroy', id));
-        }
+        confirmAndDelete('Yakin ingin menghapus riwayat ini? Stok barang akan dikembalikan.', route('dashboard.inventory.adjustments.destroy', id));
         closeMenu();
     };
 
@@ -100,18 +71,14 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
         { value: 'out', label: 'Keluar' },
     ];
 
-    // Cabang buat prefill modal create: kalau branch_manager, langsung kunci ke cabangnya (branches[0]).
-    // Kalau Owner lagi filter ke 1 cabang, prefill itu. Kalau "semua cabang", modal minta pilih manual.
-    const defaultBranchId = is_branch_manager ? (branches[0]?.id ?? null) : filters.branch_id ? Number(filters.branch_id) : null;
+    const defaultBranchId = resolveBranchId({ isBranchManager: is_branch_manager, branches, filterBranchId: filters.branch_id });
 
     return (
         <DashboardSidebarLayout title="Perubahan" description="Catat semua perubahan stok barang anda (penyesuaian)">
             <Head title="Perubahan Stok" />
 
             <div className="flex flex-col gap-6 p-4 sm:p-6">
-                {/* Toolbar */}
-                <div className="flex flex-col gap-3 rounded-xl border border-[var(--border-strong)] bg-[var(--neutral-white)] p-4 shadow-sm">
-                    {/* Baris 1: Cabang + Tanggal + Aksi */}
+                <div className="flex flex-col gap-3">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex flex-wrap items-center gap-3">
                             {!is_branch_manager ? (
@@ -133,7 +100,6 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {/* Branch manager TETAP boleh buat perubahan (itu bagian ngurus stok cabangnya) */}
                             <Button
                                 onClick={() => setShowCreateModal(true)}
                                 className="flex-1 bg-[var(--surface-header)] hover:bg-[var(--surface-header-hover)] sm:flex-none"
@@ -148,7 +114,6 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                         </div>
                     </div>
 
-                    {/* Baris 2: Search + Filter Status */}
                     <div className="flex items-center gap-3">
                         <SearchInput value={search} onChange={setSearch} onSubmit={handleSearch} placeholder="Cari barang..." />
 
@@ -162,7 +127,6 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                     </div>
                 </div>
 
-                {/* Summary Cards — 2 kolom di mobile, 4 kolom mulai sm */}
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-4">
                     <div className="flex items-center gap-2 rounded-xl border border-[var(--border-strong)] bg-[var(--neutral-white)] p-3 shadow-sm sm:gap-4 sm:p-5">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 sm:h-12 sm:w-12">
@@ -212,7 +176,6 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                     </div>
                 </div>
 
-                {/* Table */}
                 <div className="overflow-hidden rounded-xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
                     <div className="overflow-x-auto">
                         <Table className="min-w-[820px]">
@@ -228,16 +191,13 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                             </TableHeader>
                             <TableBody>
                                 {adjustments.data.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="py-12 text-center">
-                                            <Package className="mx-auto mb-2 h-8 w-8 text-gray-300" />
-                                            <p className="font-medium text-[var(--subheading)]">Belum ada data perubahan</p>
-                                            <p className="mb-4 text-sm text-[var(--grey-text)]">Klik tombol Buat Perubahan untuk mencatat stok</p>
-                                            <Button onClick={() => setShowCreateModal(true)} variant="outline">
-                                                + Buat Perubahan
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
+                                    <TableEmptyState
+                                        colSpan={6}
+                                        icon={Package}
+                                        message="Belum ada data perubahan"
+                                        description="Klik tombol Buat Perubahan untuk mencatat stok"
+                                        action={{ label: '+ Buat Perubahan', onClick: () => setShowCreateModal(true) }}
+                                    />
                                 ) : (
                                     Object.entries(groupedAdjustments).map(([dateLabel, rows]) => (
                                         <React.Fragment key={dateLabel}>
@@ -306,7 +266,15 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                     </div>
                 </div>
 
-                <Pagination links={adjustments.links} />
+                <PaginationBar
+                    from={adjustments.from ?? 0}
+                    to={adjustments.to ?? 0}
+                    total={adjustments.total}
+                    itemLabel="Perubahan"
+                    links={adjustments.links}
+                    perPage={filters.per_page ?? '6'}
+                    onPerPageChange={(v) => applyFilters({ per_page: v })}
+                />
             </div>
 
             {activeMenuAdj && (
@@ -322,6 +290,7 @@ export default function InventoryAdjustment({ adjustments, stats, inventoryItems
                     onClose={() => setShowCreateModal(false)}
                 />
             )}
+            {confirmDialog}
         </DashboardSidebarLayout>
     );
 }

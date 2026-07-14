@@ -11,3 +11,4 @@ export * from "./top-products-card"
 export type { CategorySlice } from "./category-donut"
 export type { HourPoint } from "./hourly-sales-chart"
 export type { TrendMetric, TrendPoint } from "./sales-trend-chart"
+export { PendingTransfersCard, type PendingTransfer } from './pending-transfers-card';

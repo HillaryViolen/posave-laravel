@@ -1,4 +1,16 @@
-import { Button, FilterDropdown, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import {
+    Button,
+    FilterDropdown,
+    PaginationBar,
+    SearchInput,
+    Table,
+    TableBody,
+    TableCell,
+    TableEmptyState,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components';
 import {
     InventoryItemActionsMenu,
     InventoryItemCreateModal,
@@ -7,11 +19,13 @@ import {
     type InventoryCategory,
     type InventoryItem,
 } from '@/features/advance/management/inventory/components';
+import { useConfirmAction, useDropdownMenu, useFilters } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import axios from 'axios';
 import { Minus, MoreVertical, Plus, Printer } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { resolveBranchId } from '../lib';
 
 interface InventoryItemListProps {
     items: {
@@ -23,45 +37,24 @@ interface InventoryItemListProps {
     };
     categories: InventoryCategory[];
     branches: { id: number; name: string }[];
-    filters: { search?: string; category_id?: string; branch_id?: string };
+    filters: { search?: string; category_id?: string; branch_id?: string; per_page?: string };
     is_branch_manager: boolean;
     can_manage_catalog: boolean;
 }
 
 export default function InventoryItemList({ items, categories, branches, filters, is_branch_manager, can_manage_catalog }: InventoryItemListProps) {
-    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
+    const { openId: openMenuId, position: menuPosition, buttonRefs, toggleMenu, closeMenu } = useDropdownMenu();
     const [detailItem, setDetailItem] = useState<InventoryItem | null>(null);
     const [editItem, setEditItem] = useState<InventoryItem | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [search, setSearch] = useState(filters.search ?? '');
-    const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
-
-    // Salinan lokal, biar stepper stok bisa update angka langsung tanpa reload halaman.
+    const { search, setSearch, applyFilters, handleSearch } = useFilters('dashboard.inventory.items.index', filters);
     const [itemRows, setItemRows] = useState<InventoryItem[]>(items.data);
     const [pendingStockId, setPendingStockId] = useState<number | null>(null);
+    const { confirmAndDelete } = useConfirmAction();
 
     useEffect(() => {
         setItemRows(items.data);
     }, [items.data]);
-
-    const toggleMenu = (id: number) => {
-        if (openMenuId === id) {
-            setOpenMenuId(null);
-            return;
-        }
-        const btn = buttonRefs.current[id];
-        if (btn) {
-            const rect = btn.getBoundingClientRect();
-            setMenuPosition({
-                top: rect.bottom + window.scrollY + 4,
-                left: rect.right + window.scrollX - 144,
-            });
-        }
-        setOpenMenuId(id);
-    };
-
-    const closeMenu = () => setOpenMenuId(null);
 
     const handleShowDetail = (item: InventoryItem) => {
         setDetailItem(item);
@@ -72,30 +65,14 @@ export default function InventoryItemList({ items, categories, branches, filters
         closeMenu();
     };
 
-    const applyFilters = (overrides: Record<string, string | undefined>) => {
-        router.get(
-            route('dashboard.inventory.items.index'),
-            { ...filters, ...overrides },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
-    };
-
     const handleDelete = (id: number) => {
-        if (confirm('Yakin ingin menghapus barang ini?')) {
-            router.delete(route('dashboard.inventory.items.destroy', id));
-        }
+        confirmAndDelete('Yakin ingin menghapus barang ini?', route('dashboard.inventory.items.destroy', id));
         closeMenu();
-    };
-
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        applyFilters({ search: search || undefined });
     };
 
     const activeMenuitem = itemRows.find((i) => i.id === openMenuId);
     const activeBranchName = branches.find((b) => String(b.id) === filters.branch_id)?.name;
-    const selectedBranchId = filters.branch_id ? Number(filters.branch_id) : is_branch_manager ? (branches[0]?.id ?? null) : null;
-
+    const selectedBranchId = resolveBranchId({ isBranchManager: is_branch_manager, branches, filterBranchId: filters.branch_id });
     const getStockStatus = (item: InventoryItem) => {
         if (item.current_stock === 0) return { label: 'Stok Habis', color: 'bg-red-100 text-red-600' };
         if (item.current_stock <= item.min_stock) return { label: 'Stok Rendah', color: 'bg-orange-100 text-orange-500' };
@@ -181,13 +158,14 @@ export default function InventoryItemList({ items, categories, branches, filters
 
                             <TableBody>
                                 {itemRows.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={6} className="py-10 text-center text-[var(--grey-text)]">
-                                            {filters.search || filters.category_id
+                                    <TableEmptyState
+                                        colSpan={6}
+                                        message={
+                                            filters.search || filters.category_id
                                                 ? 'Barang tidak ditemukan'
-                                                : 'Belum ada barang, tambah barang terlebih dahulu'}
-                                        </TableCell>
-                                    </TableRow>
+                                                : 'Belum ada barang, tambah barang terlebih dahulu'
+                                        }
+                                    />
                                 ) : (
                                     itemRows.map((item) => {
                                         const status = getStockStatus(item);
@@ -289,7 +267,15 @@ export default function InventoryItemList({ items, categories, branches, filters
                     </div>
                 </div>
 
-                <Pagination links={items.links} />
+                <PaginationBar
+                    from={items.from ?? 0}
+                    to={items.to ?? 0}
+                    total={items.total}
+                    itemLabel="Barang"
+                    links={items.links}
+                    perPage={filters.per_page ?? '5'}
+                    onPerPageChange={(v) => applyFilters({ per_page: v })}
+                />
             </div>
 
             {can_manage_catalog && activeMenuitem && (

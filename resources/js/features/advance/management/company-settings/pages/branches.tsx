@@ -1,6 +1,7 @@
-import { CountBadge, CreateButton, PrintButton, SearchInput } from '@/components';
+import { CountBadge, CreateButton, PaginationBar, PrintButton, SearchInput } from '@/components';
+import { useConfirmAction, useFilters } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
-import { Head, router, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { MapPin, Phone } from 'lucide-react';
 import { useState } from 'react';
 
@@ -22,20 +23,19 @@ interface Props {
         per_page: number;
         links: { url: string | null; label: string; active: boolean }[];
     };
-    filters?: {
+    filters: {
         search?: string;
-        per_page?: number;
+        per_page?: string;
     };
 }
 
 type ModalMode = 'add' | 'edit' | null;
 
-const PER_PAGE_OPTIONS = [5, 10, 25, 50];
-
-export default function BranchesPage({ branches, filters }: Props) {
+export default function BranchesPage({ branches, filters = {} }: Props) {
     const [modal, setModal] = useState<ModalMode>(null);
     const [editingBranch, setEditingBranch] = useState<Branch | null>(null);
-    const [search, setSearch] = useState(filters?.search ?? '');
+    const { search, setSearch, applyFilters, handleSearch } = useFilters('settings.branches', filters);
+    const { confirmAndRun } = useConfirmAction();
 
     const {
         data,
@@ -82,32 +82,8 @@ export default function BranchesPage({ branches, filters }: Props) {
     };
 
     const handleDelete = (branch: Branch) => {
-        if (!confirm(`Hapus cabang "${branch.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
-        destroy(route('settings.branches.destroy', branch.id));
-    };
-
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.get(
-            route('settings.branches'),
-            { search, per_page: filters?.per_page ?? 5 },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            },
-        );
-    };
-
-    const handlePerPage = (perPage: number) => {
-        router.get(
-            route('settings.branches'),
-            { search, per_page: perPage },
-            {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true,
-            },
+        confirmAndRun(`Hapus cabang "${branch.name}"? Tindakan ini tidak bisa dibatalkan.`, () =>
+            destroy(route('settings.branches.destroy', branch.id)),
         );
     };
 
@@ -119,7 +95,6 @@ export default function BranchesPage({ branches, filters }: Props) {
             <Head title="Kelola Toko" />
 
             <div className="min-h-screen bg-[var(--page-bg)] p-6">
-                {/* Toolbar */}
                 <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex flex-wrap items-center gap-3">
                         <SearchInput value={search} onChange={setSearch} onSubmit={handleSearch} placeholder="Cari cabang..." />
@@ -132,7 +107,6 @@ export default function BranchesPage({ branches, filters }: Props) {
                     </div>
                 </div>
 
-                {/* Table */}
                 <div className="overflow-hidden rounded-2xl border border-[var(--border-strong)] bg-[var(--neutral-white)] shadow-sm">
                     <table className="w-full">
                         <thead>
@@ -214,50 +188,17 @@ export default function BranchesPage({ branches, filters }: Props) {
                     </table>
                 </div>
 
-                {/* Pagination */}
-                {branches.links.length > 3 && (
-                    <div className="mt-4 flex items-center justify-between">
-                        <p className="text-sm text-[var(--grey-text-muted)]">
-                            Menampilkan {branches.from}-{branches.to} dari {branches.total} Halaman
-                        </p>
-
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-1">
-                                {branches.links.map((link, i) => (
-                                    <button
-                                        key={i}
-                                        aria-label={`Halaman ${link.label}`}
-                                        disabled={!link.url}
-                                        onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                        className={`rounded-lg px-3 py-1.5 text-sm ${
-                                            link.active
-                                                ? 'bg-[var(--surface-header)] font-medium text-[var(--text-light)]'
-                                                : 'bg-[var(--neutral-white)] text-[var(--grey-text)] hover:bg-[var(--second-accent)] disabled:cursor-not-allowed disabled:opacity-40'
-                                        }`}
-                                        dangerouslySetInnerHTML={{ __html: link.label }}
-                                    />
-                                ))}
-                            </div>
-
-                            {/* Per page dropdown */}
-                            <select
-                                aria-label="Jumlah item per halaman"
-                                value={filters?.per_page ?? 5}
-                                onChange={(e) => handlePerPage(Number(e.target.value))}
-                                className="rounded-lg border border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 py-1.5 text-sm text-[var(--grey-text)] outline-none"
-                            >
-                                {PER_PAGE_OPTIONS.map((n) => (
-                                    <option key={n} value={n}>
-                                        {n} per halaman
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-                    </div>
-                )}
+                <PaginationBar
+                    from={branches.from ?? 0}
+                    to={branches.to ?? 0}
+                    total={branches.total}
+                    itemLabel="Cabang"
+                    links={branches.links}
+                    perPage={filters?.per_page ?? '5'}
+                    onPerPageChange={(v) => applyFilters({ per_page: v })}
+                />
             </div>
 
-            {/* Modal */}
             {modal && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center p-4"

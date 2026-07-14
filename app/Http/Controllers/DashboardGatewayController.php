@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Advance\Owner\DashboardController as AdvanceOwnerDashboardController;
+use App\Http\Controllers\Advance\Management\DashboardController as AdvanceOwnerDashboardController;
 use App\Http\Controllers\Lite\DashboardController as LiteOwnerDashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

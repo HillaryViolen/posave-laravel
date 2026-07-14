@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import axios from 'axios';   
 import { getConversations, getMessages, sendMessageToServer } from '@/features/chatbot/api';
-import type { Conversation, Message } from '../types';
+import type { Conversation, Message, PendingAction } from '../types';
 
 export function useChatMessages() {
     const [messages, setMessages] = useState<Message[]>([]);
@@ -45,9 +46,9 @@ export function useChatMessages() {
         setIsWaitingReply(true);
 
         try {
-            const { reply, conversation_id } = await sendMessageToServer(text, activeConversationId);
+            const { reply, conversation_id, action, form } = await sendMessageToServer(text, activeConversationId);
 
-            setMessages((prev) => [...prev, { role: 'assistant', content: reply }]);
+            setMessages((prev) => [...prev, { role: 'assistant', content: reply, action, form }]);
 
             if (!activeConversationId) {
                 setActiveConversationId(conversation_id);
@@ -55,11 +56,19 @@ export function useChatMessages() {
 
             await loadConversations();
         } catch (error) {
-            console.error('Chat error:', error);
+            if (axios.isAxiosError(error) && error.response) {
+                console.error('Chat error (pesan asli dari server):', error.response.data);
+            } else {
+                console.error('Chat error:', error);
+            }
             setMessages((prev) => [...prev, { role: 'assistant', content: 'Maaf, terjadi kesalahan. Coba lagi.' }]);
         } finally {
             setIsWaitingReply(false);
         }
+    };
+
+    const appendAssistantMessage = (content: string, action: PendingAction | null) => {
+        setMessages((prev) => [...prev, { role: 'assistant', content, action }]);
     };
 
     return {
@@ -72,5 +81,6 @@ export function useChatMessages() {
         loadConversations,
         selectConversation,
         startNewConversation,
+        appendAssistantMessage,
     };
 }

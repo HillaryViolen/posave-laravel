@@ -5,6 +5,7 @@ import {
     KpiCard,
     MetricToggle,
     PaymentBreakdown,
+    PendingTransfersCard,
     QuickActionsCard,
     RecentTransaction,
     RecentTransactionsCard,
@@ -16,6 +17,7 @@ import {
     type HourPoint,
     type Kpi,
     type PaymentSlice,
+    type PendingTransfer,
 } from '@/features/advance/management/dashboard/components';
 import { DashboardSidebarLayout } from '@/layouts';
 import { formatNumber, formatPct, formatRupiah } from '@/lib/format';
@@ -46,6 +48,8 @@ interface Props {
     categorySummary: CategorySlice[];
     topProducts: TopProduct[];
     recentTransactions: RecentTransaction[];
+    pendingTransfers: PendingTransfer[];
+    pendingTransfersCount: number;
 }
 
 export default function Dashboard({
@@ -58,6 +62,8 @@ export default function Dashboard({
     categorySummary,
     topProducts,
     recentTransactions,
+    pendingTransfers,
+    pendingTransfersCount,
 }: Props) {
     const [metric, setMetric] = useState<TrendMetric>('omzet');
 
@@ -82,6 +88,8 @@ export default function Dashboard({
                     Menampilkan data <span className="font-medium text-[var(--subheading)]">{filters.label}</span> · dibandingkan dengan periode
                     sebelumnya.
                 </p>
+
+                <PendingTransfersCard transfers={pendingTransfers} count={pendingTransfersCount} />
 
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
                     <KpiCard

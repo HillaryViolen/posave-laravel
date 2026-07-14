@@ -51,8 +51,6 @@ export function InfoPanel({ broadcasts, notes, authUser, onCreateBroadcast, onCr
     const btnGhostClass =
         'rounded-lg border border-[var(--border-strong)] px-3 py-1.5 text-xs font-medium text-[var(--grey-text)] hover:bg-[var(--second-accent)]';
 
-    // Sidebar: kolom permanen 288px, disembunyiin di mobile (muncul via Sheet, bukan di sini).
-    // Sheet: isi penuh area Sheet, gak perlu border/lebar sendiri (Sheet-nya yang ngatur itu).
     const rootClass =
         variant === 'sheet'
             ? 'flex h-full w-full flex-col overflow-y-auto bg-[var(--neutral-white)]'
@@ -60,7 +58,6 @@ export function InfoPanel({ broadcasts, notes, authUser, onCreateBroadcast, onCr
 
     return (
         <div className={rootClass}>
-            {/* Broadcast / General Info */}
             <div className="border-b border-[var(--border-strong)]">
                 <button
                     aria-label="Toggle broadcast panel"
@@ -138,7 +135,6 @@ export function InfoPanel({ broadcasts, notes, authUser, onCreateBroadcast, onCr
                 )}
             </div>
 
-            {/* Note */}
             <div>
                 <button
                     aria-label="Toggle note panel"

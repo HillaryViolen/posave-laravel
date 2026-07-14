@@ -74,7 +74,6 @@ export function ChatArea({ conversation, messages, authUserId, isLoading, onSend
 
     return (
         <div className={`flex-col overflow-hidden ${className}`}>
-            {/* Header */}
             <div className="flex items-center gap-3 border-b border-[var(--border-strong)] bg-[var(--neutral-white)] px-4 py-3.5 sm:px-5">
                 {onBack && (
                     <button
@@ -110,7 +109,6 @@ export function ChatArea({ conversation, messages, authUserId, isLoading, onSend
                 )}
             </div>
 
-            {/* Messages */}
             <div className="flex-1 overflow-y-auto bg-[var(--page-bg)] p-4">
                 {isLoading ? (
                     <div className="flex h-full items-center justify-center">
@@ -130,7 +128,6 @@ export function ChatArea({ conversation, messages, authUserId, isLoading, onSend
                 )}
             </div>
 
-            {/* File preview */}
             {files.length > 0 && (
                 <div className="flex flex-wrap gap-2 border-t border-[var(--border-strong)] bg-[var(--neutral-white)] px-4 py-2">
                     {files.map((file, i) => (
@@ -151,7 +148,6 @@ export function ChatArea({ conversation, messages, authUserId, isLoading, onSend
                 </div>
             )}
 
-            {/* Input */}
             <div className="border-t border-[var(--border-strong)] bg-[var(--neutral-white)] px-3 py-3 sm:px-4">
                 <div className="flex items-end gap-2">
                     <button

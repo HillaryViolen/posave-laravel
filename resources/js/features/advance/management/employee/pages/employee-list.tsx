@@ -1,20 +1,10 @@
-import { Button, FilterDropdown, Pagination, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
-import { EmployeeActionsMenu, EmployeeDetailModal, EmployeeEditModal } from '@/features/advance/management/employee/components';
+import { Button, FilterDropdown, PaginationBar, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import { EmployeeActionsMenu, EmployeeDetailModal, EmployeeEditModal, type Employee } from '@/features/advance/management/employee/components';
+import { useConfirmAction, useDropdownMenu } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { MoreVertical, Plus, Printer } from 'lucide-react';
-import React, { useRef, useState } from 'react';
-
-export interface Employee {
-    id: number;
-    name: string;
-    role: string;
-    branch_id: number | null;
-    branch: { id: number; name: string } | null;
-    active_date: string;
-    slot_status: string;
-    user?: { id: number; email: string };
-}
+import React, { useState } from 'react';
 
 interface Branch {
     id: number;
@@ -32,17 +22,15 @@ interface EmployeeListProps {
     branches: Branch[];
     filters: {
         branch?: string;
+        per_page?: string;
     };
     is_branch_manager: boolean;
 }
 
 export default function EmployeeList({ employees, branches, filters, is_branch_manager }: EmployeeListProps) {
-    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const [detailEmployee, setDetailEmployee] = useState<Employee | null>(null);
     const [editEmployee, setEditEmployee] = useState<Employee | null>(null);
-    const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
-
+    const { openId: openMenuId, position: menuPosition, buttonRefs, toggleMenu, closeMenu } = useDropdownMenu();
     const editForm = useForm({
         name: '',
         role: '',
@@ -50,21 +38,11 @@ export default function EmployeeList({ employees, branches, filters, is_branch_m
         active_date: '',
         slot_status: '',
     });
+    const { confirmAndDelete } = useConfirmAction();
 
-    const toggleMenu = (id: number) => {
-        if (openMenuId === id) {
-            setOpenMenuId(null);
-            return;
-        }
-        const btn = buttonRefs.current[id];
-        if (btn) {
-            const rect = btn.getBoundingClientRect();
-            setMenuPosition({ top: rect.bottom + window.scrollY + 4, left: rect.right + window.scrollX - 144 });
-        }
-        setOpenMenuId(id);
+    const applyFilters = (overrides: Record<string, string | undefined>) => {
+        router.get(route('dashboard.employees.index'), { ...filters, ...overrides }, { preserveState: true, preserveScroll: true, replace: true });
     };
-
-    const closeMenu = () => setOpenMenuId(null);
 
     const handleShowDetail = (employee: Employee) => {
         setDetailEmployee(employee);
@@ -95,22 +73,10 @@ export default function EmployeeList({ employees, branches, filters, is_branch_m
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Yakin ingin menghapus karyawan ini? Akun login karyawan juga akan terhapus.')) {
-            router.delete(route('dashboard.employees.destroy', id));
-        }
+        confirmAndDelete('Yakin ingin menghapus karyawan ini? Akun login karyawan juga akan terhapus.', route('dashboard.employees.destroy', id));
         closeMenu();
     };
-
-    const handleFilterBranch = (branchId: string | undefined) => {
-        router.get(route('dashboard.employees.index'), branchId ? { branch: branchId } : {}, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
-
     const activeMenuEmployee = employees.data.find((e) => e.id === openMenuId);
-
     const canManage = (employee: Employee) => !is_branch_manager || employee.role === 'cashier';
 
     return (
@@ -123,7 +89,7 @@ export default function EmployeeList({ employees, branches, filters, is_branch_m
                             value={filters.branch}
                             options={branches.map((b) => ({ value: String(b.id), label: b.name }))}
                             allLabel="Semua Cabang"
-                            onChange={handleFilterBranch}
+                            onChange={(v) => applyFilters({ branch: v })}
                         />
                     ) : (
                         <span className="text-sm font-medium text-[var(--grey-text)]">
@@ -231,7 +197,15 @@ export default function EmployeeList({ employees, branches, filters, is_branch_m
                     </div>
                 </div>
 
-                <Pagination links={employees.links} />
+                <PaginationBar
+                    from={employees.from ?? 0}
+                    to={employees.to ?? 0}
+                    total={employees.total}
+                    itemLabel="Karyawan"
+                    links={employees.links}
+                    perPage={filters.per_page ?? '5'}
+                    onPerPageChange={(v) => applyFilters({ per_page: v })}
+                />
             </div>
 
             {activeMenuEmployee && (

@@ -2,21 +2,22 @@ import {
     Button,
     DateNavigator,
     FilterDropdown,
-    Pagination,
-    PerPageSelect,
+    PaginationBar,
     SearchInput,
     Table,
     TableBody,
     TableCell,
+    TableEmptyState,
     TableHead,
     TableHeader,
     TableRow,
 } from '@/components';
 import { InventoryPurchaseOrderActionsMenu, InventoryPurchaseOrderCreateModal } from '@/features/advance/management/inventory/components';
+import { useConfirmAction, useDropdownMenu, useFilters } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
 import { MoreVertical, Plus, Printer } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import { useState } from 'react';
 
 interface Supplier {
     id: number;
@@ -81,36 +82,11 @@ export default function InventoryPurchaseOrderList({
     is_branch_manager,
     filters,
 }: InventoryPurchaseOrderListProps) {
-    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const [showCreateModal, setShowCreateModal] = useState(false);
-    const [search, setSearch] = useState(filters.search ?? '');
-    const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
-
+    const { search, setSearch, applyFilters, handleSearch } = useFilters('dashboard.inventory.purchase-orders.index', filters);
+    const { openId: openMenuId, position: menuPosition, buttonRefs, toggleMenu, closeMenu } = useDropdownMenu();
     const currentDate = filters.date ?? new Date().toISOString().slice(0, 10);
-
-    const applyFilters = (overrides: Record<string, string | undefined>) => {
-        router.get(
-            route('dashboard.inventory.purchase-orders.index'),
-            { ...filters, ...overrides },
-            { preserveState: true, preserveScroll: true, replace: true },
-        );
-    };
-
-    const toggleMenu = (id: number) => {
-        if (openMenuId === id) {
-            setOpenMenuId(null);
-            return;
-        }
-        const btn = buttonRefs.current[id];
-        if (btn) {
-            const rect = btn.getBoundingClientRect();
-            setMenuPosition({ top: rect.bottom + window.scrollY + 4, left: rect.right + window.scrollX - 176 });
-        }
-        setOpenMenuId(id);
-    };
-
-    const closeMenu = () => setOpenMenuId(null);
+    const { confirmAndDelete } = useConfirmAction();
 
     const handleUpdateStatus = (id: number, status: 'success' | 'cancelled') => {
         router.put(route('dashboard.inventory.purchase-orders.update', id), { status });
@@ -118,17 +94,9 @@ export default function InventoryPurchaseOrderList({
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Yakin ingin menghapus PO ini?')) {
-            router.delete(route('dashboard.inventory.purchase-orders.destroy', id));
-        }
+        confirmAndDelete('Yakin ingin menghapus PO ini?', route('dashboard.inventory.purchase-orders.destroy', id));
         closeMenu();
     };
-
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        applyFilters({ search: search || undefined });
-    };
-
     const activeMenuPO = purchaseOrders.data.find((po) => po.id === openMenuId);
 
     return (
@@ -192,11 +160,7 @@ export default function InventoryPurchaseOrderList({
 
                             <TableBody>
                                 {purchaseOrders.data.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={7} className="py-10 text-center text-[var(--grey-text)]">
-                                            Belum ada PO, buat PO terlebih dahulu
-                                        </TableCell>
-                                    </TableRow>
+                                    <TableEmptyState colSpan={7} message="Belum ada PO, buat PO terlebih dahulu" />
                                 ) : (
                                     purchaseOrders.data.map((po) => (
                                         <TableRow key={po.id}>
@@ -243,16 +207,15 @@ export default function InventoryPurchaseOrderList({
                     </div>
                 </div>
 
-                <div className="mt-4 flex flex-col items-center justify-between gap-3 sm:flex-row">
-                    <span className="text-sm text-[var(--grey-text)]">
-                        Menampilkan {purchaseOrders.from ?? 0}-{purchaseOrders.to ?? 0} dari {purchaseOrders.total} Pembelian
-                    </span>
-
-                    <div className="flex items-center gap-3">
-                        <Pagination links={purchaseOrders.links} />
-                        <PerPageSelect value={filters.per_page ?? '6'} onChange={(v) => applyFilters({ per_page: v })} />
-                    </div>
-                </div>
+                <PaginationBar
+                    from={purchaseOrders.from ?? 0}
+                    to={purchaseOrders.to ?? 0}
+                    total={purchaseOrders.total}
+                    itemLabel="Pembelian"
+                    links={purchaseOrders.links}
+                    perPage={filters.per_page ?? '6'}
+                    onPerPageChange={(v) => applyFilters({ per_page: v })}
+                />
             </div>
 
             {activeMenuPO && (

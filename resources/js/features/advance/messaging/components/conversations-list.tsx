@@ -50,7 +50,6 @@ export function ConversationList({
 
     return (
         <div className="flex h-full flex-col border-r border-[var(--border-strong)] bg-[var(--neutral-white)]">
-            {/* Tab */}
             <div className="flex gap-2 border-b border-[var(--border-strong)] p-3">
                 <button
                     aria-label="Tab Pesan"
@@ -76,7 +75,6 @@ export function ConversationList({
                 </button>
             </div>
 
-            {/* Search */}
             <div className="p-3">
                 <input
                     type="text"
@@ -88,7 +86,6 @@ export function ConversationList({
                 />
             </div>
 
-            {/* List */}
             <div className="flex-1 overflow-y-auto">
                 {activeTab === 'pesan' ? (
                     filteredConversations.length === 0 ? (
@@ -138,8 +135,7 @@ export function ConversationList({
                             );
                         })
                     )
-                ) : // Tab Kontak
-                filteredContacts.length === 0 ? (
+                ) : filteredContacts.length === 0 ? (
                     <p className="py-10 text-center text-sm text-[var(--grey-text-muted)]">Tidak ada kontak</p>
                 ) : (
                     filteredContacts.map((contact) => {

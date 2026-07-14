@@ -1,9 +1,10 @@
-import { Button, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import { Button, PaginationBar, SearchInput, Table, TableBody, TableCell, TableEmptyState, TableHead, TableHeader, TableRow } from '@/components';
 import { InventorySupplierCreateModal, InventorySupplierEditModal } from '@/features/advance/management/inventory/components';
+import { useConfirmAction, useFilters } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import { Building2, Plus } from 'lucide-react';
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 interface Supplier {
     id: number;
@@ -31,29 +32,19 @@ interface InventorySupplierListProps {
     };
     categories: CategoryOption[];
     is_branch_manager: boolean;
-    filters: { search?: string };
+    filters: { search?: string; per_page?: string };
 }
 
 export default function InventorySupplierList({ suppliers, categories, is_branch_manager, filters }: InventorySupplierListProps) {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editSupplier, setEditSupplier] = useState<Supplier | null>(null);
-    const [search, setSearch] = useState(filters.search ?? '');
+    const { search, setSearch, applyFilters, handleSearch } = useFilters('dashboard.inventory.suppliers.index', filters);
+    const { confirmAndDelete } = useConfirmAction();
 
     const canManageCatalog = !is_branch_manager;
 
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.get(route('dashboard.inventory.suppliers.index'), search ? { search } : {}, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
-
     const handleDelete = (supplier: Supplier) => {
-        if (confirm(`Hapus pemasok "${supplier.name}"?`)) {
-            router.delete(route('dashboard.inventory.suppliers.destroy', supplier.id));
-        }
+        confirmAndDelete(`Hapus pemasok "${supplier.name}"?`, route('dashboard.inventory.suppliers.destroy', supplier.id));
     };
 
     return (
@@ -88,13 +79,14 @@ export default function InventorySupplierList({ suppliers, categories, is_branch
 
                             <TableBody>
                                 {suppliers.data.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={canManageCatalog ? 4 : 3} className="py-10 text-center text-[var(--grey-text)]">
-                                            {filters.search
+                                    <TableEmptyState
+                                        colSpan={canManageCatalog ? 4 : 3}
+                                        message={
+                                            filters.search
                                                 ? `Pemasok "${filters.search}" tidak ditemukan`
-                                                : 'Belum ada pemasok, tambah pemasok terlebih dahulu'}
-                                        </TableCell>
-                                    </TableRow>
+                                                : 'Belum ada pemasok, tambah pemasok terlebih dahulu'
+                                        }
+                                    />
                                 ) : (
                                     suppliers.data.map((supplier) => (
                                         <TableRow key={supplier.id}>
@@ -155,7 +147,15 @@ export default function InventorySupplierList({ suppliers, categories, is_branch
                     </div>
                 </div>
 
-                <Pagination links={suppliers.links} />
+                <PaginationBar
+                    from={suppliers.from ?? 0}
+                    to={suppliers.to ?? 0}
+                    total={suppliers.total}
+                    itemLabel="Pemasok"
+                    links={suppliers.links}
+                    perPage={filters.per_page ?? '5'}
+                    onPerPageChange={(v) => applyFilters({ per_page: v })}
+                />
             </div>
 
             {canManageCatalog && showCreateModal && (

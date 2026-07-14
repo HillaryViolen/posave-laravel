@@ -6,7 +6,7 @@ interface PerPageSelectProps {
     options?: number[];
 }
 
-export function PerPageSelect({ value, onChange, options = [6, 12, 24] }: PerPageSelectProps) {
+export function PerPageSelect({ value, onChange, options = [5, 10, 15, 20, 25] }: PerPageSelectProps) {
     return (
         <div className="relative">
             <select

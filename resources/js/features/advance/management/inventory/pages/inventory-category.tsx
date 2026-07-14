@@ -1,14 +1,15 @@
-import { Button, Pagination, SearchInput, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components';
+import { Button, PaginationBar, SearchInput, Table, TableBody, TableCell, TableEmptyState, TableHead, TableHeader, TableRow } from '@/components';
 import {
     InventoryCategoryActionsMenu,
     InventoryCategoryCreateModal,
     InventoryCategoryEditModal,
     type InventoryCategory,
 } from '@/features/advance/management/inventory/components';
+import { useConfirmAction, useDropdownMenu, useFilters } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
-import { Head, router } from '@inertiajs/react';
-import { MoreVertical, Plus, Printer } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import { Head } from '@inertiajs/react';
+import { MoreVertical, Plus } from 'lucide-react';
+import { useState } from 'react';
 
 interface InventoryCategoryListProps {
     categories: {
@@ -18,35 +19,16 @@ interface InventoryCategoryListProps {
         to: number;
         links: { url: string | null; label: string; active: boolean }[];
     };
-    filters: { search?: string };
+    filters: { search?: string; per_page?: string };
     can_manage_catalog: boolean;
 }
 
 export default function InventoryCategoryList({ categories, filters, can_manage_catalog }: InventoryCategoryListProps) {
-    const [openMenuId, setOpenMenuId] = useState<number | null>(null);
-    const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0 });
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editCategory, setEditCategory] = useState<InventoryCategory | null>(null);
-    const [search, setSearch] = useState(filters.search ?? '');
-    const buttonRefs = useRef<{ [key: number]: HTMLButtonElement | null }>({});
-
-    const toggleMenu = (id: number) => {
-        if (openMenuId === id) {
-            setOpenMenuId(null);
-            return;
-        }
-        const btn = buttonRefs.current[id];
-        if (btn) {
-            const rect = btn.getBoundingClientRect();
-            setMenuPosition({
-                top: rect.bottom + window.scrollY + 4,
-                left: rect.right + window.scrollX - 144,
-            });
-        }
-        setOpenMenuId(id);
-    };
-
-    const closeMenu = () => setOpenMenuId(null);
+    const { search, setSearch, applyFilters, handleSearch } = useFilters('dashboard.inventory.categories.index', filters);
+    const { openId: openMenuId, position: menuPosition, buttonRefs, toggleMenu, closeMenu } = useDropdownMenu();
+    const { confirmAndDelete } = useConfirmAction();
 
     const handleEdit = (category: InventoryCategory) => {
         setEditCategory(category);
@@ -54,21 +36,12 @@ export default function InventoryCategoryList({ categories, filters, can_manage_
     };
 
     const handleDelete = (id: number) => {
-        if (confirm('Yakin ingin menghapus kategori ini? Barang yang terhubung tidak akan terhapus.')) {
-            router.delete(route('dashboard.inventory.categories.destroy', id));
-        }
+        confirmAndDelete(
+            'Yakin ingin menghapus kategori ini? Barang yang terhubung tidak akan terhapus.',
+            route('dashboard.inventory.categories.destroy', id),
+        );
         closeMenu();
     };
-
-    const handleSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.get(route('dashboard.inventory.categories.index'), search ? { search } : {}, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true,
-        });
-    };
-
     const activeMenuCategory = categories.data.find((c) => c.id === openMenuId);
 
     return (
@@ -88,10 +61,6 @@ export default function InventoryCategoryList({ categories, filters, can_manage_
                                 Buat Kategori
                             </Button>
                         )}
-                        <Button variant="outline" className="bg-[var(--neutral-white)]">
-                            <Printer className="mr-2 h-4 w-4" />
-                            Cetak
-                        </Button>
                     </div>
                 </div>
 
@@ -108,13 +77,14 @@ export default function InventoryCategoryList({ categories, filters, can_manage_
 
                             <TableBody>
                                 {categories.data.length === 0 ? (
-                                    <TableRow>
-                                        <TableCell colSpan={can_manage_catalog ? 3 : 2} className="py-10 text-center text-[var(--grey-text)]">
-                                            {filters.search
+                                    <TableEmptyState
+                                        colSpan={can_manage_catalog ? 3 : 2}
+                                        message={
+                                            filters.search
                                                 ? `Kategori "${filters.search}" tidak ditemukan`
-                                                : 'Belum ada kategori, buat kategori terlebih dahulu'}
-                                        </TableCell>
-                                    </TableRow>
+                                                : 'Belum ada kategori, buat kategori terlebih dahulu'
+                                        }
+                                    />
                                 ) : (
                                     categories.data.map((category) => (
                                         <TableRow key={category.id}>
@@ -146,7 +116,15 @@ export default function InventoryCategoryList({ categories, filters, can_manage_
                     </div>
                 </div>
 
-                <Pagination links={categories.links} />
+                <PaginationBar
+                    from={categories.from ?? 0}
+                    to={categories.to ?? 0}
+                    total={categories.total}
+                    itemLabel="Kategori"
+                    links={categories.links}
+                    perPage={filters.per_page ?? '5'}
+                    onPerPageChange={(v) => applyFilters({ per_page: v })}
+                />
             </div>
 
             {can_manage_catalog && activeMenuCategory && (

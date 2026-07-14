@@ -1,11 +1,11 @@
-import { Badge, Button, SearchInput } from '@/components';
+import { AskChatbotButton, Badge, Button, SearchInput } from '@/components';
 import { Card, CardContent, Input, Separator, Sheet, SheetContent } from '@/components/ui';
 import { CartItem, CategoryOption, ItemOption } from '@/features/advance/cashier/order/type';
 import { useChatbot } from '@/features/chatbot';
 import { CashierLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
-import { Banknote, ChevronLeft, ChevronRight, MessageSquare, QrCode, ShoppingCart } from 'lucide-react';
+import { Banknote, ChevronLeft, ChevronRight, QrCode, ShoppingCart } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 interface Props {
@@ -315,15 +315,7 @@ export default function OrderPage({ items, categories }: Props) {
                         placeholder="Cari barang..."
                         variant="kiosk"
                     />
-                    <Button
-                        aria-label="Buka asisten chatbot"
-                        onClick={open}
-                        variant="outline"
-                        className="ml-auto h-10 shrink-0 rounded-md border-blue-200 bg-white text-[#003399] shadow-sm hover:bg-blue-50"
-                    >
-                        <MessageSquare className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Tanya Temanmu</span>
-                    </Button>
+                    <AskChatbotButton className="ml-auto" />
                 </div>
 
                 {successInfo && (
@@ -423,10 +415,8 @@ export default function OrderPage({ items, categories }: Props) {
                 </div>
             </div>
 
-            {/* Order Detail — sidebar mulai 1024px (lg) */}
             <div className="hidden w-[340px] flex-col border-l border-white/10 bg-[var(--sidebar)] text-white lg:flex">{orderDetailInner}</div>
 
-            {/* Payment — sidebar baru mulai 1280px (xl), biar gak gencet konten di laptop kecil */}
             {showPayment && <div className="hidden w-[320px] flex-col border-l border-sky-950 bg-sky-900 text-white xl:flex">{paymentInner}</div>}
 
             {cartCount > 0 && !sheetOpen && (

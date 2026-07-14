@@ -82,7 +82,6 @@ export function SalesFilterBar({ routeName, outlets, filters, extraParams = {}, 
                     </Select>
                 ) : (
                     outlets.length === 1 && (
-                        // Cuma 1 cabang: tampilin sebagai info statis, bukan dropdown kosong.
                         <div className="flex h-10 w-full items-center gap-2 rounded-lg bg-[var(--second-accent)] px-3 font-medium text-[var(--subheading)] shadow-sm sm:w-fit">
                             <Store className="h-4 w-4 shrink-0 text-[var(--grey-text)]" />
                             {outlets[0].name}

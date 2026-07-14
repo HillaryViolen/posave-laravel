@@ -1,5 +1,6 @@
 import { Button, Input } from '@/components/ui';
 import { InventoryCategoryFormModal } from '@/features/lite/inventory/components';
+import { useConfirmAction } from '@/hooks';
 import { DashboardSidebarLayout } from '@/layouts';
 import { Head, router } from '@inertiajs/react';
 import axios from 'axios';
@@ -27,6 +28,7 @@ export default function CategoryList({ categories: initialCategories, filters }:
     const [loadingMore, setLoadingMore] = useState(false);
     const [search, setSearch] = useState(filters.search ?? '');
     const [formCategory, setFormCategory] = useState<CategoryItem | 'new' | null>(null);
+    const { confirmAndDelete } = useConfirmAction();
 
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -55,13 +57,10 @@ export default function CategoryList({ categories: initialCategories, filters }:
                 ? `Kategori "${category.name}" masih punya ${category.items_count} barang. Barangnya tidak akan terhapus, tapi jadi tanpa kategori. Lanjutkan?`
                 : `Hapus kategori "${category.name}"?`;
 
-        if (!confirm(warning)) return;
-
-        router.delete(route('lite.inventory.categories.destroy', category.id), {
+        confirmAndDelete(warning, route('lite.inventory.categories.destroy', category.id), {
             onSuccess: () => setCategories((prev) => prev.filter((c) => c.id !== category.id)),
         });
     };
-
     return (
         <DashboardSidebarLayout title="Kategori Barang" description="Kelompokkan barang biar gampang dicari">
             <Head title="Kategori" />
